@@ -73,22 +73,21 @@ def _parse_markdown_to_html(text: str, orig_newlines: str | None = None, is_firs
     return text, newlines
 
 
-def _render_report_html(
+def _render_report_sections(
     data: dict,
     filtered_segments: list[dict],
-    current_seg_idx: str,
+    current_seg_idx: str | None,
     annotations: dict,
-) -> str:
-    """Build the HTML for the report view with numbered, highlighted sentences."""
+) -> list[tuple[int, str]]:
+    """Build per-section HTML for the report with highlighted sentences.
+
+    Returns list of (section_idx, html_string) tuples.
+    """
     sections = data.get("sections", [])
     all_segments = data.get("segments", [])
     answer_text = data.get("answer", "")
 
-    # Build lookup: segment idx -> sequential number in filtered list
     filtered_set = {s["idx"] for s in filtered_segments}
-    seg_number = {}
-    for i, s in enumerate(filtered_segments):
-        seg_number[s["idx"]] = i + 1
 
     # Group all segments by section
     by_section: dict[int, list[dict]] = {}
@@ -100,19 +99,20 @@ def _render_report_html(
     for sec_idx in by_section:
         by_section[sec_idx].sort(key=lambda s: s.get("idx_in_section", 0))
 
-    parts = []
+    result = []
     for section in sections:
         sec_idx = section.get("idx")
         header = section.get("header", "")
         level = section.get("header_level", 2)
 
+        parts = []
         if header:
             header_text = html.escape(header.lstrip("#").strip())
             tag = f"h{min(level, 4)}"
             parts.append(f"<{tag} style='margin-top:1em;margin-bottom:0.3em;'>{header_text}</{tag}>")
 
         sec_segments = by_section.get(sec_idx, [])
-        if not sec_segments:
+        if not sec_segments and not header:
             continue
 
         section_start = section.get("start", 0)
@@ -141,16 +141,8 @@ def _render_report_html(
             is_current = seg_idx == current_seg_idx
             is_annotated = seg_idx in annotations
 
-            num = seg_number.get(seg_idx)
-            if is_annotated and num is not None:
-                prefix = f"[&#10003;{num}]"
-            elif num is not None:
-                prefix = f"[{num}]"
-            else:
-                prefix = ""
-
             if is_current:
-                style = "border-left:4px solid #fdd835; padding-left:6px; background-color:rgba(253,216,53,0.15); font-weight:bold;"
+                style = "background-color:rgba(253,216,53,0.15); padding:2px 4px; border-radius:4px; font-weight:bold;"
             elif is_annotated:
                 style = "border-left:3px solid #4caf50; padding-left:4px;"
             elif not in_filter:
@@ -158,15 +150,19 @@ def _render_report_html(
             else:
                 style = ""
 
-            sentence_parts.append(f'{newlines}<span style="{style}">{prefix} {text}</span>')
+            sentence_parts.append(f'{newlines}<span style="{style}">{text}</span>')
 
-        paragraph = " ".join(sentence_parts)
-        parts.append(
-            f'<div style="line-height:2.2; margin-bottom:16px; padding:10px; '
-            f'border:1px solid rgba(128,128,128,0.3); border-radius:8px;">{paragraph}</div>'
-        )
+        if sentence_parts:
+            paragraph = " ".join(sentence_parts)
+            parts.append(
+                f'<div style="line-height:2.2; margin-bottom:16px; padding:10px; '
+                f'border:1px solid rgba(128,128,128,0.3); border-radius:8px;">{paragraph}</div>'
+            )
 
-    return "\n".join(parts)
+        if parts:
+            result.append((sec_idx, "\n".join(parts)))
+
+    return result
 
 
 # ── Sidebar ─────────────────────────────────────────────────────────────
@@ -289,15 +285,21 @@ else:
 segments = data.get("segments", [])
 filtered = _get_filtered_segments(segments, st.session_state.nav_mode)
 
-if not filtered:
-    st.warning("No sentences match the current navigation mode.")
-    st.stop()
+# Determine current segment (None if filter is empty)
+if filtered:
+    idx = st.session_state.current_sentence_idx
+    idx = max(0, min(idx, len(filtered) - 1))
+    st.session_state.current_sentence_idx = idx
+    current_seg = filtered[idx]
+else:
+    current_seg = None
+    idx = 0
 
 # Progress bar in sidebar
 with st.sidebar:
     if tutorial_mode:
         st.caption(f"{len(filtered)} sentences in this example")
-    else:
+    elif filtered:
         annotated_count = sum(1 for s in filtered if s["idx"] in st.session_state.annotations)
         total_count = len(filtered)
         st.progress(annotated_count / total_count if total_count > 0 else 0.0)
@@ -312,45 +314,25 @@ if tutorial_mode:
 # Question
 st.markdown(f"**Question:** {data.get('question', '')}")
 
-# Clamp index
-idx = st.session_state.current_sentence_idx
-idx = max(0, min(idx, len(filtered) - 1))
-st.session_state.current_sentence_idx = idx
-current_seg = filtered[idx]
+# Warning when filter yields nothing
+if not filtered:
+    st.warning("No sentences match the current navigation mode. The full report is shown below.")
 
-# ── Navigation ─────────────────────────────────────────────────────────
-nav_cols = st.columns([1, 2, 1])
-with nav_cols[0]:
-    if st.button("Prev", disabled=idx == 0, use_container_width=True):
-        st.session_state.current_sentence_idx = idx - 1
-        st.rerun()
-with nav_cols[1]:
-    st.markdown(f"<div style='text-align:center;padding-top:8px;'>Sentence {idx + 1} of {len(filtered)}</div>", unsafe_allow_html=True)
-with nav_cols[2]:
-    if st.button("Next", disabled=idx == len(filtered) - 1, use_container_width=True):
-        st.session_state.current_sentence_idx = idx + 1
-        st.rerun()
+# ── Navigation (only when we have filtered segments) ────────────────────
+if current_seg is not None:
+    nav_cols = st.columns([1, 2, 1])
+    with nav_cols[0]:
+        if st.button("Prev", disabled=idx == 0, use_container_width=True):
+            st.session_state.current_sentence_idx = idx - 1
+            st.rerun()
+    with nav_cols[1]:
+        st.markdown(f"<div style='text-align:center;padding-top:8px;'>Sentence {idx + 1} of {len(filtered)}</div>", unsafe_allow_html=True)
+    with nav_cols[2]:
+        if st.button("Next", disabled=idx == len(filtered) - 1, use_container_width=True):
+            st.session_state.current_sentence_idx = idx + 1
+            st.rerun()
 
-# ── Current sentence display ───────────────────────────────────────────
-sentence_text = current_seg.get("text", "")
-sentence_html, _ = _parse_markdown_to_html(html.escape(sentence_text))
-st.markdown(
-    f'<div style="padding:1rem; border-left:4px solid #fdd835; '
-    f'background-color:rgba(253,216,53,0.1); border-radius:0.5rem; margin-bottom:1rem;">'
-    f'{sentence_html}</div>',
-    unsafe_allow_html=True,
-)
-
-# Show citations if present
-citations = current_seg.get("citations", [])
-if citations:
-    with st.expander(f"Citations ({len(citations)})"):
-        for title, url in citations:
-            st.markdown(f"- [{html.escape(title)}]({url})")
-
-# ── Annotation / Tutorial panel ────────────────────────────────────────
-
-# Rubric definitions (shared between annotation and tutorial)
+# ── Rubric definitions (shared between annotation and tutorial) ─────────
 rubrics = [
     ("is_repetitive", "repetitive_explanation", "Repetitive?", "llm_is_repetitive", "llm_repetitive_analysis"),
     ("is_non_coherent", "non_coherent_explanation", "Non-coherent?", "llm_is_non_coherent", "llm_coherence_analysis"),
@@ -358,110 +340,126 @@ rubrics = [
     ("is_missing_details", "missing_details_explanation", "Missing details?", "llm_is_missing_details", "llm_missing_details_analysis"),
 ]
 
-if tutorial_mode:
-    # Tutorial: show LLM answers read-only
-    st.subheader("LLM Annotations (read-only)")
-    for field, expl_field, label, llm_field, llm_analysis_field in rubrics:
-        llm_val = current_seg.get(llm_field)
-        llm_analysis = current_seg.get(llm_analysis_field, "")
+# ── Render report sections with inline annotation ───────────────────────
+current_seg_idx = current_seg["idx"] if current_seg is not None else None
+current_section_idx = current_seg.get("section_idx") if current_seg is not None else None
 
-        if llm_val is True:
-            badge = ":red[**Yes**]"
-        elif llm_val is False:
-            badge = ":green[**No**]"
-        else:
-            badge = ":gray[N/A]"
+section_htmls = _render_report_sections(data, filtered, current_seg_idx, st.session_state.annotations)
 
-        st.markdown(f"**{label}** {badge}")
-        if llm_analysis:
-            with st.expander("LLM analysis"):
-                st.markdown(llm_analysis)
+for sec_idx, sec_html in section_htmls:
+    st.markdown(sec_html, unsafe_allow_html=True)
 
-    # Tutorial "Next" button (no saving)
-    if st.button("Next", key="tutorial_next", type="primary", use_container_width=True, disabled=idx == len(filtered) - 1):
-        st.session_state.current_sentence_idx = idx + 1
-        st.rerun()
-
-else:
-    # Regular annotation mode
-    if not annotator_id:
-        st.warning("Enter your Annotator ID in the sidebar to start annotating.")
-        st.stop()
-
-    st.caption("A sentence can have multiple issues. Evaluate each rubric independently.")
-
-    # Load existing annotation for this segment
-    existing = st.session_state.annotations.get(current_seg["idx"], {})
-
-    annotation = {}
-    for field, expl_field, label, _llm_field, _llm_analysis_field in rubrics:
-        cols = st.columns([2, 3])
-        existing_val = existing.get(field, "")
-        # Map stored string values to radio index
-        if existing_val == "True" or existing_val is True:
-            default_idx = 0
-        elif existing_val == "False" or existing_val is False:
-            default_idx = 1
-        else:
-            default_idx = 2
-
-        with cols[0]:
-            choice = st.radio(
-                label,
-                ["Yes", "No", "---"],
-                index=default_idx,
-                horizontal=True,
-                key=f"rubric_{current_seg['idx']}_{field}",
-            )
-            if choice == "Yes":
-                annotation[field] = True
-            elif choice == "No":
-                annotation[field] = False
-            # else leave unset
-
-        with cols[1]:
-            annotation[expl_field] = st.text_input(
-                "Explanation (optional)",
-                value=existing.get(expl_field, ""),
-                key=f"expl_{current_seg['idx']}_{field}",
-                label_visibility="collapsed",
-                placeholder="Explanation (optional)",
+    # Insert inline annotation panel after the section containing the current sentence
+    if current_seg is not None and sec_idx == current_section_idx:
+        with st.container(border=True):
+            # Compact sentence quote
+            sentence_text = current_seg.get("text", "")
+            sentence_html, _ = _parse_markdown_to_html(html.escape(sentence_text))
+            st.markdown(
+                f'<div style="padding:0.5rem 0.75rem; border-left:4px solid #fdd835; '
+                f'background-color:rgba(253,216,53,0.08); border-radius:4px; margin-bottom:0.5rem; font-size:0.95em;">'
+                f'{sentence_html}</div>',
+                unsafe_allow_html=True,
             )
 
-    annotation["other_issues"] = st.text_input(
-        "Other issues",
-        value=existing.get("other_issues", ""),
-        key=f"other_{current_seg['idx']}",
-        placeholder="Any other issues (factual errors, grammar, formatting, etc.)",
-    )
+            # Citations
+            citations = current_seg.get("citations", [])
+            if citations:
+                with st.expander(f"Citations ({len(citations)})"):
+                    for title, url in citations:
+                        st.markdown(f"- [{html.escape(title)}]({url})")
 
-    # Save & Next
-    if st.button("Save & Next", type="primary", use_container_width=True):
-        # Require at least one rubric answered
-        has_answer = any(
-            f in annotation for f, _, _, _, _ in rubrics
-        )
-        if not has_answer:
-            st.error("Please answer at least one rubric before saving.")
-        else:
-            try:
-                save_annotation(
-                    annotator_id=annotator_id,
-                    model_name=model,
-                    example_id=example_id,
-                    segment_idx=current_seg["idx"],
-                    sentence_text=current_seg.get("text", ""),
-                    annotation=annotation,
-                )
-                st.session_state.annotations[current_seg["idx"]] = annotation
-                if idx < len(filtered) - 1:
+            # Tutorial mode: read-only LLM annotations
+            if tutorial_mode:
+                for field, expl_field, label, llm_field, llm_analysis_field in rubrics:
+                    llm_val = current_seg.get(llm_field)
+                    llm_analysis = current_seg.get(llm_analysis_field, "")
+
+                    if llm_val is True:
+                        badge = ":red[**Yes**]"
+                    elif llm_val is False:
+                        badge = ":green[**No**]"
+                    else:
+                        badge = ":gray[N/A]"
+
+                    st.markdown(f"**{label}** {badge}")
+                    if llm_analysis:
+                        with st.expander("LLM analysis"):
+                            st.markdown(llm_analysis)
+
+                if st.button("Next", key="tutorial_next", type="primary", use_container_width=True, disabled=idx == len(filtered) - 1):
                     st.session_state.current_sentence_idx = idx + 1
-                st.rerun()
-            except Exception as e:
-                st.error(f"Failed to save annotation: {e}")
+                    st.rerun()
 
-# ── Full report (context) ──────────────────────────────────────────────
-st.divider()
-with st.expander("Full Report (context)", expanded=True):
-    report_html = _render_report_html(data, filtered, current_seg["idx"], st.session_state.annotations)
-    st.markdown(report_html, unsafe_allow_html=True)
+            # Annotation mode
+            else:
+                if not annotator_id:
+                    st.warning("Enter your Annotator ID in the sidebar to start annotating.")
+                else:
+                    st.caption("A sentence can have multiple issues. Evaluate each rubric independently.")
+
+                    existing = st.session_state.annotations.get(current_seg["idx"], {})
+
+                    annotation = {}
+                    for field, expl_field, label, _llm_field, _llm_analysis_field in rubrics:
+                        cols = st.columns([2, 3])
+                        existing_val = existing.get(field, "")
+                        if existing_val == "True" or existing_val is True:
+                            default_idx = 0
+                        elif existing_val == "False" or existing_val is False:
+                            default_idx = 1
+                        else:
+                            default_idx = 2
+
+                        with cols[0]:
+                            choice = st.radio(
+                                label,
+                                ["Yes", "No", "---"],
+                                index=default_idx,
+                                horizontal=True,
+                                key=f"rubric_{current_seg['idx']}_{field}",
+                            )
+                            if choice == "Yes":
+                                annotation[field] = True
+                            elif choice == "No":
+                                annotation[field] = False
+
+                        with cols[1]:
+                            annotation[expl_field] = st.text_input(
+                                "Explanation (optional)",
+                                value=existing.get(expl_field, ""),
+                                key=f"expl_{current_seg['idx']}_{field}",
+                                label_visibility="collapsed",
+                                placeholder="Explanation (optional)",
+                            )
+
+                    annotation["other_issues"] = st.text_input(
+                        "Other issues",
+                        value=existing.get("other_issues", ""),
+                        key=f"other_{current_seg['idx']}",
+                        placeholder="Any other issues (factual errors, grammar, formatting, etc.)",
+                    )
+
+                    # Save & Next
+                    if st.button("Save & Next", type="primary", use_container_width=True):
+                        has_answer = any(
+                            f in annotation for f, _, _, _, _ in rubrics
+                        )
+                        if not has_answer:
+                            st.error("Please answer at least one rubric before saving.")
+                        else:
+                            try:
+                                save_annotation(
+                                    annotator_id=annotator_id,
+                                    model_name=model,
+                                    example_id=example_id,
+                                    segment_idx=current_seg["idx"],
+                                    sentence_text=current_seg.get("text", ""),
+                                    annotation=annotation,
+                                )
+                                st.session_state.annotations[current_seg["idx"]] = annotation
+                                if idx < len(filtered) - 1:
+                                    st.session_state.current_sentence_idx = idx + 1
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Failed to save annotation: {e}")
