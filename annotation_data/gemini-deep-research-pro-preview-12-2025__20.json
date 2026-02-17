@@ -1,0 +1,2327 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "20",
+  "question": "Please provide a detailed answer to the following question:\n\nApart from preventing overfitting, are there any side effects (desirable or otherwise) of applying dropout in deep neural networks?",
+  "answer": "# Comprehensive Analysis of the Side Effects of Dropout in Deep Neural Networks\n\n**Key Points**\n*   **Uncertainty Quantification:** Dropout enables the estimation of model uncertainty (epistemic uncertainty) via Monte Carlo sampling at inference time, effectively approximating Bayesian Neural Networks.\n*   **Optimization Dynamics:** It alters the loss landscape, aiding in the escape from saddle points and promoting convergence to flatter, more robust minima, though often at the cost of slower training convergence.\n*   **Sparsity Induction:** Dropout induces sparsity in neuronal activations and, under certain conditions, weight condensation, mimicking the effects of sparse coding without explicit L1 regularization.\n*   **Adversarial Robustness:** It acts as a defense mechanism against adversarial attacks by increasing gradient variance and reducing reliance on high-frequency texture features.\n*   **Architectural Disharmony:** A significant negative side effect is the \"variance shift\" when combined with Batch Normalization, potentially leading to training instability if not architecturally managed.\n\n### Executive Summary\nWhile Dropout is primarily employed as a regularization technique to mitigate overfitting in deep neural networks, its influence extends far beyond simple capacity control. Research indicates that the stochastic noise introduced by Dropout fundamentally alters the learning dynamics, the geometry of the loss landscape, and the resulting feature representations. Desirable side effects include the ability to estimate predictive uncertainty, improved robustness against adversarial perturbations, and the induction of sparse representations that enhance interpretability. Conversely, undesirable side effects include increased training time due to noisy gradients, potential underfitting if hyperparameters are misconfigured, and a well-documented \"disharmony\" when combined with Batch Normalization, known as variance shift. This report provides an exhaustive analysis of these secondary effects, synthesizing theoretical proofs and empirical observations to guide the effective deployment of Dropout in complex deep learning architectures.\n\n---\n\n## 1. Introduction\n\nDropout, introduced by Hinton et al., is a stochastic regularization technique where a fraction of neurons (or connections) are randomly deactivated (dropped) during the training phase. The primary motivation for Dropout is to prevent the co-adaptation of feature detectors, thereby reducing overfitting and improving generalization error [cite: 1, 2]. However, treating Dropout solely as a regularizer oversimplifies its impact on Deep Neural Networks (DNNs).\n\nThe application of multiplicative Bernoulli noise to hidden units creates a cascade of secondary effects\u2014some emergent and beneficial, others detrimental to specific architectures. These effects range from implicit data augmentation in the input space [cite: 3] to the approximation of Deep Gaussian Processes for uncertainty estimation [cite: 4]. Furthermore, the interaction of Dropout with other normalization techniques, specifically Batch Normalization, introduces complex statistical inconsistencies that can degrade performance [cite: 5, 6]. This report categorizes and analyzes these side effects, distinguishing between those that alter the optimization landscape, those that modify feature representation, and those that affect inference capabilities.\n\n## 2. Implicit Data Augmentation\n\nOne of the most profound side effects of Dropout is its mathematical equivalence to data augmentation. While explicit data augmentation involves transforming input data (e.g., rotations, flips) to increase dataset diversity, Dropout achieves a similar effect implicitly within the feature space.\n\n### 2.1 Projection of Noise to Input Space\nResearch suggests that the stochasticity introduced by Dropout in hidden layers can be interpreted as projecting noise back into the input space. Bouthillier et al. demonstrated that training a network with Dropout is effectively similar to training a deterministic network on an augmented dataset where the input samples have been corrupted by specific noise patterns [cite: 3, 7]. This \"implicit\" augmentation allows the network to explore the vicinity of training points on the data manifold without requiring domain-specific knowledge to design explicit augmentation strategies (such as knowing that an image should be rotation-invariant) [cite: 3, 7].\n\n### 2.2 Deep Augmentation\nExtending this concept, recent studies have formalized \"Deep Augmentation,\" where Dropout is treated not just as a regularizer but as a mechanism to augment high-dimensional activations. This is particularly effective in self-supervised learning contexts where labeled data is absent. By applying Dropout to deeper layers, the network is forced to learn representations that are invariant to perturbations in the semantic feature space, rather than just the pixel space [cite: 8]. This suggests that Dropout mitigates inter-layer co-adaptation, a critical issue in self-supervised learning, effectively functioning as a modality-agnostic augmentation strategy [cite: 8].\n\n### 2.3 Robustness to Domain Shift\nThe implicit augmentation provided by Dropout contributes to robustness against domain shifts. By effectively training on a \"cloud\" of noisy variations around each data point, the decision boundaries become smoother and less sensitive to small deviations in the input distribution. This is conceptually similar to training on an infinite ensemble of slightly perturbed models, which naturally yields better generalization to unseen domains [cite: 9, 10].\n\n## 3. Uncertainty Estimation and Bayesian Approximation\n\nPerhaps the most significant \"desirable\" side effect of Dropout, beyond regularization, is its ability to transform standard deterministic neural networks into probabilistic models capable of quantifying uncertainty.\n\n### 3.1 Monte Carlo (MC) Dropout\nStandard deep learning models provide point estimates (e.g., a single class probability), often with overconfident predictions even on out-of-distribution data. Gal and Ghahramani established that a neural network with Dropout applied before every weight layer is mathematically equivalent to an approximation of a probabilistic Deep Gaussian Process [cite: 4].\n\nThis realization led to the development of **Monte Carlo (MC) Dropout**. By keeping Dropout active during inference (test time) and performing multiple stochastic forward passes ($T$ times) for the same input, one obtains a distribution of predictions rather than a single output [cite: 11, 12].\n*   **Predictive Mean:** The average of the $T$ stochastic outputs serves as the final prediction, often yielding higher accuracy than a single deterministic pass (model averaging) [cite: 4, 13].\n*   **Predictive Variance:** The variance of the $T$ outputs quantifies the **epistemic uncertainty** (model uncertainty)\u2014the uncertainty stemming from a lack of training data in that region of the input space [cite: 12, 14].\n\n### 3.2 Practical Implications for Safety-Critical Systems\nThis side effect is transformative for safety-critical applications (e.g., autonomous driving, medical diagnosis). A model using MC Dropout can signal \"I don't know\" when the variance of its predictions is high, allowing the system to defer decisions to humans or conservative fallback mechanisms [cite: 11, 15]. It provides a principled mechanism for uncertainty estimation without requiring changes to the architecture or complex Bayesian training procedures [cite: 12, 16].\n\n### 3.3 Limitations and Reliability\nDespite its utility, this side effect has limitations. Recent empirical investigations suggest that MC Dropout may produce unreliable uncertainty estimates in certain regimes, particularly failing to capture increased uncertainty in extrapolation (far from training data) and interpolation regions, compared to exact Bayesian inference or Gaussian Processes [cite: 17, 18, 19]. Furthermore, the computational cost of running $T$ forward passes during inference (e.g., 20\u201350 passes) introduces significant latency, making it challenging for real-time applications [cite: 12, 16].\n\n## 4. Sparsity Induction and Feature Representation\n\nDropout has been observed to induce sparsity in the hidden unit activations of neural networks, a side effect that mimics the properties of sparse coding.\n\n### 4.1 Activation Sparsity\nEven in the absence of explicit sparsity-inducing regularizers (like L1 regularization), Dropout leads to sparse activations. The original Dropout paper noted that as a side effect of randomly dropping units, the remaining active units are forced to become more distinct and less co-dependent [cite: 1]. By randomly subsampling the network, Dropout reduces the effective capacity, forcing the network to utilize the available neurons more efficiently and often resulting in a representation where fewer neurons are active for any given input [cite: 1, 20]. This sparsity can be beneficial for interpretability, as individual neurons are more likely to encode distinct features rather than complex, entangled co-adaptations [cite: 21].\n\n### 4.2 Weight Condensation\nRecent theoretical work has identified a phenomenon termed \"weight condensation\" as an implicit regularization effect of Dropout. Research by Zhang et al. indicates that input weights of hidden neurons trained with Dropout tend to condense onto isolated orientations [cite: 22, 23, 24]. This condensation reduces the effective complexity of the network, as the weights cluster into a finite set of directions. This phenomenon occurs even when weights are initialized in a regime that would typically prevent condensation (e.g., Neural Tangent Kernel initialization), suggesting that Dropout actively drives the optimization trajectory toward simpler, lower-complexity solutions [cite: 22, 24].\n\n### 4.3 Sparseout and Controlled Sparsity\nThe sparsity-inducing side effect is so prominent that variants like \"Sparseout\" have been developed to explicitly control it. Sparseout generalizes Dropout to allow direct regulation of the sparsity level in activations, demonstrating that while sparsity is beneficial for tasks like language modeling, it must be carefully tuned, as excessive sparsity can harm performance in dense tasks like image classification [cite: 25].\n\n## 5. Optimization Landscape and Training Dynamics\n\nDropout significantly alters the geometry of the loss landscape and the dynamics of Stochastic Gradient Descent (SGD).\n\n### 5.1 Escaping Saddle Points\nIn high-dimensional non-convex optimization (typical of deep learning), saddle points\u2014regions where gradients vanish but the point is not a local minimum\u2014are a major obstacle. Gradient descent can stall at these points. The stochastic noise introduced by Dropout acts as a continuous perturbation to the gradients. Theoretical analysis shows that perturbed gradient descent (which Dropout effectively implements) can escape strict saddle points efficiently, often in polynomial time [cite: 26, 27, 28]. The noise ensures that the optimization process does not get stuck in unstable stationary points, pushing the parameters toward regions with negative curvature where descent can continue [cite: 29, 30].\n\n### 5.2 Finding Flatter Minima\nDropout encourages the optimizer to find \"flatter\" minima in the loss landscape. A flat minimum is a region where the loss function remains low even if the parameters are slightly perturbed. Because Dropout introduces noise during training, the network is forced to find a solution that is robust to the presence or absence of specific neurons\u2014essentially a solution that is stable under perturbation [cite: 22, 31]. Flatter minima are widely associated with better generalization capabilities because the test error is less sensitive to the shift between training and test distributions [cite: 22, 23].\n\n### 5.3 Convergence Speed and Training Time\nA notable \"negative\" side effect is the impact on convergence speed. Because Dropout effectively trains a different sub-network at every step, the parameter updates are noisy and less consistent than in standard SGD. Consequently, networks with Dropout typically require significantly more training epochs (often 2-3 times more) to converge compared to standard networks [cite: 1, 32, 33]. The loss curve may appear erratic, and the final convergence point might have a slightly higher training loss (due to the regularization) while achieving lower validation loss [cite: 34, 35].\n\n### 5.4 Learning Rate Dynamics\nThe noise introduced by Dropout allows, and often necessitates, the use of higher learning rates and momentum. The stochasticity prevents the optimizer from settling too quickly into sharp, poor local minima, enabling the use of aggressive learning rates to traverse the landscape more rapidly without diverging [cite: 31, 36].\n\n## 6. Adversarial Robustness\n\nAdversarial examples are inputs with imperceptible perturbations designed to fool neural networks. Dropout has been identified as a defense mechanism against such attacks.\n\n### 6.1 Gradient Variance and Obfuscation\nUsing Dropout at test time (Defensive Dropout) increases the variance of the gradients with respect to the input. This stochasticity makes it difficult for gradient-based attack methods (like FGSM or PGD) to calculate stable gradients required to generate effective adversarial perturbations [cite: 37]. By treating the network as a moving target, Dropout reduces the attack success rate significantly [cite: 37, 38].\n\n### 6.2 Texture Bias Reduction\nConvolutional Neural Networks (CNNs) often rely heavily on local texture features rather than global shapes, making them brittle to adversarial attacks that manipulate texture. \"Informative Dropout\" and similar strategies have been shown to reduce this texture bias, forcing the network to learn more robust, shape-based representations. This shift in feature reliance enhances robustness not only to adversarial attacks but also to random corruptions and domain shifts [cite: 39, 40].\n\n## 7. Interaction with Batch Normalization: The \"Disharmony\"\n\nOne of the most critical operational side effects of Dropout is its problematic interaction with Batch Normalization (BN), a phenomenon termed the \"disharmony\" between Dropout and Batch Norm.\n\n### 7.1 Variance Shift\nBatch Normalization relies on maintaining accurate running statistics (mean and variance) of layer activations during training to normalize inputs during inference. Dropout, however, fundamentally alters the statistical distribution of activations.\n*   **Training Phase:** When Dropout is active, a fraction of neurons are zeroed out, and the remaining are scaled up. The variance of the activations reflects this specific Bernoulli noise distribution.\n*   **Inference Phase:** Dropout is turned off, and weights are scaled (or not, depending on implementation). The variance of the activations changes compared to the training phase.\n\nThis discrepancy is known as **variance shift** [cite: 5, 6, 41]. Because BN learns its running variance based on the training mode (with Dropout), but is applied during inference mode (without Dropout), the statistics used for normalization at test time may be incorrect. This leads to numerical instability and erroneous predictions [cite: 5, 42].\n\n### 7.2 Architectural Implications\nResearch indicates that placing Dropout *before* Batch Normalization exacerbates this issue. The recommended practice, if both must be used, is often to apply Dropout *after* Batch Normalization, or to use specific variants like Gaussian Dropout that have less impact on variance consistency [cite: 43, 44, 45]. In many modern architectures (e.g., ResNets), Dropout is often omitted entirely in favor of BN, which provides its own mild regularization effect, to avoid this conflict [cite: 45, 46].\n\n## 8. Inference and Deployment Side Effects\n\n### 8.1 Deterministic vs. Stochastic Modes\nA side effect of Dropout is the bifurcation of the model's behavior into two distinct modes: training (stochastic) and inference (deterministic). This requires careful handling of weight scaling.\n*   **Weight Scaling:** To ensure that the expected total input to a neuron remains the same during testing as it was during training, the weights must be scaled by the dropout probability $p$ (or activations scaled by $1/(1-p)$ during training, known as Inverted Dropout) [cite: 1, 2]. Failure to implement this scaling correctly leads to a massive shift in activation magnitudes, causing the network to fail completely at inference time [cite: 31, 47].\n\n### 8.2 Computational Overhead (Inference)\nWhile standard Dropout has zero computational overhead at inference (since it is turned off), utilizing its uncertainty estimation capabilities (MC Dropout) incurs a linear increase in inference cost proportional to the number of samples $T$. This side effect renders the technique prohibitive for latency-sensitive applications unless specialized hardware or distillation techniques are used [cite: 12, 16].\n\n## 9. Conclusion\n\nThe application of Dropout in deep neural networks induces a complex set of side effects that extend well beyond simple regularization.\n*   **Beneficial Side Effects:** Implicit data augmentation, escape from saddle points, convergence to flatter minima, induction of sparsity/interpretability, and the capability for uncertainty estimation and adversarial defense.\n*   **Detrimental Side Effects:** Slower training convergence, increased training time, potential underfitting, and severe statistical conflicts with Batch Normalization (variance shift).\n\nUnderstanding these side effects is crucial for the academic and practical design of deep learning systems. For instance, a practitioner designing a safety-critical medical imaging system might accept the slower convergence and computational overhead of MC Dropout to gain vital uncertainty estimates. Conversely, an engineer optimizing a real-time object detector might avoid Dropout to prevent conflict with Batch Normalization and maximize inference speed. Thus, Dropout should be viewed not merely as a \"switch\" to reduce overfitting, but as a structural modifier of the network's probabilistic behavior and optimization trajectory.\n\n---",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# Comprehensive Analysis of the Side Effects of Dropout in Deep Neural Networks",
+      "header_level": 1,
+      "text": "# Comprehensive Analysis of the Side Effects of Dropout in Deep Neural Networks\n\n**Key Points**\n*   **Uncertainty Quantification:** Dropout enables the estimation of model uncertainty (epistemic uncertainty) via Monte Carlo sampling at inference time, effectively approximating Bayesian Neural Networks.\n*   **Optimization Dynamics:** It alters the loss landscape, aiding in the escape from saddle points and promoting convergence to flatter, more robust minima, though often at the cost of slower training convergence.\n*   **Sparsity Induction:** Dropout induces sparsity in neuronal activations and, under certain conditions, weight condensation, mimicking the effects of sparse coding without explicit L1 regularization.\n*   **Adversarial Robustness:** It acts as a defense mechanism against adversarial attacks by increasing gradient variance and reducing reliance on high-frequency texture features.\n*   **Architectural Disharmony:** A significant negative side effect is the \"variance shift\" when combined with Batch Normalization, potentially leading to training instability if not architecturally managed.\n\n",
+      "start": 0,
+      "end": 1115
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "### Executive Summary",
+      "header_level": 3,
+      "text": "### Executive Summary\nWhile Dropout is primarily employed as a regularization technique to mitigate overfitting in deep neural networks, its influence extends far beyond simple capacity control. Research indicates that the stochastic noise introduced by Dropout fundamentally alters the learning dynamics, the geometry of the loss landscape, and the resulting feature representations. Desirable side effects include the ability to estimate predictive uncertainty, improved robustness against adversarial perturbations, and the induction of sparse representations that enhance interpretability. Conversely, undesirable side effects include increased training time due to noisy gradients, potential underfitting if hyperparameters are misconfigured, and a well-documented \"disharmony\" when combined with Batch Normalization, known as variance shift. This report provides an exhaustive analysis of these secondary effects, synthesizing theoretical proofs and empirical observations to guide the effective deployment of Dropout in complex deep learning architectures.\n\n---\n\n",
+      "start": 1115,
+      "end": 2185
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 1. Introduction",
+      "header_level": 2,
+      "text": "## 1. Introduction\n\nDropout, introduced by Hinton et al., is a stochastic regularization technique where a fraction of neurons (or connections) are randomly deactivated (dropped) during the training phase. The primary motivation for Dropout is to prevent the co-adaptation of feature detectors, thereby reducing overfitting and improving generalization error [cite: 1, 2]. However, treating Dropout solely as a regularizer oversimplifies its impact on Deep Neural Networks (DNNs).\n\nThe application of multiplicative Bernoulli noise to hidden units creates a cascade of secondary effects\u2014some emergent and beneficial, others detrimental to specific architectures. These effects range from implicit data augmentation in the input space [cite: 3] to the approximation of Deep Gaussian Processes for uncertainty estimation [cite: 4]. Furthermore, the interaction of Dropout with other normalization techniques, specifically Batch Normalization, introduces complex statistical inconsistencies that can degrade performance [cite: 5, 6]. This report categorizes and analyzes these side effects, distinguishing between those that alter the optimization landscape, those that modify feature representation, and those that affect inference capabilities.\n\n",
+      "start": 2185,
+      "end": 3430
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 2. Implicit Data Augmentation",
+      "header_level": 2,
+      "text": "## 2. Implicit Data Augmentation\n\nOne of the most profound side effects of Dropout is its mathematical equivalence to data augmentation. While explicit data augmentation involves transforming input data (e.g., rotations, flips) to increase dataset diversity, Dropout achieves a similar effect implicitly within the feature space.\n\n",
+      "start": 3430,
+      "end": 3761
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 2.1 Projection of Noise to Input Space",
+      "header_level": 3,
+      "text": "### 2.1 Projection of Noise to Input Space\nResearch suggests that the stochasticity introduced by Dropout in hidden layers can be interpreted as projecting noise back into the input space. Bouthillier et al. demonstrated that training a network with Dropout is effectively similar to training a deterministic network on an augmented dataset where the input samples have been corrupted by specific noise patterns [cite: 3, 7]. This \"implicit\" augmentation allows the network to explore the vicinity of training points on the data manifold without requiring domain-specific knowledge to design explicit augmentation strategies (such as knowing that an image should be rotation-invariant) [cite: 3, 7].\n\n",
+      "start": 3761,
+      "end": 4462
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 2.2 Deep Augmentation",
+      "header_level": 3,
+      "text": "### 2.2 Deep Augmentation\nExtending this concept, recent studies have formalized \"Deep Augmentation,\" where Dropout is treated not just as a regularizer but as a mechanism to augment high-dimensional activations. This is particularly effective in self-supervised learning contexts where labeled data is absent. By applying Dropout to deeper layers, the network is forced to learn representations that are invariant to perturbations in the semantic feature space, rather than just the pixel space [cite: 8]. This suggests that Dropout mitigates inter-layer co-adaptation, a critical issue in self-supervised learning, effectively functioning as a modality-agnostic augmentation strategy [cite: 8].\n\n",
+      "start": 4462,
+      "end": 5160
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "### 2.3 Robustness to Domain Shift",
+      "header_level": 3,
+      "text": "### 2.3 Robustness to Domain Shift\nThe implicit augmentation provided by Dropout contributes to robustness against domain shifts. By effectively training on a \"cloud\" of noisy variations around each data point, the decision boundaries become smoother and less sensitive to small deviations in the input distribution. This is conceptually similar to training on an infinite ensemble of slightly perturbed models, which naturally yields better generalization to unseen domains [cite: 9, 10].\n\n",
+      "start": 5160,
+      "end": 5651
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "## 3. Uncertainty Estimation and Bayesian Approximation",
+      "header_level": 2,
+      "text": "## 3. Uncertainty Estimation and Bayesian Approximation\n\nPerhaps the most significant \"desirable\" side effect of Dropout, beyond regularization, is its ability to transform standard deterministic neural networks into probabilistic models capable of quantifying uncertainty.\n\n",
+      "start": 5651,
+      "end": 5926
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "### 3.1 Monte Carlo (MC) Dropout",
+      "header_level": 3,
+      "text": "### 3.1 Monte Carlo (MC) Dropout\nStandard deep learning models provide point estimates (e.g., a single class probability), often with overconfident predictions even on out-of-distribution data. Gal and Ghahramani established that a neural network with Dropout applied before every weight layer is mathematically equivalent to an approximation of a probabilistic Deep Gaussian Process [cite: 4].\n\nThis realization led to the development of **Monte Carlo (MC) Dropout**. By keeping Dropout active during inference (test time) and performing multiple stochastic forward passes ($T$ times) for the same input, one obtains a distribution of predictions rather than a single output [cite: 11, 12].\n*   **Predictive Mean:** The average of the $T$ stochastic outputs serves as the final prediction, often yielding higher accuracy than a single deterministic pass (model averaging) [cite: 4, 13].\n*   **Predictive Variance:** The variance of the $T$ outputs quantifies the **epistemic uncertainty** (model uncertainty)\u2014the uncertainty stemming from a lack of training data in that region of the input space [cite: 12, 14].\n\n",
+      "start": 5926,
+      "end": 7041
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "### 3.2 Practical Implications for Safety-Critical Systems",
+      "header_level": 3,
+      "text": "### 3.2 Practical Implications for Safety-Critical Systems\nThis side effect is transformative for safety-critical applications (e.g., autonomous driving, medical diagnosis). A model using MC Dropout can signal \"I don't know\" when the variance of its predictions is high, allowing the system to defer decisions to humans or conservative fallback mechanisms [cite: 11, 15]. It provides a principled mechanism for uncertainty estimation without requiring changes to the architecture or complex Bayesian training procedures [cite: 12, 16].\n\n",
+      "start": 7041,
+      "end": 7578
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "### 3.3 Limitations and Reliability",
+      "header_level": 3,
+      "text": "### 3.3 Limitations and Reliability\nDespite its utility, this side effect has limitations. Recent empirical investigations suggest that MC Dropout may produce unreliable uncertainty estimates in certain regimes, particularly failing to capture increased uncertainty in extrapolation (far from training data) and interpolation regions, compared to exact Bayesian inference or Gaussian Processes [cite: 17, 18, 19]. Furthermore, the computational cost of running $T$ forward passes during inference (e.g., 20\u201350 passes) introduces significant latency, making it challenging for real-time applications [cite: 12, 16].\n\n",
+      "start": 7578,
+      "end": 8194
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "## 4. Sparsity Induction and Feature Representation",
+      "header_level": 2,
+      "text": "## 4. Sparsity Induction and Feature Representation\n\nDropout has been observed to induce sparsity in the hidden unit activations of neural networks, a side effect that mimics the properties of sparse coding.\n\n",
+      "start": 8194,
+      "end": 8403
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "### 4.1 Activation Sparsity",
+      "header_level": 3,
+      "text": "### 4.1 Activation Sparsity\nEven in the absence of explicit sparsity-inducing regularizers (like L1 regularization), Dropout leads to sparse activations. The original Dropout paper noted that as a side effect of randomly dropping units, the remaining active units are forced to become more distinct and less co-dependent [cite: 1]. By randomly subsampling the network, Dropout reduces the effective capacity, forcing the network to utilize the available neurons more efficiently and often resulting in a representation where fewer neurons are active for any given input [cite: 1, 20]. This sparsity can be beneficial for interpretability, as individual neurons are more likely to encode distinct features rather than complex, entangled co-adaptations [cite: 21].\n\n",
+      "start": 8403,
+      "end": 9167
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "### 4.2 Weight Condensation",
+      "header_level": 3,
+      "text": "### 4.2 Weight Condensation\nRecent theoretical work has identified a phenomenon termed \"weight condensation\" as an implicit regularization effect of Dropout. Research by Zhang et al. indicates that input weights of hidden neurons trained with Dropout tend to condense onto isolated orientations [cite: 22, 23, 24]. This condensation reduces the effective complexity of the network, as the weights cluster into a finite set of directions. This phenomenon occurs even when weights are initialized in a regime that would typically prevent condensation (e.g., Neural Tangent Kernel initialization), suggesting that Dropout actively drives the optimization trajectory toward simpler, lower-complexity solutions [cite: 22, 24].\n\n",
+      "start": 9167,
+      "end": 9890
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "### 4.3 Sparseout and Controlled Sparsity",
+      "header_level": 3,
+      "text": "### 4.3 Sparseout and Controlled Sparsity\nThe sparsity-inducing side effect is so prominent that variants like \"Sparseout\" have been developed to explicitly control it. Sparseout generalizes Dropout to allow direct regulation of the sparsity level in activations, demonstrating that while sparsity is beneficial for tasks like language modeling, it must be carefully tuned, as excessive sparsity can harm performance in dense tasks like image classification [cite: 25].\n\n",
+      "start": 9890,
+      "end": 10361
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "## 5. Optimization Landscape and Training Dynamics",
+      "header_level": 2,
+      "text": "## 5. Optimization Landscape and Training Dynamics\n\nDropout significantly alters the geometry of the loss landscape and the dynamics of Stochastic Gradient Descent (SGD).\n\n",
+      "start": 10361,
+      "end": 10533
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "### 5.1 Escaping Saddle Points",
+      "header_level": 3,
+      "text": "### 5.1 Escaping Saddle Points\nIn high-dimensional non-convex optimization (typical of deep learning), saddle points\u2014regions where gradients vanish but the point is not a local minimum\u2014are a major obstacle. Gradient descent can stall at these points. The stochastic noise introduced by Dropout acts as a continuous perturbation to the gradients. Theoretical analysis shows that perturbed gradient descent (which Dropout effectively implements) can escape strict saddle points efficiently, often in polynomial time [cite: 26, 27, 28]. The noise ensures that the optimization process does not get stuck in unstable stationary points, pushing the parameters toward regions with negative curvature where descent can continue [cite: 29, 30].\n\n",
+      "start": 10533,
+      "end": 11271
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "### 5.2 Finding Flatter Minima",
+      "header_level": 3,
+      "text": "### 5.2 Finding Flatter Minima\nDropout encourages the optimizer to find \"flatter\" minima in the loss landscape. A flat minimum is a region where the loss function remains low even if the parameters are slightly perturbed. Because Dropout introduces noise during training, the network is forced to find a solution that is robust to the presence or absence of specific neurons\u2014essentially a solution that is stable under perturbation [cite: 22, 31]. Flatter minima are widely associated with better generalization capabilities because the test error is less sensitive to the shift between training and test distributions [cite: 22, 23].\n\n",
+      "start": 11271,
+      "end": 11907
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "### 5.3 Convergence Speed and Training Time",
+      "header_level": 3,
+      "text": "### 5.3 Convergence Speed and Training Time\nA notable \"negative\" side effect is the impact on convergence speed. Because Dropout effectively trains a different sub-network at every step, the parameter updates are noisy and less consistent than in standard SGD. Consequently, networks with Dropout typically require significantly more training epochs (often 2-3 times more) to converge compared to standard networks [cite: 1, 32, 33]. The loss curve may appear erratic, and the final convergence point might have a slightly higher training loss (due to the regularization) while achieving lower validation loss [cite: 34, 35].\n\n",
+      "start": 11907,
+      "end": 12534
+    },
+    {
+      "idx": 19,
+      "section_type": "text",
+      "header": "### 5.4 Learning Rate Dynamics",
+      "header_level": 3,
+      "text": "### 5.4 Learning Rate Dynamics\nThe noise introduced by Dropout allows, and often necessitates, the use of higher learning rates and momentum. The stochasticity prevents the optimizer from settling too quickly into sharp, poor local minima, enabling the use of aggressive learning rates to traverse the landscape more rapidly without diverging [cite: 31, 36].\n\n",
+      "start": 12534,
+      "end": 12894
+    },
+    {
+      "idx": 20,
+      "section_type": "text",
+      "header": "## 6. Adversarial Robustness",
+      "header_level": 2,
+      "text": "## 6. Adversarial Robustness\n\nAdversarial examples are inputs with imperceptible perturbations designed to fool neural networks. Dropout has been identified as a defense mechanism against such attacks.\n\n",
+      "start": 12894,
+      "end": 13097
+    },
+    {
+      "idx": 21,
+      "section_type": "text",
+      "header": "### 6.1 Gradient Variance and Obfuscation",
+      "header_level": 3,
+      "text": "### 6.1 Gradient Variance and Obfuscation\nUsing Dropout at test time (Defensive Dropout) increases the variance of the gradients with respect to the input. This stochasticity makes it difficult for gradient-based attack methods (like FGSM or PGD) to calculate stable gradients required to generate effective adversarial perturbations [cite: 37]. By treating the network as a moving target, Dropout reduces the attack success rate significantly [cite: 37, 38].\n\n",
+      "start": 13097,
+      "end": 13558
+    },
+    {
+      "idx": 22,
+      "section_type": "text",
+      "header": "### 6.2 Texture Bias Reduction",
+      "header_level": 3,
+      "text": "### 6.2 Texture Bias Reduction\nConvolutional Neural Networks (CNNs) often rely heavily on local texture features rather than global shapes, making them brittle to adversarial attacks that manipulate texture. \"Informative Dropout\" and similar strategies have been shown to reduce this texture bias, forcing the network to learn more robust, shape-based representations. This shift in feature reliance enhances robustness not only to adversarial attacks but also to random corruptions and domain shifts [cite: 39, 40].\n\n",
+      "start": 13558,
+      "end": 14076
+    },
+    {
+      "idx": 23,
+      "section_type": "text",
+      "header": "## 7. Interaction with Batch Normalization: The \"Disharmony\"",
+      "header_level": 2,
+      "text": "## 7. Interaction with Batch Normalization: The \"Disharmony\"\n\nOne of the most critical operational side effects of Dropout is its problematic interaction with Batch Normalization (BN), a phenomenon termed the \"disharmony\" between Dropout and Batch Norm.\n\n",
+      "start": 14076,
+      "end": 14331
+    },
+    {
+      "idx": 24,
+      "section_type": "text",
+      "header": "### 7.1 Variance Shift",
+      "header_level": 3,
+      "text": "### 7.1 Variance Shift\nBatch Normalization relies on maintaining accurate running statistics (mean and variance) of layer activations during training to normalize inputs during inference. Dropout, however, fundamentally alters the statistical distribution of activations.\n*   **Training Phase:** When Dropout is active, a fraction of neurons are zeroed out, and the remaining are scaled up. The variance of the activations reflects this specific Bernoulli noise distribution.\n*   **Inference Phase:** Dropout is turned off, and weights are scaled (or not, depending on implementation). The variance of the activations changes compared to the training phase.\n\nThis discrepancy is known as **variance shift** [cite: 5, 6, 41]. Because BN learns its running variance based on the training mode (with Dropout), but is applied during inference mode (without Dropout), the statistics used for normalization at test time may be incorrect. This leads to numerical instability and erroneous predictions [cite: 5, 42].\n\n",
+      "start": 14331,
+      "end": 15341
+    },
+    {
+      "idx": 25,
+      "section_type": "text",
+      "header": "### 7.2 Architectural Implications",
+      "header_level": 3,
+      "text": "### 7.2 Architectural Implications\nResearch indicates that placing Dropout *before* Batch Normalization exacerbates this issue. The recommended practice, if both must be used, is often to apply Dropout *after* Batch Normalization, or to use specific variants like Gaussian Dropout that have less impact on variance consistency [cite: 43, 44, 45]. In many modern architectures (e.g., ResNets), Dropout is often omitted entirely in favor of BN, which provides its own mild regularization effect, to avoid this conflict [cite: 45, 46].\n\n",
+      "start": 15341,
+      "end": 15875
+    },
+    {
+      "idx": 26,
+      "section_type": "text",
+      "header": "## 8. Inference and Deployment Side Effects",
+      "header_level": 2,
+      "text": "## 8. Inference and Deployment Side Effects\n\n",
+      "start": 15875,
+      "end": 15920
+    },
+    {
+      "idx": 27,
+      "section_type": "text",
+      "header": "### 8.1 Deterministic vs. Stochastic Modes",
+      "header_level": 3,
+      "text": "### 8.1 Deterministic vs. Stochastic Modes\nA side effect of Dropout is the bifurcation of the model's behavior into two distinct modes: training (stochastic) and inference (deterministic). This requires careful handling of weight scaling.\n*   **Weight Scaling:** To ensure that the expected total input to a neuron remains the same during testing as it was during training, the weights must be scaled by the dropout probability $p$ (or activations scaled by $1/(1-p)$ during training, known as Inverted Dropout) [cite: 1, 2]. Failure to implement this scaling correctly leads to a massive shift in activation magnitudes, causing the network to fail completely at inference time [cite: 31, 47].\n\n",
+      "start": 15920,
+      "end": 16615
+    },
+    {
+      "idx": 28,
+      "section_type": "text",
+      "header": "### 8.2 Computational Overhead (Inference)",
+      "header_level": 3,
+      "text": "### 8.2 Computational Overhead (Inference)\nWhile standard Dropout has zero computational overhead at inference (since it is turned off), utilizing its uncertainty estimation capabilities (MC Dropout) incurs a linear increase in inference cost proportional to the number of samples $T$. This side effect renders the technique prohibitive for latency-sensitive applications unless specialized hardware or distillation techniques are used [cite: 12, 16].\n\n",
+      "start": 16615,
+      "end": 17068
+    },
+    {
+      "idx": 29,
+      "section_type": "text",
+      "header": "## 9. Conclusion",
+      "header_level": 2,
+      "text": "## 9. Conclusion\n\nThe application of Dropout in deep neural networks induces a complex set of side effects that extend well beyond simple regularization.\n*   **Beneficial Side Effects:** Implicit data augmentation, escape from saddle points, convergence to flatter minima, induction of sparsity/interpretability, and the capability for uncertainty estimation and adversarial defense.\n*   **Detrimental Side Effects:** Slower training convergence, increased training time, potential underfitting, and severe statistical conflicts with Batch Normalization (variance shift).\n\nUnderstanding these side effects is crucial for the academic and practical design of deep learning systems. For instance, a practitioner designing a safety-critical medical imaging system might accept the slower convergence and computational overhead of MC Dropout to gain vital uncertainty estimates. Conversely, an engineer optimizing a real-time object detector might avoid Dropout to prevent conflict with Batch Normalization and maximize inference speed. Thus, Dropout should be viewed not merely as a \"switch\" to reduce overfitting, but as a structural modifier of the network's probabilistic behavior and optimization trajectory.\n\n---",
+      "start": 17068,
+      "end": 18282
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# Comprehensive Analysis of the Side Effects of Dropout in Deep Neural Networks",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "**Key Points**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "text": "*  **Uncertainty Quantification:** Dropout enables the estimation of model uncertainty (epistemic uncertainty) via Monte Carlo sampling at inference time, effectively approximating Bayesian Neural Networks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_3",
+      "section_idx": 0,
+      "idx_in_section": 3,
+      "text": "*  **Optimization Dynamics:** It alters the loss landscape, aiding in the escape from saddle points and promoting convergence to flatter, more robust minima, though often at the cost of slower training convergence.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_4",
+      "section_idx": 0,
+      "idx_in_section": 4,
+      "text": "*  **Sparsity Induction:** Dropout induces sparsity in neuronal activations and, under certain conditions, weight condensation, mimicking the effects of sparse coding without explicit L1 regularization.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_5",
+      "section_idx": 0,
+      "idx_in_section": 5,
+      "text": "*  **Adversarial Robustness:** It acts as a defense mechanism against adversarial attacks by increasing gradient variance and reducing reliance on high-frequency texture features.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_6",
+      "section_idx": 0,
+      "idx_in_section": 6,
+      "text": "*  **Architectural Disharmony:** A significant negative side effect is the \"variance shift\" when combined with Batch Normalization, potentially leading to training instability if not architecturally managed.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "### 3.3 Limitations and Reliability",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "Despite its utility, this side effect has limitations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "Recent empirical investigations suggest that MC Dropout may produce unreliable uncertainty estimates in certain regimes, particularly failing to capture increased uncertainty in extrapolation (far from training data) and interpolation regions, compared to exact Bayesian inference or Gaussian Processes.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEXB25FsPBGl2PCNyVMRND63ci23x4qqswjIPt6wAiwhWsgqFBflbrwcPg4A1xrNPH9r2le6c-cvpnMPA6fcHr56LlmHEy2q39DozGaGMrP3ipP8Ta7jjmEYSzvO9arvimO4Iarkd2DbeYc-PORIoxobvSB9NO2c_DSgrURaUbyPa2ckAzO2ffR1vQqz0rhd-lKOhVdCipuZHiFsA_Z48TCefk="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIG9SVqTjKBch6_yq0-b35axoMzhwQSgsxpK101ZhbQLa1gWvNSryssHebtmEagGRItHwKX_nDPK8z0jEofLp4BQGvAGGeHyboKFWiWYxMV7TWBwrUaQ=="
+        ],
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF2TU1VyC9JalTJfJQyPvwW6vscxZc0p4s1r420MRqNt29xgmLGa92Bg-LG5Mx388Q44V7njGRct_5WfaQn8o7qrO3uH25hUluZC07n4F0NBmhh9zlEWJ0RuXH2BH8JdyVhkdUz8KScfWUCESUhxgQyBwJpG4SAsTiFrThE8Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "Furthermore, the computational cost of running $T$ forward passes during inference (e.g., 20\u201350 passes) introduces significant latency, making it challenging for real-time applications.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "## 4. Sparsity Induction and Feature Representation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "Dropout has been observed to induce sparsity in the hidden unit activations of neural networks, a side effect that mimics the properties of sparse coding.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "### 4.1 Activation Sparsity",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF0PJAKGYDExljyrLXeFkYpxatp7A15OeNqqGcpss9RBzCDB8QXai-mRBHFKOW3N2VkpcBrO7zb4-vCncKUJCchymD-Enwk7X2WMWHohdYG9M59JW_xAmzCfnhz30g4hsS7Ss2gC9JvM2_ngi6EuFszHlWFT_GBCWX6laYEXLqmBVC_qFggluVhGQs9SYjka933olD0DrcSAv0O2ly1"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "Even in the absence of explicit sparsity-inducing regularizers (like L1 regularization), Dropout leads to sparse activations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF0PJAKGYDExljyrLXeFkYpxatp7A15OeNqqGcpss9RBzCDB8QXai-mRBHFKOW3N2VkpcBrO7zb4-vCncKUJCchymD-Enwk7X2WMWHohdYG9M59JW_xAmzCfnhz30g4hsS7Ss2gC9JvM2_ngi6EuFszHlWFT_GBCWX6laYEXLqmBVC_qFggluVhGQs9SYjka933olD0DrcSAv0O2ly1"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_2",
+      "section_idx": 12,
+      "idx_in_section": 2,
+      "text": "The original Dropout paper noted that as a side effect of randomly dropping units, the remaining active units are forced to become more distinct and less co-dependent.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "machinelearningmastery.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENItoyrL-Aafl17AogqTApKBrzm-K9rsxbQ0bTt3zjRtxZhErY2UWIybTm7mtOAyxiSG0qP6hwrJg9VuuiJkefl1GVjw5tnybeqcWA8D2RM3aTd_viYHvhJ_6meVcAxVex5eKQRnf8UQpVR5SbtCiX1n4w9AWUu4gs7g3brubKXoT1lae6264="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_3",
+      "section_idx": 12,
+      "idx_in_section": 3,
+      "text": "By randomly subsampling the network, Dropout reduces the effective capacity, forcing the network to utilize the available neurons more efficiently and often resulting in a representation where fewer neurons are active for any given input.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "machinelearningmastery.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENItoyrL-Aafl17AogqTApKBrzm-K9rsxbQ0bTt3zjRtxZhErY2UWIybTm7mtOAyxiSG0qP6hwrJg9VuuiJkefl1GVjw5tnybeqcWA8D2RM3aTd_viYHvhJ_6meVcAxVex5eKQRnf8UQpVR5SbtCiX1n4w9AWUu4gs7g3brubKXoT1lae6264="
+        ],
+        [
+          "reddit.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqUGte6f46d1yDLoie0RITO1H5eOijBXLila3lo8_GRDhPLL35hASrapbPEQedscfo_isEomUTQSfxOD8o1o1IgDYh9IuCQyQY4CBIDwR8GDT13iDvBZaHd_1qxM6drjz0VCpp0nRkc4FviIEyZUvTjrwGBvMcRkhfuYVXLhm_-bntm1-8J7mAY3ZMHDTBG_TjEkhofDiXTaUUxHtwCA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_4",
+      "section_idx": 12,
+      "idx_in_section": 4,
+      "text": "This sparsity can be beneficial for interpretability, as individual neurons are more likely to encode distinct features rather than complex, entangled co-adaptations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF0PJAKGYDExljyrLXeFkYpxatp7A15OeNqqGcpss9RBzCDB8QXai-mRBHFKOW3N2VkpcBrO7zb4-vCncKUJCchymD-Enwk7X2WMWHohdYG9M59JW_xAmzCfnhz30g4hsS7Ss2gC9JvM2_ngi6EuFszHlWFT_GBCWX6laYEXLqmBVC_qFggluVhGQs9SYjka933olD0DrcSAv0O2ly1"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "### 4.2 Weight Condensation",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFHn6tsyfvZq5bRPfxNP79iz1tKqIoNTGZoLZ3SgPwyAj1IS2iLTVcIMPV8jOKQZBgAzx3-L2QWfaxFnkBiV2IbhY1gaOSm_O4C4PFww66vvywscyNFI_xNlhc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "Recent theoretical work has identified a phenomenon termed \"weight condensation\" as an implicit regularization effect of Dropout.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFHn6tsyfvZq5bRPfxNP79iz1tKqIoNTGZoLZ3SgPwyAj1IS2iLTVcIMPV8jOKQZBgAzx3-L2QWfaxFnkBiV2IbhY1gaOSm_O4C4PFww66vvywscyNFI_xNlhc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_2",
+      "section_idx": 13,
+      "idx_in_section": 2,
+      "text": "Research by Zhang et al. indicates that input weights of hidden neurons trained with Dropout tend to condense onto isolated orientations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFuCjhuzkAIUHiReQ3xXKKhILY6okHIVTAZv-9-JJ7_MbNstPQdkAxleeNpiaKl-JbwrYWqq4QUMyO5yoQdpp5QRccAeOJ0KYC0SYn1V49aGU0vQy5Xbw=="
+        ],
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFHn6tsyfvZq5bRPfxNP79iz1tKqIoNTGZoLZ3SgPwyAj1IS2iLTVcIMPV8jOKQZBgAzx3-L2QWfaxFnkBiV2IbhY1gaOSm_O4C4PFww66vvywscyNFI_xNlhc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_3",
+      "section_idx": 13,
+      "idx_in_section": 3,
+      "text": "This condensation reduces the effective complexity of the network, as the weights cluster into a finite set of directions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFHn6tsyfvZq5bRPfxNP79iz1tKqIoNTGZoLZ3SgPwyAj1IS2iLTVcIMPV8jOKQZBgAzx3-L2QWfaxFnkBiV2IbhY1gaOSm_O4C4PFww66vvywscyNFI_xNlhc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_4",
+      "section_idx": 13,
+      "idx_in_section": 4,
+      "text": "This phenomenon occurs even when weights are initialized in a regime that would typically prevent condensation (e.g., Neural Tangent Kernel initialization), suggesting that Dropout actively drives the optimization trajectory toward simpler, lower-complexity solutions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFHn6tsyfvZq5bRPfxNP79iz1tKqIoNTGZoLZ3SgPwyAj1IS2iLTVcIMPV8jOKQZBgAzx3-L2QWfaxFnkBiV2IbhY1gaOSm_O4C4PFww66vvywscyNFI_xNlhc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "### 4.3 Sparseout and Controlled Sparsity",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUq_UQkqXCWcsHL5pFtmrTRGR1sw1foyfgzFGKn-BsMkRKeNd7z_aATUZzwQPwg874Gmw_SlWU8_zyhUVlL1BvCGgx-MlzKQ48ZIqnSw-gVdGkNBcewg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "The sparsity-inducing side effect is so prominent that variants like \"Sparseout\" have been developed to explicitly control it.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUq_UQkqXCWcsHL5pFtmrTRGR1sw1foyfgzFGKn-BsMkRKeNd7z_aATUZzwQPwg874Gmw_SlWU8_zyhUVlL1BvCGgx-MlzKQ48ZIqnSw-gVdGkNBcewg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_2",
+      "section_idx": 14,
+      "idx_in_section": 2,
+      "text": "Sparseout generalizes Dropout to allow direct regulation of the sparsity level in activations, demonstrating that while sparsity is beneficial for tasks like language modeling, it must be carefully tuned, as excessive sparsity can harm performance in dense tasks like image classification.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUq_UQkqXCWcsHL5pFtmrTRGR1sw1foyfgzFGKn-BsMkRKeNd7z_aATUZzwQPwg874Gmw_SlWU8_zyhUVlL1BvCGgx-MlzKQ48ZIqnSw-gVdGkNBcewg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "## 5. Optimization Landscape and Training Dynamics",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "Dropout significantly alters the geometry of the loss landscape and the dynamics of Stochastic Gradient Descent (SGD).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "### 5.1 Escaping Saddle Points",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFC13i89MPNngJdcg-bGbrR9Fq4NkTI-F-y85wFyUM88Bn4mR8JGIPsbvWigsG930llvj1-4JoG4li4wfvxLCgkp-dOyDeKOxaSyfDLpsuuWIDj0baJNgaizFF9-uIm__tI7cwP5D99zI7B3vWEL6cc2ivm0xnu_kT3SaZeQYDZd-h6ptyIfkalDNY="
+        ],
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHP54fYedKGEG3Cuj-4sdi6oAbKFAY3hhkH5ZZU8MCDR7k0H9pjxxL-9SLVHULydjH6wIcWw8RIIM3kbKH_yeSvAGzDjgLz2dvaszVaTx_qQQ1ia6oYaFfsQqEqZ5NfTJoTLny7dmPnBw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "In high-dimensional non-convex optimization (typical of deep learning), saddle points\u2014regions where gradients vanish but the point is not a local minimum\u2014are a major obstacle.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFC13i89MPNngJdcg-bGbrR9Fq4NkTI-F-y85wFyUM88Bn4mR8JGIPsbvWigsG930llvj1-4JoG4li4wfvxLCgkp-dOyDeKOxaSyfDLpsuuWIDj0baJNgaizFF9-uIm__tI7cwP5D99zI7B3vWEL6cc2ivm0xnu_kT3SaZeQYDZd-h6ptyIfkalDNY="
+        ],
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHP54fYedKGEG3Cuj-4sdi6oAbKFAY3hhkH5ZZU8MCDR7k0H9pjxxL-9SLVHULydjH6wIcWw8RIIM3kbKH_yeSvAGzDjgLz2dvaszVaTx_qQQ1ia6oYaFfsQqEqZ5NfTJoTLny7dmPnBw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "Gradient descent can stall at these points.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFC13i89MPNngJdcg-bGbrR9Fq4NkTI-F-y85wFyUM88Bn4mR8JGIPsbvWigsG930llvj1-4JoG4li4wfvxLCgkp-dOyDeKOxaSyfDLpsuuWIDj0baJNgaizFF9-uIm__tI7cwP5D99zI7B3vWEL6cc2ivm0xnu_kT3SaZeQYDZd-h6ptyIfkalDNY="
+        ],
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHP54fYedKGEG3Cuj-4sdi6oAbKFAY3hhkH5ZZU8MCDR7k0H9pjxxL-9SLVHULydjH6wIcWw8RIIM3kbKH_yeSvAGzDjgLz2dvaszVaTx_qQQ1ia6oYaFfsQqEqZ5NfTJoTLny7dmPnBw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_3",
+      "section_idx": 16,
+      "idx_in_section": 3,
+      "text": "The stochastic noise introduced by Dropout acts as a continuous perturbation to the gradients.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFC13i89MPNngJdcg-bGbrR9Fq4NkTI-F-y85wFyUM88Bn4mR8JGIPsbvWigsG930llvj1-4JoG4li4wfvxLCgkp-dOyDeKOxaSyfDLpsuuWIDj0baJNgaizFF9-uIm__tI7cwP5D99zI7B3vWEL6cc2ivm0xnu_kT3SaZeQYDZd-h6ptyIfkalDNY="
+        ],
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHP54fYedKGEG3Cuj-4sdi6oAbKFAY3hhkH5ZZU8MCDR7k0H9pjxxL-9SLVHULydjH6wIcWw8RIIM3kbKH_yeSvAGzDjgLz2dvaszVaTx_qQQ1ia6oYaFfsQqEqZ5NfTJoTLny7dmPnBw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_4",
+      "section_idx": 16,
+      "idx_in_section": 4,
+      "text": "Theoretical analysis shows that perturbed gradient descent (which Dropout effectively implements) can escape strict saddle points efficiently, often in polynomial time.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEj8Ym-C2VOvGn-057ovcwWpNgqn6FGHRmtNMruGSOLnHKY41QD7mA_71Fesls4ICCytRrdfRQV36IM1qRg5MiAchx39uJEv7D79b4WpxP_U2DDInf-eQKuKKQgmyo2cEtBMS81XEAu1DAzN7_NYvdTogA="
+        ],
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC3QzYmtsI6KRibFF7u_4OqEse8qOk12XetD6fFCvSmQSBj9nXJuz5pCIDp9gT4BDVicTQH-zchREBKmxlg7oDw2Q54QW3GPCsTA7Yi-7VfyM26poExGKz9parZ8E028U1Eewg"
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHyy6jWA4z6UgZiufNFSfyo-cxTtqgZ3fef5Eipejp9YCU-eYJrK-MUQ-Cf7qy7_P8CxAkmwVjkY6E-wBiugvPdLexeYCsj95qyAmrpC2Ad4JtION4rr0rE1HRdocwffP0WyyZrLvJJc8LNxnNWt86to7NMz5X_10o5tLmQW3s9J_tOfHKpo4n2NgmaEzhD6A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_5",
+      "section_idx": 16,
+      "idx_in_section": 5,
+      "text": "The noise ensures that the optimization process does not get stuck in unstable stationary points, pushing the parameters toward regions with negative curvature where descent can continue.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFC13i89MPNngJdcg-bGbrR9Fq4NkTI-F-y85wFyUM88Bn4mR8JGIPsbvWigsG930llvj1-4JoG4li4wfvxLCgkp-dOyDeKOxaSyfDLpsuuWIDj0baJNgaizFF9-uIm__tI7cwP5D99zI7B3vWEL6cc2ivm0xnu_kT3SaZeQYDZd-h6ptyIfkalDNY="
+        ],
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHP54fYedKGEG3Cuj-4sdi6oAbKFAY3hhkH5ZZU8MCDR7k0H9pjxxL-9SLVHULydjH6wIcWw8RIIM3kbKH_yeSvAGzDjgLz2dvaszVaTx_qQQ1ia6oYaFfsQqEqZ5NfTJoTLny7dmPnBw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "### 5.2 Finding Flatter Minima",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFuCjhuzkAIUHiReQ3xXKKhILY6okHIVTAZv-9-JJ7_MbNstPQdkAxleeNpiaKl-JbwrYWqq4QUMyO5yoQdpp5QRccAeOJ0KYC0SYn1V49aGU0vQy5Xbw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "Dropout encourages the optimizer to find \"flatter\" minima in the loss landscape.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFuCjhuzkAIUHiReQ3xXKKhILY6okHIVTAZv-9-JJ7_MbNstPQdkAxleeNpiaKl-JbwrYWqq4QUMyO5yoQdpp5QRccAeOJ0KYC0SYn1V49aGU0vQy5Xbw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "A flat minimum is a region where the loss function remains low even if the parameters are slightly perturbed.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFuCjhuzkAIUHiReQ3xXKKhILY6okHIVTAZv-9-JJ7_MbNstPQdkAxleeNpiaKl-JbwrYWqq4QUMyO5yoQdpp5QRccAeOJ0KYC0SYn1V49aGU0vQy5Xbw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_3",
+      "section_idx": 17,
+      "idx_in_section": 3,
+      "text": "Because Dropout introduces noise during training, the network is forced to find a solution that is robust to the presence or absence of specific neurons\u2014essentially a solution that is stable under perturbation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "lunartech.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG9MZoz6XYB6h6q1gWzSIeWruDAxJiILpfEUjd4wGFe52NonehAdjVom8lSTNHfRG23hutyCLMcNunBAXLIKdkYHaVPrAwNOL2hEgyCxS741BufzZ8xrKXN3tSsoH_eqT_J2il8XP4FARqkLLdY1tZnzpYoBWq4UIWNKT-3pc_vARyX7n6yOfclfOFLIwi0MfNRjzIT1BH9ptLBKEVV0i6vzQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_4",
+      "section_idx": 17,
+      "idx_in_section": 4,
+      "text": "Flatter minima are widely associated with better generalization capabilities because the test error is less sensitive to the shift between training and test distributions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sjtu.edu.cn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGDvS8bYWaJamSDcJb_RSDPiBQRSsWIO2FnkInqdwliHBTi_pmGeqIOEBgPrbizwk-LZXV0jYp9UoLWqqBbd-okQcR-7rRdff9bgyvTroHnqjD079xv3kOjzv5HNBBz-NAMyd6E4-q-0x8kDl0Fs5minCDQ7NDDg=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFuCjhuzkAIUHiReQ3xXKKhILY6okHIVTAZv-9-JJ7_MbNstPQdkAxleeNpiaKl-JbwrYWqq4QUMyO5yoQdpp5QRccAeOJ0KYC0SYn1V49aGU0vQy5Xbw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "### 5.3 Convergence Speed and Training Time",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIfcEFkzoHYTOQRDRpPDDZcNpcLG_t9Lx7WTIgqQbEgpxWhm9UjPk9iYnmjhVi-EsGt5-3Lmgl5GiRw9tKnYtlCMmzszwjHmOEGwNO7ut2nnroP1vcz6EcLjV2Jd7o1NQXckJrlu6lR0HhRWEPMn0QLLIgVpLRR-EiOM2mqeW51ZgHDil3GmNB2pmL2uSH"
+        ],
+        [
+          "dremio.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHKmmJfbsrFF0ILYm2mFilagUq2DmNM0fgykxqfP42Y3j29oL214gXz0udWcmlU44crtittzN4wJGAqI6e3W-kW_b_HkyInAphmKDcTQfwDdj5l6E5gdopYTNSCqhuXa9kcOgOtanWIR2-9Kmw-"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "A notable \"negative\" side effect is the impact on convergence speed.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIfcEFkzoHYTOQRDRpPDDZcNpcLG_t9Lx7WTIgqQbEgpxWhm9UjPk9iYnmjhVi-EsGt5-3Lmgl5GiRw9tKnYtlCMmzszwjHmOEGwNO7ut2nnroP1vcz6EcLjV2Jd7o1NQXckJrlu6lR0HhRWEPMn0QLLIgVpLRR-EiOM2mqeW51ZgHDil3GmNB2pmL2uSH"
+        ],
+        [
+          "dremio.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHKmmJfbsrFF0ILYm2mFilagUq2DmNM0fgykxqfP42Y3j29oL214gXz0udWcmlU44crtittzN4wJGAqI6e3W-kW_b_HkyInAphmKDcTQfwDdj5l6E5gdopYTNSCqhuXa9kcOgOtanWIR2-9Kmw-"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "Because Dropout effectively trains a different sub-network at every step, the parameter updates are noisy and less consistent than in standard SGD.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIfcEFkzoHYTOQRDRpPDDZcNpcLG_t9Lx7WTIgqQbEgpxWhm9UjPk9iYnmjhVi-EsGt5-3Lmgl5GiRw9tKnYtlCMmzszwjHmOEGwNO7ut2nnroP1vcz6EcLjV2Jd7o1NQXckJrlu6lR0HhRWEPMn0QLLIgVpLRR-EiOM2mqeW51ZgHDil3GmNB2pmL2uSH"
+        ],
+        [
+          "dremio.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHKmmJfbsrFF0ILYm2mFilagUq2DmNM0fgykxqfP42Y3j29oL214gXz0udWcmlU44crtittzN4wJGAqI6e3W-kW_b_HkyInAphmKDcTQfwDdj5l6E5gdopYTNSCqhuXa9kcOgOtanWIR2-9Kmw-"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_3",
+      "section_idx": 18,
+      "idx_in_section": 3,
+      "text": "Consequently, networks with Dropout typically require significantly more training epochs (often 2-3 times more) to converge compared to standard networks.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "machinelearningmastery.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENItoyrL-Aafl17AogqTApKBrzm-K9rsxbQ0bTt3zjRtxZhErY2UWIybTm7mtOAyxiSG0qP6hwrJg9VuuiJkefl1GVjw5tnybeqcWA8D2RM3aTd_viYHvhJ_6meVcAxVex5eKQRnf8UQpVR5SbtCiX1n4w9AWUu4gs7g3brubKXoT1lae6264="
+        ],
+        [
+          "infermatic.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFZto5327YwDItsh1pf8Ih3lc1knaLF1LRI2sdfEDIm9gxcDMXTKrRM1P3NtIjX27tn-AefewDrjVjh2Mq4IiNVJikuGRAl37ApvUy455VqkvS49JKX3-A5jDLRS67r3aTlKnOL3Rncc1tqm3eUwhxS28cSTltGZpbcXL0j1ffki_6mB5ZkxDZqq5Jji5kfY5CgCkRQQsFGD47YdhT6HacxgWHoATioPHasL_oQXworeXpYvlzGlxIUekXEo8NzO3_tgKrKWQ=="
+        ],
+        [
+          "massedcompute.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxltyhXTYDloR12MCOWN4hzZ0iw3hW3ue783Eljw-TtGVOgfjUAWz_hkMggTnuhhhNDwjVajQxjwuZq2kmcRRnZ0cPCwGZdVLGfCfx_eIrr0iRB6JMysjtxxU9Ra-d5WbXujoTKbNq08reGbdZN0RZYxTCAWbqCBjdLo23Tftpi55925RP0GVQJofiQjJYnDkgftbCt-GBPht1_Q2u79fOevzGKBMZ4S-WbkqUD3O7vJIM7JsOlTvxWKk6skORdrn0okEwuwZR3SKp8hI="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_4",
+      "section_idx": 18,
+      "idx_in_section": 4,
+      "text": "The loss curve may appear erratic, and the final convergence point might have a slightly higher training loss (due to the regularization) while achieving lower validation loss.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIfcEFkzoHYTOQRDRpPDDZcNpcLG_t9Lx7WTIgqQbEgpxWhm9UjPk9iYnmjhVi-EsGt5-3Lmgl5GiRw9tKnYtlCMmzszwjHmOEGwNO7ut2nnroP1vcz6EcLjV2Jd7o1NQXckJrlu6lR0HhRWEPMn0QLLIgVpLRR-EiOM2mqeW51ZgHDil3GmNB2pmL2uSH"
+        ],
+        [
+          "dremio.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHKmmJfbsrFF0ILYm2mFilagUq2DmNM0fgykxqfP42Y3j29oL214gXz0udWcmlU44crtittzN4wJGAqI6e3W-kW_b_HkyInAphmKDcTQfwDdj5l6E5gdopYTNSCqhuXa9kcOgOtanWIR2-9Kmw-"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_0",
+      "section_idx": 19,
+      "idx_in_section": 0,
+      "text": "### 5.4 Learning Rate Dynamics",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lunartech.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG9MZoz6XYB6h6q1gWzSIeWruDAxJiILpfEUjd4wGFe52NonehAdjVom8lSTNHfRG23hutyCLMcNunBAXLIKdkYHaVPrAwNOL2hEgyCxS741BufzZ8xrKXN3tSsoH_eqT_J2il8XP4FARqkLLdY1tZnzpYoBWq4UIWNKT-3pc_vARyX7n6yOfclfOFLIwi0MfNRjzIT1BH9ptLBKEVV0i6vzQ=="
+        ],
+        [
+          "reddit.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEVo3m3FlCASChnsszhEebC975nsfcauok9i31dygkzNzNb-fqlg2L3a1GNblwE_tITP29_qnN8JshjByEvpN9zilSumhUAp-VY_76J5DBDIGhseVwQRZTm-actWxOAs1Hf21cIJr5X2_8xmnAEzVneNib_WO-KWWnNMYuH0JDzdu_0uzHikHjE1N-XXEuP0cLmlWhKbE_5t81uQaBGZJtsFQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_1",
+      "section_idx": 19,
+      "idx_in_section": 1,
+      "text": "The noise introduced by Dropout allows, and often necessitates, the use of higher learning rates and momentum.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lunartech.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG9MZoz6XYB6h6q1gWzSIeWruDAxJiILpfEUjd4wGFe52NonehAdjVom8lSTNHfRG23hutyCLMcNunBAXLIKdkYHaVPrAwNOL2hEgyCxS741BufzZ8xrKXN3tSsoH_eqT_J2il8XP4FARqkLLdY1tZnzpYoBWq4UIWNKT-3pc_vARyX7n6yOfclfOFLIwi0MfNRjzIT1BH9ptLBKEVV0i6vzQ=="
+        ],
+        [
+          "reddit.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEVo3m3FlCASChnsszhEebC975nsfcauok9i31dygkzNzNb-fqlg2L3a1GNblwE_tITP29_qnN8JshjByEvpN9zilSumhUAp-VY_76J5DBDIGhseVwQRZTm-actWxOAs1Hf21cIJr5X2_8xmnAEzVneNib_WO-KWWnNMYuH0JDzdu_0uzHikHjE1N-XXEuP0cLmlWhKbE_5t81uQaBGZJtsFQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_2",
+      "section_idx": 19,
+      "idx_in_section": 2,
+      "text": "The stochasticity prevents the optimizer from settling too quickly into sharp, poor local minima, enabling the use of aggressive learning rates to traverse the landscape more rapidly without diverging.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lunartech.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG9MZoz6XYB6h6q1gWzSIeWruDAxJiILpfEUjd4wGFe52NonehAdjVom8lSTNHfRG23hutyCLMcNunBAXLIKdkYHaVPrAwNOL2hEgyCxS741BufzZ8xrKXN3tSsoH_eqT_J2il8XP4FARqkLLdY1tZnzpYoBWq4UIWNKT-3pc_vARyX7n6yOfclfOFLIwi0MfNRjzIT1BH9ptLBKEVV0i6vzQ=="
+        ],
+        [
+          "reddit.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEVo3m3FlCASChnsszhEebC975nsfcauok9i31dygkzNzNb-fqlg2L3a1GNblwE_tITP29_qnN8JshjByEvpN9zilSumhUAp-VY_76J5DBDIGhseVwQRZTm-actWxOAs1Hf21cIJr5X2_8xmnAEzVneNib_WO-KWWnNMYuH0JDzdu_0uzHikHjE1N-XXEuP0cLmlWhKbE_5t81uQaBGZJtsFQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "### Executive Summary",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "While Dropout is primarily employed as a regularization technique to mitigate overfitting in deep neural networks, its influence extends far beyond simple capacity control.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "Research indicates that the stochastic noise introduced by Dropout fundamentally alters the learning dynamics, the geometry of the loss landscape, and the resulting feature representations.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "Desirable side effects include the ability to estimate predictive uncertainty, improved robustness against adversarial perturbations, and the induction of sparse representations that enhance interpretability.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "Conversely, undesirable side effects include increased training time due to noisy gradients, potential underfitting if hyperparameters are misconfigured, and a well-documented \"disharmony\" when combined with Batch Normalization, known as variance shift.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "This report provides an exhaustive analysis of these secondary effects, synthesizing theoretical proofs and empirical observations to guide the effective deployment of Dropout in complex deep learning architectures.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_0",
+      "section_idx": 20,
+      "idx_in_section": 0,
+      "text": "## 6. Adversarial Robustness",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_1",
+      "section_idx": 20,
+      "idx_in_section": 1,
+      "text": "Adversarial examples are inputs with imperceptible perturbations designed to fool neural networks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_2",
+      "section_idx": 20,
+      "idx_in_section": 2,
+      "text": "Dropout has been identified as a defense mechanism against such attacks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_0",
+      "section_idx": 21,
+      "idx_in_section": 0,
+      "text": "### 6.1 Gradient Variance and Obfuscation",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF15FJwuyoYLFttPtqVFu5A6A6PperU4ostsDC6Ig3Tg7QFrM2qSGgnpXGKjfOpxp57qC7XFWasaslSK4bKji4097SyK92TlRqvJanxdYHfhow6Y84zdA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH0nB2OBx011QUdH7_fcJ-JPoK_-DxtBCJnh7qWgsHTnSGirZm8C83tsjC9TqvqLKmsFHsKnAJ3dV-oS7a7blKFoOaQ-JYBdB4mRriuYOqeeD0EatpkVKmasvzR4pljNDaxlF2VpyVjwMTCbtFAPD8nb_vVHN9oevcQFUsao-PtrBwpr5iuCChHXySEHg7ETjlJQ9CNQJvZF-HQiDDOHwX-bkwXHQ-QwAvspGsc0ThCM0mysHbNUl0cwwb-weGPrjHCggo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_1",
+      "section_idx": 21,
+      "idx_in_section": 1,
+      "text": "Using Dropout at test time (Defensive Dropout) increases the variance of the gradients with respect to the input.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF15FJwuyoYLFttPtqVFu5A6A6PperU4ostsDC6Ig3Tg7QFrM2qSGgnpXGKjfOpxp57qC7XFWasaslSK4bKji4097SyK92TlRqvJanxdYHfhow6Y84zdA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH0nB2OBx011QUdH7_fcJ-JPoK_-DxtBCJnh7qWgsHTnSGirZm8C83tsjC9TqvqLKmsFHsKnAJ3dV-oS7a7blKFoOaQ-JYBdB4mRriuYOqeeD0EatpkVKmasvzR4pljNDaxlF2VpyVjwMTCbtFAPD8nb_vVHN9oevcQFUsao-PtrBwpr5iuCChHXySEHg7ETjlJQ9CNQJvZF-HQiDDOHwX-bkwXHQ-QwAvspGsc0ThCM0mysHbNUl0cwwb-weGPrjHCggo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_2",
+      "section_idx": 21,
+      "idx_in_section": 2,
+      "text": "This stochasticity makes it difficult for gradient-based attack methods (like FGSM or PGD) to calculate stable gradients required to generate effective adversarial perturbations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF15FJwuyoYLFttPtqVFu5A6A6PperU4ostsDC6Ig3Tg7QFrM2qSGgnpXGKjfOpxp57qC7XFWasaslSK4bKji4097SyK92TlRqvJanxdYHfhow6Y84zdA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_3",
+      "section_idx": 21,
+      "idx_in_section": 3,
+      "text": "By treating the network as a moving target, Dropout reduces the attack success rate significantly.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF15FJwuyoYLFttPtqVFu5A6A6PperU4ostsDC6Ig3Tg7QFrM2qSGgnpXGKjfOpxp57qC7XFWasaslSK4bKji4097SyK92TlRqvJanxdYHfhow6Y84zdA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH0nB2OBx011QUdH7_fcJ-JPoK_-DxtBCJnh7qWgsHTnSGirZm8C83tsjC9TqvqLKmsFHsKnAJ3dV-oS7a7blKFoOaQ-JYBdB4mRriuYOqeeD0EatpkVKmasvzR4pljNDaxlF2VpyVjwMTCbtFAPD8nb_vVHN9oevcQFUsao-PtrBwpr5iuCChHXySEHg7ETjlJQ9CNQJvZF-HQiDDOHwX-bkwXHQ-QwAvspGsc0ThCM0mysHbNUl0cwwb-weGPrjHCggo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_0",
+      "section_idx": 22,
+      "idx_in_section": 0,
+      "text": "### 6.2 Texture Bias Reduction",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmvVSDm4Kit51pQmSs9QbESDEqvZ7-TFH2TBV8NYIcP59p-wWV6q6kssLtGGSZCtxmvrMojt7c9aElH8KmZJ5z1l2IUo3ieM1WXALuSACfGkSSOBTKdSjVrNzlywpmQdLIKo2zDy0UOQE="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFl6dTUHrNdGZbFRV6pxodo7TTlbyoZDarUJZheERvHPUT1JLE1i4rS9lEfRVx7Mz3njidsrUJz6P8Bju5f6mF1CclRhQCm_hsqhHs25gFxg_ht3hawvw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_1",
+      "section_idx": 22,
+      "idx_in_section": 1,
+      "text": "Convolutional Neural Networks (CNNs) often rely heavily on local texture features rather than global shapes, making them brittle to adversarial attacks that manipulate texture.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmvVSDm4Kit51pQmSs9QbESDEqvZ7-TFH2TBV8NYIcP59p-wWV6q6kssLtGGSZCtxmvrMojt7c9aElH8KmZJ5z1l2IUo3ieM1WXALuSACfGkSSOBTKdSjVrNzlywpmQdLIKo2zDy0UOQE="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFl6dTUHrNdGZbFRV6pxodo7TTlbyoZDarUJZheERvHPUT1JLE1i4rS9lEfRVx7Mz3njidsrUJz6P8Bju5f6mF1CclRhQCm_hsqhHs25gFxg_ht3hawvw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_2",
+      "section_idx": 22,
+      "idx_in_section": 2,
+      "text": "\"Informative Dropout\" and similar strategies have been shown to reduce this texture bias, forcing the network to learn more robust, shape-based representations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmvVSDm4Kit51pQmSs9QbESDEqvZ7-TFH2TBV8NYIcP59p-wWV6q6kssLtGGSZCtxmvrMojt7c9aElH8KmZJ5z1l2IUo3ieM1WXALuSACfGkSSOBTKdSjVrNzlywpmQdLIKo2zDy0UOQE="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFl6dTUHrNdGZbFRV6pxodo7TTlbyoZDarUJZheERvHPUT1JLE1i4rS9lEfRVx7Mz3njidsrUJz6P8Bju5f6mF1CclRhQCm_hsqhHs25gFxg_ht3hawvw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_3",
+      "section_idx": 22,
+      "idx_in_section": 3,
+      "text": "This shift in feature reliance enhances robustness not only to adversarial attacks but also to random corruptions and domain shifts.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmvVSDm4Kit51pQmSs9QbESDEqvZ7-TFH2TBV8NYIcP59p-wWV6q6kssLtGGSZCtxmvrMojt7c9aElH8KmZJ5z1l2IUo3ieM1WXALuSACfGkSSOBTKdSjVrNzlywpmQdLIKo2zDy0UOQE="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFl6dTUHrNdGZbFRV6pxodo7TTlbyoZDarUJZheERvHPUT1JLE1i4rS9lEfRVx7Mz3njidsrUJz6P8Bju5f6mF1CclRhQCm_hsqhHs25gFxg_ht3hawvw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_0",
+      "section_idx": 23,
+      "idx_in_section": 0,
+      "text": "## 7. Interaction with Batch Normalization: The \"Disharmony\"",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_1",
+      "section_idx": 23,
+      "idx_in_section": 1,
+      "text": "One of the most critical operational side effects of Dropout is its problematic interaction with Batch Normalization (BN), a phenomenon termed the \"disharmony\" between Dropout and Batch Norm.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_0",
+      "section_idx": 24,
+      "idx_in_section": 0,
+      "text": "### 7.1 Variance Shift",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_1",
+      "section_idx": 24,
+      "idx_in_section": 1,
+      "text": "Batch Normalization relies on maintaining accurate running statistics (mean and variance) of layer activations during training to normalize inputs during inference.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_2",
+      "section_idx": 24,
+      "idx_in_section": 2,
+      "text": "Dropout, however, fundamentally alters the statistical distribution of activations.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_3",
+      "section_idx": 24,
+      "idx_in_section": 3,
+      "text": "*  **Training Phase:** When Dropout is active, a fraction of neurons are zeroed out, and the remaining are scaled up.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_4",
+      "section_idx": 24,
+      "idx_in_section": 4,
+      "text": "The variance of the activations reflects this specific Bernoulli noise distribution.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_5",
+      "section_idx": 24,
+      "idx_in_section": 5,
+      "text": "*  **Inference Phase:** Dropout is turned off, and weights are scaled (or not, depending on implementation).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_6",
+      "section_idx": 24,
+      "idx_in_section": 6,
+      "text": "The variance of the activations changes compared to the training phase.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_7",
+      "section_idx": 24,
+      "idx_in_section": 7,
+      "text": "This discrepancy is known as **variance shift**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "liner.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGkiuydCNkqTR5e8j-tTWsfNaXal9emaxWrvmk8TB026S09yhcFlqBFgAY7hmUGCnXfkgT0dgDt7CNwS25GsRoaaZM1fqkO5ld5sPbcxvXj2seOvJ7lL_j5bjkt7d9DfmJoBFFXX4pnXzn6PyFelOgKlpAHnRnDOXEqBMsJrg9S5Rw0a5Aw55J_sseHa2t9bL2vw_nROFYuyezQQa8HZsBm0g=="
+        ],
+        [
+          "thecvf.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8lBwC0Hc4OtutOeQUf-JnqpY3GAFnMM1RDDXIY7fEVGuE8KJsLZqKV_ePYxvQ1EF0TuHowv24_2Imldq--fKDeB6e0Z1DezOr6vvF-qBtwdrLehXNyLrBZYyxVf4A60VR7mybuPXfgCiY3LPyfY6tzH0KMSnPiM3axmL7CYi36SE-9scpMoS2K5g6jp7jLmK2El5YFdqEvuw-X7VAfQT3G2MeGaxsHpyPbUCHATKYbIgOnIfuCpfUuZjSrd4KxO8c3lweVhgZ6dnJniU4VYZ_7W1ZuKA="
+        ],
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFCJ2VUj3r5wRAVWoHLQ4I6lKVb-9VJf0lpXehfm_zJSgE5aHAkZvMAOr4plCqs3dAsrTJpojLJmwQI5HryY4U3VEL-A6QPxdcmkIX8t6PZtxrQXveu_DhL-rft5LszALOHeP8YczPINzrh9xt_1_7jqiMEZoSv0BOLICLuhWipvHJRRBndb5iwAmYRAcD1Ye5RnjAdE20="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_8",
+      "section_idx": 24,
+      "idx_in_section": 8,
+      "text": "Because BN learns its running variance based on the training mode (with Dropout), but is applied during inference mode (without Dropout), the statistics used for normalization at test time may be incorrect.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "liner.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGkiuydCNkqTR5e8j-tTWsfNaXal9emaxWrvmk8TB026S09yhcFlqBFgAY7hmUGCnXfkgT0dgDt7CNwS25GsRoaaZM1fqkO5ld5sPbcxvXj2seOvJ7lL_j5bjkt7d9DfmJoBFFXX4pnXzn6PyFelOgKlpAHnRnDOXEqBMsJrg9S5Rw0a5Aw55J_sseHa2t9bL2vw_nROFYuyezQQa8HZsBm0g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdewv488bUdXLD4pOjZ35_h9lrx8hHjv3jXc3eyZBF2Ai9zjL6hb6T8WLGR7JTq9yZ-OYVYBRdzpzQWllH-6D2ZR66zthbMOW02HTqa5QCWUpBFAKtOg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_9",
+      "section_idx": 24,
+      "idx_in_section": 9,
+      "text": "This leads to numerical instability and erroneous predictions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "liner.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGkiuydCNkqTR5e8j-tTWsfNaXal9emaxWrvmk8TB026S09yhcFlqBFgAY7hmUGCnXfkgT0dgDt7CNwS25GsRoaaZM1fqkO5ld5sPbcxvXj2seOvJ7lL_j5bjkt7d9DfmJoBFFXX4pnXzn6PyFelOgKlpAHnRnDOXEqBMsJrg9S5Rw0a5Aw55J_sseHa2t9bL2vw_nROFYuyezQQa8HZsBm0g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdewv488bUdXLD4pOjZ35_h9lrx8hHjv3jXc3eyZBF2Ai9zjL6hb6T8WLGR7JTq9yZ-OYVYBRdzpzQWllH-6D2ZR66zthbMOW02HTqa5QCWUpBFAKtOg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_0",
+      "section_idx": 25,
+      "idx_in_section": 0,
+      "text": "### 7.2 Architectural Implications",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackoverflow.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgOJeBPz7F3KGqKsZpozIsx5ZilytcmKtUy_HC8VvsnaRKqA92OshMFVpEfvieWjryvoLE04b8Pw_0rZzH5LPxaLKzeq628zSZjkMadpmsqHxcr5dOdpu_eVo4HMXBBmsuLMpa0uVvQaHQqArMCObWRk0VEaALLRspu1vvxA8sZmi4w2qOBX3KKEl5pKCi"
+        ],
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO7gK0TfNg9ZsCreGvN6C07x5NDdDoyS1U9oVC1tbgBc44qFAUseBj_i7nzJ0edXHL7cM0IW_LHuBZBou5ZunQLcom9IVDnsGKaDIjU4el2Khu1xoYFDlE5lSjzhYBKLig_IqENVpHSqsb18hyV2gsS5ftvmoUB3eLW1hcTJ9byeoJg99agA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_1",
+      "section_idx": 25,
+      "idx_in_section": 1,
+      "text": "Research indicates that placing Dropout *before* Batch Normalization exacerbates this issue.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackoverflow.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgOJeBPz7F3KGqKsZpozIsx5ZilytcmKtUy_HC8VvsnaRKqA92OshMFVpEfvieWjryvoLE04b8Pw_0rZzH5LPxaLKzeq628zSZjkMadpmsqHxcr5dOdpu_eVo4HMXBBmsuLMpa0uVvQaHQqArMCObWRk0VEaALLRspu1vvxA8sZmi4w2qOBX3KKEl5pKCi"
+        ],
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO7gK0TfNg9ZsCreGvN6C07x5NDdDoyS1U9oVC1tbgBc44qFAUseBj_i7nzJ0edXHL7cM0IW_LHuBZBou5ZunQLcom9IVDnsGKaDIjU4el2Khu1xoYFDlE5lSjzhYBKLig_IqENVpHSqsb18hyV2gsS5ftvmoUB3eLW1hcTJ9byeoJg99agA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_2",
+      "section_idx": 25,
+      "idx_in_section": 2,
+      "text": "The recommended practice, if both must be used, is often to apply Dropout *after* Batch Normalization, or to use specific variants like Gaussian Dropout that have less impact on variance consistency.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "apxml.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlfqRl3DStagTqDG6OqGyaua-ZXfNn40XhIvpDYoBd69RrQ5sPgrWNziN_BEqL99UEntk-ewcymvv51qTNZzDPAcD-eptS2XD1clrTsvo9xwjRL_WITrjKY3iYmk7QQwqLk21amb5NAF7A1eDKEtZXArr6tn-wNvDBWXvcObEzzNzLWO12ybMvW0l-0T7hVq9ih2PuqnlKdChIICzUGUIkvHoLvBhRY_QULcxhZxTcBgt_GmG2DMVU5uqEX7-6Og=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5EeNWOJYTp63r_WSiHKhF428hlixsrG0iXCcexxX_2kXj3S3fHgVB9bf0IqCwmxB5AdqjmR8XDGu4ERZ4A1FgAOedU3qPyC_8yZk_G24Gm2TzR4y3eJHhcymhA1liv4kk4ph9cWV8q8kvGD4HgMNimywV0sR34xGUB5O39_6w61iNCbvS6A=="
+        ],
+        [
+          "stackoverflow.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgOJeBPz7F3KGqKsZpozIsx5ZilytcmKtUy_HC8VvsnaRKqA92OshMFVpEfvieWjryvoLE04b8Pw_0rZzH5LPxaLKzeq628zSZjkMadpmsqHxcr5dOdpu_eVo4HMXBBmsuLMpa0uVvQaHQqArMCObWRk0VEaALLRspu1vvxA8sZmi4w2qOBX3KKEl5pKCi"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_3",
+      "section_idx": 25,
+      "idx_in_section": 3,
+      "text": "In many modern architectures (e.g., ResNets), Dropout is often omitted entirely in favor of BN, which provides its own mild regularization effect, to avoid this conflict.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackoverflow.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgOJeBPz7F3KGqKsZpozIsx5ZilytcmKtUy_HC8VvsnaRKqA92OshMFVpEfvieWjryvoLE04b8Pw_0rZzH5LPxaLKzeq628zSZjkMadpmsqHxcr5dOdpu_eVo4HMXBBmsuLMpa0uVvQaHQqArMCObWRk0VEaALLRspu1vvxA8sZmi4w2qOBX3KKEl5pKCi"
+        ],
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO7gK0TfNg9ZsCreGvN6C07x5NDdDoyS1U9oVC1tbgBc44qFAUseBj_i7nzJ0edXHL7cM0IW_LHuBZBou5ZunQLcom9IVDnsGKaDIjU4el2Khu1xoYFDlE5lSjzhYBKLig_IqENVpHSqsb18hyV2gsS5ftvmoUB3eLW1hcTJ9byeoJg99agA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_0",
+      "section_idx": 26,
+      "idx_in_section": 0,
+      "text": "## 8. Inference and Deployment Side Effects",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_0",
+      "section_idx": 27,
+      "idx_in_section": 0,
+      "text": "### 8.1 Deterministic vs. Stochastic Modes",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_1",
+      "section_idx": 27,
+      "idx_in_section": 1,
+      "text": "A side effect of Dropout is the bifurcation of the model's behavior into two distinct modes: training (stochastic) and inference (deterministic).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_2",
+      "section_idx": 27,
+      "idx_in_section": 2,
+      "text": "This requires careful handling of weight scaling.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_3",
+      "section_idx": 27,
+      "idx_in_section": 3,
+      "text": "*  **Weight Scaling:** To ensure that the expected total input to a neuron remains the same during testing as it was during training, the weights must be scaled by the dropout probability $p$ (or activations scaled by $1/(1-p)$ during training, known as Inverted Dropout).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "machinelearningmastery.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENItoyrL-Aafl17AogqTApKBrzm-K9rsxbQ0bTt3zjRtxZhErY2UWIybTm7mtOAyxiSG0qP6hwrJg9VuuiJkefl1GVjw5tnybeqcWA8D2RM3aTd_viYHvhJ_6meVcAxVex5eKQRnf8UQpVR5SbtCiX1n4w9AWUu4gs7g3brubKXoT1lae6264="
+        ],
+        [
+          "geeksforgeeks.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdme6fQdyq1EIPQwgMUvQYcwYjonBxOLjCwYPQc9OhRSsQCfMOFSycvgbe5maig5rKMtPzgmI95bIeUMS_LDvkXtdIOPDDZlWT_9umNtiaoPqRxoiCxoP4hjq4uHgQcudWwxnBZDIN95qPfpjJ61vIdGeehXRAJsE62RMZqPil4LomG2fvUs5H0UM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_4",
+      "section_idx": 27,
+      "idx_in_section": 4,
+      "text": "Failure to implement this scaling correctly leads to a massive shift in activation magnitudes, causing the network to fail completely at inference time.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lunartech.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG9MZoz6XYB6h6q1gWzSIeWruDAxJiILpfEUjd4wGFe52NonehAdjVom8lSTNHfRG23hutyCLMcNunBAXLIKdkYHaVPrAwNOL2hEgyCxS741BufzZ8xrKXN3tSsoH_eqT_J2il8XP4FARqkLLdY1tZnzpYoBWq4UIWNKT-3pc_vARyX7n6yOfclfOFLIwi0MfNRjzIT1BH9ptLBKEVV0i6vzQ=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFg5HJ_3UztJmTFYWYAuVw8jBccsYyRM_0dSyvDlHLpEKU3TiiClrbNHWZbQ-tFL3_e38Ledi91sqLXxqUr18-F73bPSeAUElXbhylw90gryKjb36zjjy58-625AscmDqfTrG8_f94xlXsHJ5tVS0cFno1bYtOj14wWsDxZz3R0cfP_K6ozZ6fYx97m5z6_nrTZ4ifAuIKtI0pJz5NH"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "28_0",
+      "section_idx": 28,
+      "idx_in_section": 0,
+      "text": "### 8.2 Computational Overhead (Inference)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_1",
+      "section_idx": 28,
+      "idx_in_section": 1,
+      "text": "While standard Dropout has zero computational overhead at inference (since it is turned off), utilizing its uncertainty estimation capabilities (MC Dropout) incurs a linear increase in inference cost proportional to the number of samples $T$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_2",
+      "section_idx": 28,
+      "idx_in_section": 2,
+      "text": "This side effect renders the technique prohibitive for latency-sensitive applications unless specialized hardware or distillation techniques are used.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "29_0",
+      "section_idx": 29,
+      "idx_in_section": 0,
+      "text": "## 9. Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_1",
+      "section_idx": 29,
+      "idx_in_section": 1,
+      "text": "The application of Dropout in deep neural networks induces a complex set of side effects that extend well beyond simple regularization.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_2",
+      "section_idx": 29,
+      "idx_in_section": 2,
+      "text": "*  **Beneficial Side Effects:** Implicit data augmentation, escape from saddle points, convergence to flatter minima, induction of sparsity/interpretability, and the capability for uncertainty estimation and adversarial defense.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_3",
+      "section_idx": 29,
+      "idx_in_section": 3,
+      "text": "*  **Detrimental Side Effects:** Slower training convergence, increased training time, potential underfitting, and severe statistical conflicts with Batch Normalization (variance shift).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_4",
+      "section_idx": 29,
+      "idx_in_section": 4,
+      "text": "Understanding these side effects is crucial for the academic and practical design of deep learning systems.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_5",
+      "section_idx": 29,
+      "idx_in_section": 5,
+      "text": "For instance, a practitioner designing a safety-critical medical imaging system might accept the slower convergence and computational overhead of MC Dropout to gain vital uncertainty estimates.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_6",
+      "section_idx": 29,
+      "idx_in_section": 6,
+      "text": "Conversely, an engineer optimizing a real-time object detector might avoid Dropout to prevent conflict with Batch Normalization and maximize inference speed.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_7",
+      "section_idx": 29,
+      "idx_in_section": 7,
+      "text": "Thus, Dropout should be viewed not merely as a \"switch\" to reduce overfitting, but as a structural modifier of the network's probabilistic behavior and optimization trajectory.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 1. Introduction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "Dropout, introduced by Hinton et al., is a stochastic regularization technique where a fraction of neurons (or connections) are randomly deactivated (dropped) during the training phase.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "The primary motivation for Dropout is to prevent the co-adaptation of feature detectors, thereby reducing overfitting and improving generalization error.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "machinelearningmastery.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENItoyrL-Aafl17AogqTApKBrzm-K9rsxbQ0bTt3zjRtxZhErY2UWIybTm7mtOAyxiSG0qP6hwrJg9VuuiJkefl1GVjw5tnybeqcWA8D2RM3aTd_viYHvhJ_6meVcAxVex5eKQRnf8UQpVR5SbtCiX1n4w9AWUu4gs7g3brubKXoT1lae6264="
+        ],
+        [
+          "geeksforgeeks.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdme6fQdyq1EIPQwgMUvQYcwYjonBxOLjCwYPQc9OhRSsQCfMOFSycvgbe5maig5rKMtPzgmI95bIeUMS_LDvkXtdIOPDDZlWT_9umNtiaoPqRxoiCxoP4hjq4uHgQcudWwxnBZDIN95qPfpjJ61vIdGeehXRAJsE62RMZqPil4LomG2fvUs5H0UM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "However, treating Dropout solely as a regularizer oversimplifies its impact on Deep Neural Networks (DNNs).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "The application of multiplicative Bernoulli noise to hidden units creates a cascade of secondary effects\u2014some emergent and beneficial, others detrimental to specific architectures.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "These effects range from implicit data augmentation in the input space to the approximation of Deep Gaussian Processes for uncertainty estimation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRXRkMfDoLQp1fVZjpURkDXqCWyMVd65eLgwzrRri9rD4Jpsk3711_RuUmiozjC0ihj1WsBH1RIEsZtgVLBCx26VC6KDl8A1h2sUPsF-wk8up5TuU0Fw=="
+        ],
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFQ1JAyTZBBREG8YaARMl5TX-w8rR2O-1WAgwZsFjRb1S-_DXbKwOBG6vlM8vv_LCMkdmIO3M1S3vVr8WgpB80cr6SX0L1UQvkr2hcQaAxTa7MTiL7bPYbQCbLLYBAg_8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "Furthermore, the interaction of Dropout with other normalization techniques, specifically Batch Normalization, introduces complex statistical inconsistencies that can degrade performance.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "liner.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGkiuydCNkqTR5e8j-tTWsfNaXal9emaxWrvmk8TB026S09yhcFlqBFgAY7hmUGCnXfkgT0dgDt7CNwS25GsRoaaZM1fqkO5ld5sPbcxvXj2seOvJ7lL_j5bjkt7d9DfmJoBFFXX4pnXzn6PyFelOgKlpAHnRnDOXEqBMsJrg9S5Rw0a5Aw55J_sseHa2t9bL2vw_nROFYuyezQQa8HZsBm0g=="
+        ],
+        [
+          "thecvf.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8lBwC0Hc4OtutOeQUf-JnqpY3GAFnMM1RDDXIY7fEVGuE8KJsLZqKV_ePYxvQ1EF0TuHowv24_2Imldq--fKDeB6e0Z1DezOr6vvF-qBtwdrLehXNyLrBZYyxVf4A60VR7mybuPXfgCiY3LPyfY6tzH0KMSnPiM3axmL7CYi36SE-9scpMoS2K5g6jp7jLmK2El5YFdqEvuw-X7VAfQT3G2MeGaxsHpyPbUCHATKYbIgOnIfuCpfUuZjSrd4KxO8c3lweVhgZ6dnJniU4VYZ_7W1ZuKA="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_7",
+      "section_idx": 2,
+      "idx_in_section": 7,
+      "text": "This report categorizes and analyzes these side effects, distinguishing between those that alter the optimization landscape, those that modify feature representation, and those that affect inference capabilities.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 2. Implicit Data Augmentation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "One of the most profound side effects of Dropout is its mathematical equivalence to data augmentation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "While explicit data augmentation involves transforming input data (e.g., rotations, flips) to increase dataset diversity, Dropout achieves a similar effect implicitly within the feature space.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 2.1 Projection of Noise to Input Space",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRXRkMfDoLQp1fVZjpURkDXqCWyMVd65eLgwzrRri9rD4Jpsk3711_RuUmiozjC0ihj1WsBH1RIEsZtgVLBCx26VC6KDl8A1h2sUPsF-wk8up5TuU0Fw=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHlH9c9ww4TcdzZRzV41ZtYXXsNSBDf3C6bDxXvySMuTa_85XvAVp1U2V8UvJ3dfP_Cwch8Q4IzSl-8bIUY3ONCsZLicBoKSJC_UgHfhsNN0KNOTtk6To8EL0v7JfsBsEDf-TSmEvbeb1wZkymcg4J4uObxu1kg4mtkHvCr9AYX7_hl-fpH"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "Research suggests that the stochasticity introduced by Dropout in hidden layers can be interpreted as projecting noise back into the input space.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRXRkMfDoLQp1fVZjpURkDXqCWyMVd65eLgwzrRri9rD4Jpsk3711_RuUmiozjC0ihj1WsBH1RIEsZtgVLBCx26VC6KDl8A1h2sUPsF-wk8up5TuU0Fw=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHlH9c9ww4TcdzZRzV41ZtYXXsNSBDf3C6bDxXvySMuTa_85XvAVp1U2V8UvJ3dfP_Cwch8Q4IzSl-8bIUY3ONCsZLicBoKSJC_UgHfhsNN0KNOTtk6To8EL0v7JfsBsEDf-TSmEvbeb1wZkymcg4J4uObxu1kg4mtkHvCr9AYX7_hl-fpH"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "Bouthillier et al. demonstrated that training a network with Dropout is effectively similar to training a deterministic network on an augmented dataset where the input samples have been corrupted by specific noise patterns.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRXRkMfDoLQp1fVZjpURkDXqCWyMVd65eLgwzrRri9rD4Jpsk3711_RuUmiozjC0ihj1WsBH1RIEsZtgVLBCx26VC6KDl8A1h2sUPsF-wk8up5TuU0Fw=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHlH9c9ww4TcdzZRzV41ZtYXXsNSBDf3C6bDxXvySMuTa_85XvAVp1U2V8UvJ3dfP_Cwch8Q4IzSl-8bIUY3ONCsZLicBoKSJC_UgHfhsNN0KNOTtk6To8EL0v7JfsBsEDf-TSmEvbeb1wZkymcg4J4uObxu1kg4mtkHvCr9AYX7_hl-fpH"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "This \"implicit\" augmentation allows the network to explore the vicinity of training points on the data manifold without requiring domain-specific knowledge to design explicit augmentation strategies (such as knowing that an image should be rotation-invariant).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRXRkMfDoLQp1fVZjpURkDXqCWyMVd65eLgwzrRri9rD4Jpsk3711_RuUmiozjC0ihj1WsBH1RIEsZtgVLBCx26VC6KDl8A1h2sUPsF-wk8up5TuU0Fw=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHlH9c9ww4TcdzZRzV41ZtYXXsNSBDf3C6bDxXvySMuTa_85XvAVp1U2V8UvJ3dfP_Cwch8Q4IzSl-8bIUY3ONCsZLicBoKSJC_UgHfhsNN0KNOTtk6To8EL0v7JfsBsEDf-TSmEvbeb1wZkymcg4J4uObxu1kg4mtkHvCr9AYX7_hl-fpH"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 2.2 Deep Augmentation",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZoarYdXPTdI4H04XTTVsPp-anYaHrGNtaTJok0Lu23sZWQBqqBSIABMC67O0b-1sAboHT6stbeJT1qSI_Jsx6FpDX8wv1BZ82jIsQvG60P_wo7z6QXA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "Extending this concept, recent studies have formalized \"Deep Augmentation,\" where Dropout is treated not just as a regularizer but as a mechanism to augment high-dimensional activations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZoarYdXPTdI4H04XTTVsPp-anYaHrGNtaTJok0Lu23sZWQBqqBSIABMC67O0b-1sAboHT6stbeJT1qSI_Jsx6FpDX8wv1BZ82jIsQvG60P_wo7z6QXA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "This is particularly effective in self-supervised learning contexts where labeled data is absent.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZoarYdXPTdI4H04XTTVsPp-anYaHrGNtaTJok0Lu23sZWQBqqBSIABMC67O0b-1sAboHT6stbeJT1qSI_Jsx6FpDX8wv1BZ82jIsQvG60P_wo7z6QXA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "By applying Dropout to deeper layers, the network is forced to learn representations that are invariant to perturbations in the semantic feature space, rather than just the pixel space.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZoarYdXPTdI4H04XTTVsPp-anYaHrGNtaTJok0Lu23sZWQBqqBSIABMC67O0b-1sAboHT6stbeJT1qSI_Jsx6FpDX8wv1BZ82jIsQvG60P_wo7z6QXA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "This suggests that Dropout mitigates inter-layer co-adaptation, a critical issue in self-supervised learning, effectively functioning as a modality-agnostic augmentation strategy.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZoarYdXPTdI4H04XTTVsPp-anYaHrGNtaTJok0Lu23sZWQBqqBSIABMC67O0b-1sAboHT6stbeJT1qSI_Jsx6FpDX8wv1BZ82jIsQvG60P_wo7z6QXA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "### 2.3 Robustness to Domain Shift",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnZuzID9mdWG-IQ2UxLrCty1PNGO8GSe_e1IsfTRuacZqQNgs66x7w3CBuUJgqWIxcUagHwrbyFKwdr8UwlxBGRlcmTYN1_gBQi0HSfGBWhrcXA2p8x_jIAti1to_VVg8UQ2jCLYe4h92CQAZxzW6fUfIIxCHjsonfVkiGxeuW0ZbjWSUDbS83uyXxSk26QQ=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQjSxuo8XKl7eIfaBnx2PhD5U0ccq0AdvtQQeINyk7dbSB_XJaB4xYKtzmhv0qgsc_WHoUxnKY0uEQKqflIQgfR7hF9wlfSmTcsRVobLpJKLk0aguVHHe_W1HXhER6c1PvRGHDzb6OJLJu-DYzXNnPc_nryoiPpDLCRWfSssQm2-5gAQFoE_c4jnLvl6VJCJnPUCwcZWppFW1yGAPQgILtS-vqdtbY04lcKmy1thmoYndfETuX7ouBcCgGkA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "The implicit augmentation provided by Dropout contributes to robustness against domain shifts.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnZuzID9mdWG-IQ2UxLrCty1PNGO8GSe_e1IsfTRuacZqQNgs66x7w3CBuUJgqWIxcUagHwrbyFKwdr8UwlxBGRlcmTYN1_gBQi0HSfGBWhrcXA2p8x_jIAti1to_VVg8UQ2jCLYe4h92CQAZxzW6fUfIIxCHjsonfVkiGxeuW0ZbjWSUDbS83uyXxSk26QQ=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQjSxuo8XKl7eIfaBnx2PhD5U0ccq0AdvtQQeINyk7dbSB_XJaB4xYKtzmhv0qgsc_WHoUxnKY0uEQKqflIQgfR7hF9wlfSmTcsRVobLpJKLk0aguVHHe_W1HXhER6c1PvRGHDzb6OJLJu-DYzXNnPc_nryoiPpDLCRWfSssQm2-5gAQFoE_c4jnLvl6VJCJnPUCwcZWppFW1yGAPQgILtS-vqdtbY04lcKmy1thmoYndfETuX7ouBcCgGkA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "By effectively training on a \"cloud\" of noisy variations around each data point, the decision boundaries become smoother and less sensitive to small deviations in the input distribution.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnZuzID9mdWG-IQ2UxLrCty1PNGO8GSe_e1IsfTRuacZqQNgs66x7w3CBuUJgqWIxcUagHwrbyFKwdr8UwlxBGRlcmTYN1_gBQi0HSfGBWhrcXA2p8x_jIAti1to_VVg8UQ2jCLYe4h92CQAZxzW6fUfIIxCHjsonfVkiGxeuW0ZbjWSUDbS83uyXxSk26QQ=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQjSxuo8XKl7eIfaBnx2PhD5U0ccq0AdvtQQeINyk7dbSB_XJaB4xYKtzmhv0qgsc_WHoUxnKY0uEQKqflIQgfR7hF9wlfSmTcsRVobLpJKLk0aguVHHe_W1HXhER6c1PvRGHDzb6OJLJu-DYzXNnPc_nryoiPpDLCRWfSssQm2-5gAQFoE_c4jnLvl6VJCJnPUCwcZWppFW1yGAPQgILtS-vqdtbY04lcKmy1thmoYndfETuX7ouBcCgGkA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "This is conceptually similar to training on an infinite ensemble of slightly perturbed models, which naturally yields better generalization to unseen domains.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnZuzID9mdWG-IQ2UxLrCty1PNGO8GSe_e1IsfTRuacZqQNgs66x7w3CBuUJgqWIxcUagHwrbyFKwdr8UwlxBGRlcmTYN1_gBQi0HSfGBWhrcXA2p8x_jIAti1to_VVg8UQ2jCLYe4h92CQAZxzW6fUfIIxCHjsonfVkiGxeuW0ZbjWSUDbS83uyXxSk26QQ=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQjSxuo8XKl7eIfaBnx2PhD5U0ccq0AdvtQQeINyk7dbSB_XJaB4xYKtzmhv0qgsc_WHoUxnKY0uEQKqflIQgfR7hF9wlfSmTcsRVobLpJKLk0aguVHHe_W1HXhER6c1PvRGHDzb6OJLJu-DYzXNnPc_nryoiPpDLCRWfSssQm2-5gAQFoE_c4jnLvl6VJCJnPUCwcZWppFW1yGAPQgILtS-vqdtbY04lcKmy1thmoYndfETuX7ouBcCgGkA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "## 3. Uncertainty Estimation and Bayesian Approximation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "Perhaps the most significant \"desirable\" side effect of Dropout, beyond regularization, is its ability to transform standard deterministic neural networks into probabilistic models capable of quantifying uncertainty.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "### 3.1 Monte Carlo (MC) Dropout",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFQ1JAyTZBBREG8YaARMl5TX-w8rR2O-1WAgwZsFjRb1S-_DXbKwOBG6vlM8vv_LCMkdmIO3M1S3vVr8WgpB80cr6SX0L1UQvkr2hcQaAxTa7MTiL7bPYbQCbLLYBAg_8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "Standard deep learning models provide point estimates (e.g., a single class probability), often with overconfident predictions even on out-of-distribution data.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFQ1JAyTZBBREG8YaARMl5TX-w8rR2O-1WAgwZsFjRb1S-_DXbKwOBG6vlM8vv_LCMkdmIO3M1S3vVr8WgpB80cr6SX0L1UQvkr2hcQaAxTa7MTiL7bPYbQCbLLYBAg_8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "Gal and Ghahramani established that a neural network with Dropout applied before every weight layer is mathematically equivalent to an approximation of a probabilistic Deep Gaussian Process.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFQ1JAyTZBBREG8YaARMl5TX-w8rR2O-1WAgwZsFjRb1S-_DXbKwOBG6vlM8vv_LCMkdmIO3M1S3vVr8WgpB80cr6SX0L1UQvkr2hcQaAxTa7MTiL7bPYbQCbLLYBAg_8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_3",
+      "section_idx": 8,
+      "idx_in_section": 3,
+      "text": "This realization led to the development of **Monte Carlo (MC) Dropout**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "geeksforgeeks.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8N9BVld221NqfCUZvljr06zb1bCxyZQiIVDfZuGu4vi74BNQt0Ixz-OeL1yDg9U9wIm4QuaWKvKj7CLR4AGpVWbIDmXqtl93aLGP4LneeGZayn4xwNT-Oq95nvpkCuOFjSuS1s7xGt6Ei5qEDsIP-W7zPmlebN9VL5Y-vCS8nDGE="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_4",
+      "section_idx": 8,
+      "idx_in_section": 4,
+      "text": "By keeping Dropout active during inference (test time) and performing multiple stochastic forward passes ($T$ times) for the same input, one obtains a distribution of predictions rather than a single output.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "geeksforgeeks.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8N9BVld221NqfCUZvljr06zb1bCxyZQiIVDfZuGu4vi74BNQt0Ixz-OeL1yDg9U9wIm4QuaWKvKj7CLR4AGpVWbIDmXqtl93aLGP4LneeGZayn4xwNT-Oq95nvpkCuOFjSuS1s7xGt6Ei5qEDsIP-W7zPmlebN9VL5Y-vCS8nDGE="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_5",
+      "section_idx": 8,
+      "idx_in_section": 5,
+      "text": "*  **Predictive Mean:** The average of the $T$ stochastic outputs serves as the final prediction, often yielding higher accuracy than a single deterministic pass (model averaging).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFQ1JAyTZBBREG8YaARMl5TX-w8rR2O-1WAgwZsFjRb1S-_DXbKwOBG6vlM8vv_LCMkdmIO3M1S3vVr8WgpB80cr6SX0L1UQvkr2hcQaAxTa7MTiL7bPYbQCbLLYBAg_8="
+        ],
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8MlwNMcIGqMHD1Bl3NAwaMncoFa_v850rraxKv3DuXIwN-KjCT_li42_nanOKLzVv-uKgYCQNjhsx20I2PMRYLca9-KG7lRjD_tO2lyTOS0WNxhHHubKUPHwxjMDZQiGDPgwbCVGYB_Zh_3NgwtVwuZX-kVxcP0yqG0ido3L1aiaSwvS6ZS0e15pBiF_yfPGz_68COpKRnOFN0tIFjox9FLGwzN7u8eRSGGrTnR8wV3PLRA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_6",
+      "section_idx": 8,
+      "idx_in_section": 6,
+      "text": "*  **Predictive Variance:** The variance of the $T$ outputs quantifies the **epistemic uncertainty** (model uncertainty)\u2014the uncertainty stemming from a lack of training data in that region of the input space.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF3BaLrDue4M9kKPz_R06N19a6xBbizvkarUPLvYEf3hK8m8cgeqiBjs-Mi0jppSXMIoL_aE9gZANej_rdYnvD3xchYxd1tlkkUv_kMO5WEnI8SEa5IuFYt-njuPlEmN-z3JPPEYdKVASKvceGx"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "### 3.2 Practical Implications for Safety-Critical Systems",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "This side effect is transformative for safety-critical applications (e.g., autonomous driving, medical diagnosis).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "A model using MC Dropout can signal \"I don't know\" when the variance of its predictions is high, allowing the system to defer decisions to humans or conservative fallback mechanisms.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "geeksforgeeks.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8N9BVld221NqfCUZvljr06zb1bCxyZQiIVDfZuGu4vi74BNQt0Ixz-OeL1yDg9U9wIm4QuaWKvKj7CLR4AGpVWbIDmXqtl93aLGP4LneeGZayn4xwNT-Oq95nvpkCuOFjSuS1s7xGt6Ei5qEDsIP-W7zPmlebN9VL5Y-vCS8nDGE="
+        ],
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHD2dRegrOueQaX0GlYK9H0wpPDyH9Y0OXHZMxf39uXVYQhZaJXXUaOBz1pBZem-fqIkxwnRY4dP1XJ2cktEd99mTq3EraRsJsxrkrRSy7lgONKfSiLOqmXUJ2JBu9XOas4XFyg"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "It provides a principled mechanism for uncertainty estimation without requiring changes to the architecture or complex Bayesian training procedures.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHcIcS9B0aRSqvWOq2AO8UQcgcvtdz9F8itraCcjk74JJWnMWBiAX25k71Y7l6On4WFxKW_OeY0UqMGDtwJ3XwCVJRFhwze3wIB0nZ8ouaLQTSLHH-qf62jNQAGamCAI_n1kaBs-FFIahgxI_a4b-bfxHSGrw5K8-sCx7uIQcFmR0V1OGvbLnKdCMl5N_lIw41b50jZILXX0lZxQ3X_bJfuFhlGwcSmNA7Rtg="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhyucjNsfPXg3IT0KolntqK0pXxM7TeQTUuQT2ATneSkDWGfffBHQh_rsmiR2D3zwa2hDL2_Hxs4Kg5deA7wJyvaj3e8LCyCQPEHByWNdNVKhGtSWRBNgIqRFJfulOU2xir5hAIpQdq5K8NvsvugfnlslZgw8kMnzKaxvC5OTWUGW_QwPt4Za9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

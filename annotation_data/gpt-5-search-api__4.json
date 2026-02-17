@@ -1,0 +1,1247 @@
+{
+  "model_name": "gpt-5-search-api",
+  "example_id": "4",
+  "question": "Please provide a detailed answer to the following question:\n\nIn recommendation systems, how are new methods that optimize diversity typically evaluated?",
+  "answer": "Here\u2019s a detailed look at how new recommendation-methods that aim to *optimize diversity* are typically evaluated. Because diversity can trade off with other objectives like accuracy, evaluation is multifaceted, using offline metrics, user modeling, and online (user-facing) testing.  \n\n---\n\n## 1. Key Evaluation Dimensions\n\nWhen evaluating diversity-optimizing recommender methods, researchers examine a variety of metrics beyond just accuracy. Some of these are:\n\n- **Diversity (Intra-List Diversity or Dissimilarity):** Measures how dissimilar items are within each user's recommendation list. Commonly computed as the average pairwise dissimilarity among recommended items. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **Novelty / Unexpectedness / Serendipity:** How \u201cfresh\u201d or surprising the recommendations are to the user. Novelty often refers to recommending less popular or long-tail items; serendipity adds a flavor of \u201cunexpected but liked.\u201d ([evidentlyai.com](https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai))  \n- **Coverage:** Two related notions: catalog coverage (percentage of items in the catalog that ever get recommended), and distributional coverage (how evenly recommendations are spread across items) to avoid over-concentration on popular items. ([deepwiki.com](https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai))  \n- **Trade-off with Accuracy:** Traditional accuracy metrics (precision, recall, nDCG, etc.) must be measured simultaneously because boosting diversity often reduces relevance. The purpose is to understand the accuracy-diversity trade-off. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n\n---\n\n## 2. Offline Evaluation\n\nOffline evaluation refers to experiments using historical data, simulators or held-out datasets (train/test splits). The method is:\n\n- **Datasets:** Standard recommendation datasets (e.g. MovieLens, Amazon, news datasets, etc.) are used. Historic user-item interactions are split into train vs test.  \n- **Ranking Evaluation:** For every user, models produce a top-N ranked list of items, and metrics are computed over that list (e.g. precision@N, recall@N, nDCG@N).  \n- **Diversity / Novelty / Coverage Metrics Computed:** Once top-N lists are produced, diversity (e.g. intra-list dissimilarity), novelty (popularity-based or exposure to long-tail), and coverage are measured. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **Composite Metrics / Unified Measures:** Some work defines unified metrics that combine accuracy + diversity (or topical diversity) into one score. For example, Parapar & Radlinski (2021) proposed metrics that satisfy axiomatic properties and combine topical diversity with ranking accuracy. ([research.google](https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai))  \n- **User-Preference or Error in Diversity:** Instead of only measuring absolute diversity, methods sometimes model users\u2019 preferred amount of diversity and compute error between what the system delivers and the preference. For example, the *root mean square diversity error (RMSDE)* metric quantifies how far the recommendation list\u2019s diversity deviates from a user\u2019s desired diversity level. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n\n---\n\n## 3. Empirical or Simulated User Preference Studies\n\nSince diversity can be subjective, some evaluation setups try to estimate or elicit how much diversity users *want*:\n\n- **Surveys / Questionnaires / Behavioral Data:** Ask users what level of diversity they prefer, or infer from their past behavior (e.g. breadth of genres in their profile). Then assess whether the recommender\u2019s output matches that preferred diversity. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **User Studies and A/B Testing (Online):** Deploy different recommendation strategies with varying diversity, and measure user engagement (clicks, dwell time, satisfaction). This gives real-user feedback on whether increased diversity helps or harms. ([arxiv.org](https://arxiv.org/abs/1411.3650?utm_source=openai))  \n\n---\n\n## 4. Online Evaluation / A/B Tests\n\nOffline metrics can help tune systems, but online testing shows real impact. Some key elements:\n\n- **Engagement Metrics:** Click-through rate, conversion, time spent, retention (e.g., whether users continue using the system over time).  \n- **Behavioral Effects:** Diversity can influence exploration vs exploitation. A system might expose users to novel items; measure if users accept them or bounce.  \n- **Stratified Analysis:** Different user types (new vs experienced, with narrow profile vs broad) are often affected differently by diversity adjustments. Evaluation often breaks out effects by these segments. ([arxiv.org](https://arxiv.org/abs/1809.03186?utm_source=openai))  \n\n---\n\n## 5. Balancing and Visualizing Trade-offs\n\nBecause optimizing diversity often lowers accuracy, good evaluations make these trade-offs explicit:\n\n- **Pareto Fronts:** Plot accuracy vs diversity (or precision vs novelty) for various parameter settings, tracking the Pareto\u2010optimal frontier. This helps assess whether a method offers better trade-offs. ([mdpi.com](https://www.mdpi.com/2504-3900/2/18/1178?utm_source=openai))  \n- **Parameter Sweeps:** Varied regularization or diversity weights to see how diversity and accuracy move together. Enables tuning system to business or user preference. ([mdpi.com](https://www.mdpi.com/2504-3900/2/18/1178?utm_source=openai))  \n\n---\n\n## 6. Recent & Normative Metrics\n\nSome newer works introduce metrics or evaluation frames that capture societal, normative or ranking dynamics:\n\n- **Normative Diversity / RADio Metrics:** For news recommendation, RADio introduces rank-aware divergence metrics (based on Jensen-Shannon divergence) to measure how well recommendations adhere to normative goals (e.g. variety of voices) while accounting for rank bias. ([arxiv.org](https://arxiv.org/abs/2209.13520?utm_source=openai))  \n- **Commonality and Cultural Citizenship:** Metrics like *commonality* have been proposed to assess not just diversity but shared cultural exposure (e.g. ensuring a population receives content across important cultural categories). Adds another dimension beyond user satisfaction. ([arxiv.org](https://arxiv.org/abs/2302.11360?utm_source=openai))  \n\n---\n\n## 7. Key Challenges & Caveats in Evaluation\n\nWhile many methods are used, there are several issues researchers try to address:\n\n- **Metric Sensitivity & Bias:** Similarity/dissimilarity functions depend heavily on item metadata (genres, tags) or embeddings; popularity bias can distort what \"dissimilar\" means. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **User Preferences Heterogeneity:** Users differ in their tolerance for diversity; a one-size-fits-all approach may worsen user satisfaction even if aggregate metrics improve. That\u2019s why modeling user-specific preferences (e.g. through RMSDE) is valuable. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **Offline vs Online Gaps:** Offline metrics may not predict real user behavior. For example, very high diversity may look good offline but decrease engagement online for users who prefer consistency. ([arxiv.org](https://arxiv.org/abs/1809.03186?utm_source=openai))  \n\n---\n\n## 8. Typical Evaluation Protocol\n\nPutting it together, a standard evaluation protocol for new diversity-optimizing recommender methods often goes like this:\n\n1. **Select datasets** with rich item metadata (genres, topics, categories).\n2. **Define baselines**, including accuracy-focused methods (pure CF, MF, popularity) and existing diversity\u2010aware methods.\n3. **Offline experiments:**\n   - Train/test split (or cross-validation).\n   - Generate top-N recommendation lists.\n   - Compute accuracy metrics and diversity/novelty/coverage metrics.\n   - Compute unified or composite metrics where applicable.\n   - If possible, model or elicit user diversity preference, compute metrics like diversity error (RMSDE).\n   - Sweep tuning parameters controlling the trade-off (diversity weight, re-rank factor, etc.), plot Pareto front between diversity vs accuracy.\n4. **User studies / online evaluation:**\n   - Small-scale or lab studies to validate subjective user satisfaction.\n   - A/B testing or field deployment measuring engagement and satisfaction for different diversity levels.\n   - Stratify results by user type (experience, profile breadth).\n5. **Analysis of effects beyond metrics:**\n   - Coverage of catalog or long tail.\n   - Impact on item exposure (fairness, popularity bias).\n   - User retention, exploratory behavior.\n\n---\n\nIf you want, I can also pull together examples of recent published works (2024-5) that illustrate these evaluation methods in state-of-the-art recommender diversity work. Do you want those?",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "Here\u2019s a detailed look at how new recommendation-methods that aim to *optimize diversity* are typically evaluated. Because diversity can trade off with other objectives like accuracy, evaluation is multifaceted, using offline metrics, user modeling, and online (user-facing) testing.  \n\n---\n\n",
+      "start": 0,
+      "end": 292
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## 1. Key Evaluation Dimensions",
+      "header_level": 2,
+      "text": "## 1. Key Evaluation Dimensions\n\nWhen evaluating diversity-optimizing recommender methods, researchers examine a variety of metrics beyond just accuracy. Some of these are:\n\n- **Diversity (Intra-List Diversity or Dissimilarity):** Measures how dissimilar items are within each user's recommendation list. Commonly computed as the average pairwise dissimilarity among recommended items. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **Novelty / Unexpectedness / Serendipity:** How \u201cfresh\u201d or surprising the recommendations are to the user. Novelty often refers to recommending less popular or long-tail items; serendipity adds a flavor of \u201cunexpected but liked.\u201d ([evidentlyai.com](https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai))  \n- **Coverage:** Two related notions: catalog coverage (percentage of items in the catalog that ever get recommended), and distributional coverage (how evenly recommendations are spread across items) to avoid over-concentration on popular items. ([deepwiki.com](https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai))  \n- **Trade-off with Accuracy:** Traditional accuracy metrics (precision, recall, nDCG, etc.) must be measured simultaneously because boosting diversity often reduces relevance. The purpose is to understand the accuracy-diversity trade-off. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n\n---\n\n",
+      "start": 292,
+      "end": 1827
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 2. Offline Evaluation",
+      "header_level": 2,
+      "text": "## 2. Offline Evaluation\n\nOffline evaluation refers to experiments using historical data, simulators or held-out datasets (train/test splits). The method is:\n\n- **Datasets:** Standard recommendation datasets (e.g. MovieLens, Amazon, news datasets, etc.) are used. Historic user-item interactions are split into train vs test.  \n- **Ranking Evaluation:** For every user, models produce a top-N ranked list of items, and metrics are computed over that list (e.g. precision@N, recall@N, nDCG@N).  \n- **Diversity / Novelty / Coverage Metrics Computed:** Once top-N lists are produced, diversity (e.g. intra-list dissimilarity), novelty (popularity-based or exposure to long-tail), and coverage are measured. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **Composite Metrics / Unified Measures:** Some work defines unified metrics that combine accuracy + diversity (or topical diversity) into one score. For example, Parapar & Radlinski (2021) proposed metrics that satisfy axiomatic properties and combine topical diversity with ranking accuracy. ([research.google](https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai))  \n- **User-Preference or Error in Diversity:** Instead of only measuring absolute diversity, methods sometimes model users\u2019 preferred amount of diversity and compute error between what the system delivers and the preference. For example, the *root mean square diversity error (RMSDE)* metric quantifies how far the recommendation list\u2019s diversity deviates from a user\u2019s desired diversity level. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n\n---\n\n",
+      "start": 1827,
+      "end": 3579
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 3. Empirical or Simulated User Preference Studies",
+      "header_level": 2,
+      "text": "## 3. Empirical or Simulated User Preference Studies\n\nSince diversity can be subjective, some evaluation setups try to estimate or elicit how much diversity users *want*:\n\n- **Surveys / Questionnaires / Behavioral Data:** Ask users what level of diversity they prefer, or infer from their past behavior (e.g. breadth of genres in their profile). Then assess whether the recommender\u2019s output matches that preferred diversity. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **User Studies and A/B Testing (Online):** Deploy different recommendation strategies with varying diversity, and measure user engagement (clicks, dwell time, satisfaction). This gives real-user feedback on whether increased diversity helps or harms. ([arxiv.org](https://arxiv.org/abs/1411.3650?utm_source=openai))  \n\n---\n\n",
+      "start": 3579,
+      "end": 4434
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "## 4. Online Evaluation / A/B Tests",
+      "header_level": 2,
+      "text": "## 4. Online Evaluation / A/B Tests\n\nOffline metrics can help tune systems, but online testing shows real impact. Some key elements:\n\n- **Engagement Metrics:** Click-through rate, conversion, time spent, retention (e.g., whether users continue using the system over time).  \n- **Behavioral Effects:** Diversity can influence exploration vs exploitation. A system might expose users to novel items; measure if users accept them or bounce.  \n- **Stratified Analysis:** Different user types (new vs experienced, with narrow profile vs broad) are often affected differently by diversity adjustments. Evaluation often breaks out effects by these segments. ([arxiv.org](https://arxiv.org/abs/1809.03186?utm_source=openai))  \n\n---\n\n",
+      "start": 4434,
+      "end": 5159
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "## 5. Balancing and Visualizing Trade-offs",
+      "header_level": 2,
+      "text": "## 5. Balancing and Visualizing Trade-offs\n\nBecause optimizing diversity often lowers accuracy, good evaluations make these trade-offs explicit:\n\n- **Pareto Fronts:** Plot accuracy vs diversity (or precision vs novelty) for various parameter settings, tracking the Pareto\u2010optimal frontier. This helps assess whether a method offers better trade-offs. ([mdpi.com](https://www.mdpi.com/2504-3900/2/18/1178?utm_source=openai))  \n- **Parameter Sweeps:** Varied regularization or diversity weights to see how diversity and accuracy move together. Enables tuning system to business or user preference. ([mdpi.com](https://www.mdpi.com/2504-3900/2/18/1178?utm_source=openai))  \n\n---\n\n",
+      "start": 5159,
+      "end": 5836
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## 6. Recent & Normative Metrics",
+      "header_level": 2,
+      "text": "## 6. Recent & Normative Metrics\n\nSome newer works introduce metrics or evaluation frames that capture societal, normative or ranking dynamics:\n\n- **Normative Diversity / RADio Metrics:** For news recommendation, RADio introduces rank-aware divergence metrics (based on Jensen-Shannon divergence) to measure how well recommendations adhere to normative goals (e.g. variety of voices) while accounting for rank bias. ([arxiv.org](https://arxiv.org/abs/2209.13520?utm_source=openai))  \n- **Commonality and Cultural Citizenship:** Metrics like *commonality* have been proposed to assess not just diversity but shared cultural exposure (e.g. ensuring a population receives content across important cultural categories). Adds another dimension beyond user satisfaction. ([arxiv.org](https://arxiv.org/abs/2302.11360?utm_source=openai))  \n\n---\n\n",
+      "start": 5836,
+      "end": 6675
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "## 7. Key Challenges & Caveats in Evaluation",
+      "header_level": 2,
+      "text": "## 7. Key Challenges & Caveats in Evaluation\n\nWhile many methods are used, there are several issues researchers try to address:\n\n- **Metric Sensitivity & Bias:** Similarity/dissimilarity functions depend heavily on item metadata (genres, tags) or embeddings; popularity bias can distort what \"dissimilar\" means. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **User Preferences Heterogeneity:** Users differ in their tolerance for diversity; a one-size-fits-all approach may worsen user satisfaction even if aggregate metrics improve. That\u2019s why modeling user-specific preferences (e.g. through RMSDE) is valuable. ([link.springer.com](https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai))  \n- **Offline vs Online Gaps:** Offline metrics may not predict real user behavior. For example, very high diversity may look good offline but decrease engagement online for users who prefer consistency. ([arxiv.org](https://arxiv.org/abs/1809.03186?utm_source=openai))  \n\n---\n\n",
+      "start": 6675,
+      "end": 7729
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "## 8. Typical Evaluation Protocol",
+      "header_level": 2,
+      "text": "## 8. Typical Evaluation Protocol\n\nPutting it together, a standard evaluation protocol for new diversity-optimizing recommender methods often goes like this:\n\n1. **Select datasets** with rich item metadata (genres, topics, categories).\n2. **Define baselines**, including accuracy-focused methods (pure CF, MF, popularity) and existing diversity\u2010aware methods.\n3. **Offline experiments:**\n   - Train/test split (or cross-validation).\n   - Generate top-N recommendation lists.\n   - Compute accuracy metrics and diversity/novelty/coverage metrics.\n   - Compute unified or composite metrics where applicable.\n   - If possible, model or elicit user diversity preference, compute metrics like diversity error (RMSDE).\n   - Sweep tuning parameters controlling the trade-off (diversity weight, re-rank factor, etc.), plot Pareto front between diversity vs accuracy.\n4. **User studies / online evaluation:**\n   - Small-scale or lab studies to validate subjective user satisfaction.\n   - A/B testing or field deployment measuring engagement and satisfaction for different diversity levels.\n   - Stratify results by user type (experience, profile breadth).\n5. **Analysis of effects beyond metrics:**\n   - Coverage of catalog or long tail.\n   - Impact on item exposure (fairness, popularity bias).\n   - User retention, exploratory behavior.\n\n---\n\nIf you want, I can also pull together examples of recent published works (2024-5) that illustrate these evaluation methods in state-of-the-art recommender diversity work. Do you want those?",
+      "start": 7729,
+      "end": 9253
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "Here\u2019s a detailed look at how new recommendation-methods that aim to *optimize diversity* are typically evaluated.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "Because diversity can trade off with other objectives like accuracy, evaluation is multifaceted, using offline metrics, user modeling, and online (user-facing) testing.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "## 1. Key Evaluation Dimensions",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "When evaluating diversity-optimizing recommender methods, researchers examine a variety of metrics beyond just accuracy.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_11",
+      "section_idx": 1,
+      "idx_in_section": 11,
+      "text": "- **Trade-off with Accuracy:** Traditional accuracy metrics (precision, recall, nDCG, etc.) must be measured simultaneously because boosting diversity often reduces relevance.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "10 metrics to evaluate recommender and ranking systems",
+          "https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai"
+        ],
+        [
+          "Evaluation | recommenders-team/recommenders | DeepWiki",
+          "https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_12",
+      "section_idx": 1,
+      "idx_in_section": 12,
+      "text": "The purpose is to understand the accuracy-diversity trade-off.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "10 metrics to evaluate recommender and ranking systems",
+          "https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai"
+        ],
+        [
+          "Evaluation | recommenders-team/recommenders | DeepWiki",
+          "https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_13",
+      "section_idx": 1,
+      "idx_in_section": 13,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "Some of these are:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "- **Diversity (Intra-List Diversity or Dissimilarity):** Measures how dissimilar items are within each user's recommendation list.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "10 metrics to evaluate recommender and ranking systems",
+          "https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai"
+        ],
+        [
+          "Evaluation | recommenders-team/recommenders | DeepWiki",
+          "https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "Commonly computed as the average pairwise dissimilarity among recommended items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "10 metrics to evaluate recommender and ranking systems",
+          "https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai"
+        ],
+        [
+          "Evaluation | recommenders-team/recommenders | DeepWiki",
+          "https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_6",
+      "section_idx": 1,
+      "idx_in_section": 6,
+      "text": "- **Novelty / Unexpectedness / Serendipity:** How \u201cfresh\u201d or surprising the recommendations are to the user.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "10 metrics to evaluate recommender and ranking systems",
+          "https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai"
+        ],
+        [
+          "Evaluation | recommenders-team/recommenders | DeepWiki",
+          "https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_7",
+      "section_idx": 1,
+      "idx_in_section": 7,
+      "text": "Novelty often refers to recommending less popular or long-tail items; serendipity adds a flavor of \u201cunexpected but liked.\u201d",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "10 metrics to evaluate recommender and ranking systems",
+          "https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai"
+        ],
+        [
+          "Evaluation | recommenders-team/recommenders | DeepWiki",
+          "https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_9",
+      "section_idx": 1,
+      "idx_in_section": 9,
+      "text": "- **Coverage:** Two related notions: catalog coverage (percentage of items in the catalog that ever get recommended), and distributional coverage (how evenly recommendations are spread across items) to avoid over-concentration on popular items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "10 metrics to evaluate recommender and ranking systems",
+          "https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems?utm_source=openai"
+        ],
+        [
+          "Evaluation | recommenders-team/recommenders | DeepWiki",
+          "https://deepwiki.com/recommenders-team/recommenders/3-evaluation?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 2. Offline Evaluation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "Offline evaluation refers to experiments using historical data, simulators or held-out datasets (train/test splits).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_11",
+      "section_idx": 2,
+      "idx_in_section": 11,
+      "text": "- **User-Preference or Error in Diversity:** Instead of only measuring absolute diversity, methods sometimes model users\u2019 preferred amount of diversity and compute error between what the system delivers and the preference.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+          "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_12",
+      "section_idx": 2,
+      "idx_in_section": 12,
+      "text": "For example, the *root mean square diversity error (RMSDE)* metric quantifies how far the recommendation list\u2019s diversity deviates from a user\u2019s desired diversity level.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+          "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_13",
+      "section_idx": 2,
+      "idx_in_section": 13,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "The method is:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "- **Datasets:** Standard recommendation datasets (e.g. MovieLens, Amazon, news datasets, etc.) are used.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+          "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "Historic user-item interactions are split into train vs test.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+          "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "- **Ranking Evaluation:** For every user, models produce a top-N ranked list of items, and metrics are computed over that list (e.g. precision@N, recall@N, nDCG@N).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+          "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "- **Diversity / Novelty / Coverage Metrics Computed:** Once top-N lists are produced, diversity (e.g. intra-list dissimilarity), novelty (popularity-based or exposure to long-tail), and coverage are measured.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+          "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_8",
+      "section_idx": 2,
+      "idx_in_section": 8,
+      "text": "- **Composite Metrics / Unified Measures:** Some work defines unified metrics that combine accuracy + diversity (or topical diversity) into one score.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+          "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_9",
+      "section_idx": 2,
+      "idx_in_section": 9,
+      "text": "For example, Parapar & Radlinski (2021) proposed metrics that satisfy axiomatic properties and combine topical diversity with ranking accuracy.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+          "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 3. Empirical or Simulated User Preference Studies",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "Since diversity can be subjective, some evaluation setups try to estimate or elicit how much diversity users *want*:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "- **Surveys / Questionnaires / Behavioral Data:** Ask users what level of diversity they prefer, or infer from their past behavior (e.g. breadth of genres in their profile).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "DUM: Diversity-Weighted Utility Maximization for Recommendations",
+          "https://arxiv.org/abs/1411.3650?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_3",
+      "section_idx": 3,
+      "idx_in_section": 3,
+      "text": "Then assess whether the recommender\u2019s output matches that preferred diversity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "DUM: Diversity-Weighted Utility Maximization for Recommendations",
+          "https://arxiv.org/abs/1411.3650?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_4",
+      "section_idx": 3,
+      "idx_in_section": 4,
+      "text": "- **User Studies and A/B Testing (Online):** Deploy different recommendation strategies with varying diversity, and measure user engagement (clicks, dwell time, satisfaction).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "DUM: Diversity-Weighted Utility Maximization for Recommendations",
+          "https://arxiv.org/abs/1411.3650?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_5",
+      "section_idx": 3,
+      "idx_in_section": 5,
+      "text": "This gives real-user feedback on whether increased diversity helps or harms.   \n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "DUM: Diversity-Weighted Utility Maximization for Recommendations",
+          "https://arxiv.org/abs/1411.3650?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "## 4. Online Evaluation / A/B Tests",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "Offline metrics can help tune systems, but online testing shows real impact.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "Some key elements:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "- **Engagement Metrics:** Click-through rate, conversion, time spent, retention (e.g., whether users continue using the system over time).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "- **Behavioral Effects:** Diversity can influence exploration vs exploitation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "A system might expose users to novel items; measure if users accept them or bounce.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": "- **Stratified Analysis:** Different user types (new vs experienced, with narrow profile vs broad) are often affected differently by diversity adjustments.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "Evaluation often breaks out effects by these segments.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "## 5. Balancing and Visualizing Trade-offs",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "Because optimizing diversity often lowers accuracy, good evaluations make these trade-offs explicit:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "- **Pareto Fronts:** Plot accuracy vs diversity (or precision vs novelty) for various parameter settings, tracking the Pareto\u2010optimal frontier.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "When Diversity Met Accuracy: A Story of Recommender Systems",
+          "https://www.mdpi.com/2504-3900/2/18/1178?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "This helps assess whether a method offers better trade-offs.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "When Diversity Met Accuracy: A Story of Recommender Systems",
+          "https://www.mdpi.com/2504-3900/2/18/1178?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "- **Parameter Sweeps:** Varied regularization or diversity weights to see how diversity and accuracy move together.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "When Diversity Met Accuracy: A Story of Recommender Systems",
+          "https://www.mdpi.com/2504-3900/2/18/1178?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_6",
+      "section_idx": 5,
+      "idx_in_section": 6,
+      "text": "Enables tuning system to business or user preference.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "When Diversity Met Accuracy: A Story of Recommender Systems",
+          "https://www.mdpi.com/2504-3900/2/18/1178?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_7",
+      "section_idx": 5,
+      "idx_in_section": 7,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## 6. Recent & Normative Metrics",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "Some newer works introduce metrics or evaluation frames that capture societal, normative or ranking dynamics:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "- **Normative Diversity / RADio Metrics:** For news recommendation, RADio introduces rank-aware divergence metrics (based on Jensen-Shannon divergence) to measure how well recommendations adhere to normative goals (e.g. variety of voices) while accounting for rank bias.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "RADio -- Rank-Aware Divergence Metrics to Measure Normative Diversity in News Recommendations",
+          "https://arxiv.org/abs/2209.13520?utm_source=openai"
+        ],
+        [
+          "Commonality in Recommender Systems: Evaluating Recommender Systems to Enhance Cultural Citizenship",
+          "https://arxiv.org/abs/2302.11360?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "- **Commonality and Cultural Citizenship:** Metrics like *commonality* have been proposed to assess not just diversity but shared cultural exposure (e.g. ensuring a population receives content across important cultural categories).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "RADio -- Rank-Aware Divergence Metrics to Measure Normative Diversity in News Recommendations",
+          "https://arxiv.org/abs/2209.13520?utm_source=openai"
+        ],
+        [
+          "Commonality in Recommender Systems: Evaluating Recommender Systems to Enhance Cultural Citizenship",
+          "https://arxiv.org/abs/2302.11360?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "Adds another dimension beyond user satisfaction.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "RADio -- Rank-Aware Divergence Metrics to Measure Normative Diversity in News Recommendations",
+          "https://arxiv.org/abs/2209.13520?utm_source=openai"
+        ],
+        [
+          "Commonality in Recommender Systems: Evaluating Recommender Systems to Enhance Cultural Citizenship",
+          "https://arxiv.org/abs/2302.11360?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "## 7. Key Challenges & Caveats in Evaluation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "While many methods are used, there are several issues researchers try to address:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "- **Metric Sensitivity & Bias:** Similarity/dissimilarity functions depend heavily on item metadata (genres, tags) or embeddings; popularity bias can distort what \"dissimilar\" means.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "- **User Preferences Heterogeneity:** Users differ in their tolerance for diversity; a one-size-fits-all approach may worsen user satisfaction even if aggregate metrics improve.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_4",
+      "section_idx": 7,
+      "idx_in_section": 4,
+      "text": "That\u2019s why modeling user-specific preferences (e.g. through RMSDE) is valuable.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_5",
+      "section_idx": 7,
+      "idx_in_section": 5,
+      "text": "- **Offline vs Online Gaps:** Offline metrics may not predict real user behavior.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_6",
+      "section_idx": 7,
+      "idx_in_section": 6,
+      "text": "For example, very high diversity may look good offline but decrease engagement online for users who prefer consistency.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Measuring the diversity of recommendations: a preference-aware approach for evaluating and adjusting diversity | Knowledge and Information Systems",
+          "https://link.springer.com/article/10.1007/s10115-019-01371-0?utm_source=openai"
+        ],
+        [
+          "Off-line vs. On-line Evaluation of Recommender Systems in Small E-commerce",
+          "https://arxiv.org/abs/1809.03186?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_7",
+      "section_idx": 7,
+      "idx_in_section": 7,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "## 8. Typical Evaluation Protocol",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "Putting it together, a standard evaluation protocol for new diversity-optimizing recommender methods often goes like this:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_10",
+      "section_idx": 8,
+      "idx_in_section": 10,
+      "text": "- Sweep tuning parameters controlling the trade-off (diversity weight, re-rank factor, etc.), plot Pareto front between diversity vs accuracy.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_11",
+      "section_idx": 8,
+      "idx_in_section": 11,
+      "text": "4. **User studies / online evaluation:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_12",
+      "section_idx": 8,
+      "idx_in_section": 12,
+      "text": "- Small-scale or lab studies to validate subjective user satisfaction.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_13",
+      "section_idx": 8,
+      "idx_in_section": 13,
+      "text": "- A/B testing or field deployment measuring engagement and satisfaction for different diversity levels.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_14",
+      "section_idx": 8,
+      "idx_in_section": 14,
+      "text": "- Stratify results by user type (experience, profile breadth).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_15",
+      "section_idx": 8,
+      "idx_in_section": 15,
+      "text": "5. **Analysis of effects beyond metrics:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_16",
+      "section_idx": 8,
+      "idx_in_section": 16,
+      "text": "- Coverage of catalog or long tail.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_17",
+      "section_idx": 8,
+      "idx_in_section": 17,
+      "text": "- Impact on item exposure (fairness, popularity bias).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_18",
+      "section_idx": 8,
+      "idx_in_section": 18,
+      "text": "- User retention, exploratory behavior.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_19",
+      "section_idx": 8,
+      "idx_in_section": 19,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "1. **Select datasets** with rich item metadata (genres, topics, categories).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_20",
+      "section_idx": 8,
+      "idx_in_section": 20,
+      "text": "If you want, I can also pull together examples of recent published works (2024-5) that illustrate these evaluation methods in state-of-the-art recommender diversity work.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_21",
+      "section_idx": 8,
+      "idx_in_section": 21,
+      "text": "Do you want those?",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_3",
+      "section_idx": 8,
+      "idx_in_section": 3,
+      "text": "2. **Define baselines**, including accuracy-focused methods (pure CF, MF, popularity) and existing diversity\u2010aware methods.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_4",
+      "section_idx": 8,
+      "idx_in_section": 4,
+      "text": "3. **Offline experiments:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_5",
+      "section_idx": 8,
+      "idx_in_section": 5,
+      "text": "- Train/test split (or cross-validation).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_6",
+      "section_idx": 8,
+      "idx_in_section": 6,
+      "text": "- Generate top-N recommendation lists.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_7",
+      "section_idx": 8,
+      "idx_in_section": 7,
+      "text": "- Compute accuracy metrics and diversity/novelty/coverage metrics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_8",
+      "section_idx": 8,
+      "idx_in_section": 8,
+      "text": "- Compute unified or composite metrics where applicable.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_9",
+      "section_idx": 8,
+      "idx_in_section": 9,
+      "text": "- If possible, model or elicit user diversity preference, compute metrics like diversity error (RMSDE).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

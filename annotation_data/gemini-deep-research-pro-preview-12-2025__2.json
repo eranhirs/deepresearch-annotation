@@ -1,0 +1,2639 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "2",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat are leading methods for generating hard examples of the boolean satisfiability problem, and what are their strengths and weaknesses?",
+  "answer": "# Leading Methods for Generating Hard Examples of the Boolean Satisfiability Problem: A Comprehensive Analysis\n\n**Key Points**\n*   **Random k-SAT and Phase Transitions:** The classical method for generating hard instances involves creating random $k$-SAT formulas (typically $k=3$) at a specific clause-to-variable ratio (approx. 4.26 for 3-SAT). These instances exhibit a \"phase transition\" from satisfiable to unsatisfiable, creating a peak in computational hardness. While theoretically significant, they often lack the structural properties of real-world problems.\n*   **Pseudo-Industrial Generators:** To bridge the gap between random and real-world instances, researchers have developed models that incorporate \"industrial\" characteristics such as scale-free node degree distributions (power-law), community structure (modularity), and self-similarity. Leading models include the Community Attachment (CA) and Popularity-Similarity (PS) models.\n*   **Cryptographic Instances:** Problems derived from cryptographic primitives (e.g., breaking encryption, hash collisions) or logic locking (obfuscated circuits) provide some of the hardest benchmarks. These instances are characterized by complex XOR chains and a lack of \"backdoors,\" making them exceptionally difficult for Conflict-Driven Clause Learning (CDCL) solvers, though they can suffer from \"scale explosion\" when converted to Conjunctive Normal Form (CNF).\n*   **Neural and Machine Learning Approaches:** Recent advancements utilize Graph Neural Networks (GNNs) to learn the structural distribution of hard industrial instances and generate new ones. Frameworks like G2SAT and HardSATGEN represent formulas as graphs and use split-merge processes to create new instances that attempt to preserve both the structure and computational hardness of the seed formulas.\n*   **Combinatorial and Planted Solutions:** Crafted instances based on combinatorial designs (e.g., Quasigroups with Holes, Pigeonhole Principle) or \"planted\" solutions (where a solution is hidden by construction, such as the q-hidden or sgen models) allow for the generation of satisfiable instances with tunable hardness, often used to benchmark local search algorithms.\n\n## 1. Introduction\n\nThe Boolean Satisfiability Problem (SAT) stands as a cornerstone of computer science, being the first problem proven to be NP-complete. Despite its worst-case exponential complexity, modern SAT solvers\u2014particularly those employing Conflict-Driven Clause Learning (CDCL)\u2014can routinely solve industrial instances containing millions of variables. This discrepancy between theoretical hardness and practical solvability has driven a massive research effort into understanding what makes a SAT instance \"hard.\"\n\nThe generation of hard SAT examples is critical for two primary reasons: benchmarking and security. First, solver developers require challenging and diverse datasets to identify weaknesses in heuristics and improve algorithmic performance. Second, in cryptography and hardware verification, the hardness of a SAT instance underpins the security of the system; if the instance is easily solvable, the encryption or protection mechanism is compromised.\n\nHistorically, hardness was associated with random instances sampled from the phase transition region. However, a dichotomy emerged: solvers optimized for random instances often failed on industrial ones, and vice versa. This led to the realization that \"hardness\" is context-dependent and heavily influenced by structural features such as modularity, variable degree distribution, and locality. Consequently, the field has evolved from simple uniform random generators to sophisticated pseudo-industrial models, cryptographic encodings, and deep-learning-based generative frameworks.\n\nThis report provides an exhaustive analysis of the leading methods for generating hard SAT examples. It categorizes these methods into random, pseudo-industrial, cryptographic, neural, and combinatorial approaches, evaluating the strengths and weaknesses of each in the context of modern SAT solving.\n\n## 2. Random k-SAT and the Phase Transition Phenomenon\n\nThe generation of uniform random $k$-SAT instances is the most studied method for creating hard benchmarks. This approach is grounded in statistical physics and complexity theory, focusing on the transition between under-constrained and over-constrained systems.\n\n### 2.1. Uniform Random Generation and the Critical Ratio\nThe standard model for Random 3-SAT involves selecting $m$ clauses uniformly and independently from the set of all possible clauses of length 3 over $n$ variables. The hardness of these instances is governed by the control parameter $\\alpha = m/n$, known as the clause-to-variable ratio [cite: 1, 2].\n\nResearch has identified a \"phase transition\" phenomenon occurring at a critical threshold $r_k$. For Random 3-SAT, this threshold is experimentally determined to be approximately $\\alpha \\approx 4.26$ [cite: 1, 3].\n*   **Under-constrained Region ($\\alpha < 4.26$):** Formulas are almost always satisfiable. Solutions are abundant, and solvers can find them quickly.\n*   **Over-constrained Region ($\\alpha > 4.26$):** Formulas are almost always unsatisfiable. The contradiction can usually be found quickly via resolution or small cores of conflicting clauses [cite: 4].\n*   **The Critical Region ($\\alpha \\approx 4.26$):** This is the \"hard\" region. The probability of satisfiability drops sharply from 1 to 0. In this region, instances have few (if any) solutions, and proving satisfiability or unsatisfiability requires an exponential search effort [cite: 1].\n\n### 2.2. Strengths of Random k-SAT\n*   **Controllable Hardness:** The difficulty of the instances can be finely tuned by adjusting the ratio $m/n$. This allows researchers to generate instances that are consistently hard for a given size $n$ [cite: 5].\n*   **Theoretical Simplicity:** The uniform distribution allows for rigorous mathematical analysis. Upper and lower bounds for the threshold have been established (e.g., the O(1.321n) upper bound for specific randomized search algorithms) [cite: 1, 6].\n*   **Benchmarking Local Search:** Random instances are particularly effective for benchmarking Stochastic Local Search (SLS) solvers (e.g., WalkSAT), which often perform better on random instances than complete solvers [cite: 2, 7].\n\n### 2.3. Weaknesses and Limitations\n*   **Lack of Structure:** Uniform random instances lack the internal structure found in real-world problems. They do not exhibit modularity or power-law degree distributions. Consequently, heuristics that exploit structure (like clause learning in CDCL) often perform poorly or degenerate into random guessing [cite: 5, 8].\n*   **Irrelevance to Industry:** Solvers optimized for random instances often fail on industrial instances and vice versa. A solver that dominates the random track of a SAT competition may be useless for hardware verification or planning tasks [cite: 5, 9].\n*   **Asymptotic Behavior:** While hard for their size, random instances must be kept relatively small (hundreds of variables) to be solvable in reasonable time. Industrial instances, by contrast, can handle millions of variables because of their hidden structure [cite: 1, 10].\n\n## 3. Pseudo-Industrial and Structured Generators\n\nTo address the disconnect between random benchmarks and real-world applications, the research community developed \"pseudo-industrial\" generators. These methods aim to create random instances that possess the structural characteristics\u2014specifically scale-free distributions and community structure\u2014observed in industrial formulas.\n\n### 3.1. Scale-Free and Power-Law Models\nAnalysis of industrial instances (e.g., from hardware verification) reveals that they are \"scale-free.\" The number of occurrences ($k$) of a variable follows a power-law distribution $P(k) \\sim k^{-\\delta}$. In practical terms, this means most variables appear in very few clauses, while a few \"hub\" variables appear in a massive number of clauses [cite: 4, 5].\n\n*   **Generation Method:** Instead of selecting variables uniformly (probability $1/n$), variables are selected based on a non-uniform probability distribution $P(i) \\sim i^{-\\beta}$. This forces the resulting formula to exhibit a power-law distribution of variable occurrences [cite: 4].\n*   **Impact on Hardness:** Scale-free random instances show a phase transition similar to uniform random instances, but the threshold depends on the power-law exponent $\\beta$. For $\\beta > 1 - 1/k$, unsatisfiability is often due to small cores, potentially making them easier to solve than uniform instances [cite: 4].\n\n### 3.2. Community Attachment (CA) and Modularity\nIndustrial instances often exhibit high \"modularity,\" meaning variables can be grouped into communities where connections (clauses) are dense within communities but sparse between them. Uniform random instances have very low modularity [cite: 8, 11].\n\n*   **The CA Model:** This model generates instances with a target modularity $Q$. It works by assigning variables to communities and preferentially generating clauses that connect variables within the same community.\n*   **Strengths:** High modularity correlates with the performance of CDCL solvers. By tuning modularity, researchers can study how \"divide and conquer\" strategies in solvers exploit community structure [cite: 11].\n*   **Weaknesses:** The CA model does not inherently produce scale-free distributions. It focuses solely on clustering, missing the \"hub\" variable characteristic of real instances [cite: 9].\n\n### 3.3. Popularity-Similarity (PS) Models\nThe Popularity-Similarity model attempts to unify the previous approaches. It posits that connections in complex networks (and SAT formulas) are driven by two factors:\n1.  **Popularity:** Nodes (variables) with high degrees attract more connections (preferential attachment/scale-free).\n2.  **Similarity:** Nodes tend to connect to other nodes that are \"similar\" to them (homophily/clustering) [cite: 9, 12].\n\n*   **Mechanism:** Variables are mapped to a geometric space (e.g., a circle). Connections are formed based on a distance metric that accounts for both the variable's \"popularity\" (creation time/index) and \"similarity\" (angular distance).\n*   **Strengths:** This model successfully generates instances that are *both* scale-free and modular, offering a much closer approximation to industrial benchmarks than either CA or pure scale-free models [cite: 9, 12].\n\n## 4. Cryptographic and Inversion-Based Instances\n\nCryptographic problems represent a distinct class of \"hard\" SAT instances. These are generated by encoding cryptographic primitives (encryption algorithms, hash functions) into CNF. The hardness stems from the mathematical design of the primitive, which is specifically engineered to resist analysis.\n\n### 4.1. Encoding Encryption Algorithms\nStandard encryption algorithms like AES, DES, and MD5 can be transformed into SAT instances. For example, a \"Key Recovery Attack\" instance is formed by fixing a plaintext-ciphertext pair and asking the solver to find the secret key that maps the plaintext to the ciphertext [cite: 13, 14].\n\n*   **Logic Locking/Obfuscation:** In hardware security, circuits are \"locked\" by inserting additional gates (XOR/XNOR) controlled by a key. A SAT solver can be used to \"break\" this locking by finding a key that produces correct outputs. This \"SAT Attack\" on logic locking generates extremely hard instances, often used to evaluate the robustness of obfuscation schemes [cite: 14, 15].\n*   **Lattice-Based Cryptography:** Instances derived from lattice problems (e.g., Shortest Vector Problem) are used to generate hardness based on worst-case complexity assumptions. These are particularly relevant for post-quantum cryptography discussions [cite: 16].\n\n### 4.2. Strengths of Cryptographic Instances\n*   **Extreme Hardness:** These instances are designed to be hard. They often lack the \"backdoors\" or small dependent sets that CDCL solvers exploit.\n*   **Ground Truth:** In key recovery benchmarks, the solution (the key) is known to the generator, allowing for the creation of \"planted\" satisfiable instances that are guaranteed to be hard [cite: 13].\n*   **Practical Relevance:** Solving these instances has direct implications for cybersecurity. Improvements in solving these benchmarks translate to better cryptanalysis tools [cite: 17].\n\n### 4.3. Weaknesses: The XOR Explosion\nA major weakness of cryptographic SAT generation is the \"scale explosion\" caused by XOR operations. Cryptographic primitives rely heavily on XORs for diffusion. When translated to CNF (which requires AND/OR logic), a single XOR gate over $k$ variables expands into $2^{k-1}$ clauses. This exponential blowup destroys the high-level semantics of the problem and creates massive files that are difficult for solvers to ingest and process efficiently [cite: 13, 18].\n*   **Mitigation:** Recent work proposes using Arithmetic Normal Form (ANF) or Graph Neural Networks that can handle XORs natively without CNF expansion [cite: 13].\n\n## 5. Neural and Machine Learning Approaches\n\nThe application of Deep Learning to SAT generation is a rapidly expanding frontier. These methods aim to \"learn\" the distribution of hard industrial instances and generate new, unique samples that preserve the structural and computational properties of the training set.\n\n### 5.1. G2SAT: Graph-Based Generation\nG2SAT is a pioneering framework that represents SAT formulas as bipartite graphs (Literal-Clause Graphs). It views generation as a graph construction problem [cite: 19, 20].\n*   **Mechanism:** G2SAT uses a split-merge process. It decomposes real industrial graphs into trees (splitting) and then trains a Graph Neural Network (GNN) to learn how to merge these trees back together to form a valid SAT graph.\n*   **Strengths:** It is the first deep generative framework capable of producing formulas that resemble industrial instances in terms of graph metrics (modularity, degree distribution) [cite: 19, 21].\n*   **Weaknesses:** G2SAT is computationally slow because it requires sampling many tree pairs. More critically, it often fails to preserve \"hardness\"\u2014the generated instances can sometimes be much easier to solve than the seed instances due to the loss of subtle logical dependencies during the split-merge process [cite: 22].\n\n### 5.2. HardSATGEN: Structure-Hardness Awareness\nHardSATGEN improves upon G2SAT by introducing a fine-grained control mechanism to the split-merge paradigm. It explicitly targets the preservation of computational hardness [cite: 23, 24].\n*   **Mechanism:** It incorporates community detection and core structure analysis into the generation process. By maintaining the integrity of the \"core\" (the subset of clauses responsible for unsatisfiability or hardness), it avoids generating trivial instances.\n*   **Performance:** Experiments show HardSATGEN achieves significant gains over G2SAT, producing instances that are computationally comparable to the original industrial benchmarks while maintaining structural fidelity [cite: 24, 25].\n*   **Limitations:** The core-awareness mechanism makes HardSATGEN computationally expensive, making it difficult to generate massive datasets quickly [cite: 22].\n\n### 5.3. DeepSAT and Hardness Collapse\nDeepSAT and similar frameworks attempt to use end-to-end learning, sometimes leveraging knowledge from Electronic Design Automation (EDA) to preprocess instances into And-Inverter Graphs (AIGs) before generation [cite: 26].\n*   **Hardness Collapse:** A recurring challenge in neural generation is \"hardness collapse,\" where the generator learns the statistical appearance of a hard formula but misses the precise logical constraints that make it hard. This results in generated datasets that look industrial but are trivially solvable [cite: 27]. Recent methods attempt to mitigate this by using GNN-based core detection to iteratively refine generated instances [cite: 27].\n\n## 6. Combinatorial and Crafted Benchmarks\n\nCrafted benchmarks are designed to defeat specific solver strategies or to enforce a specific logical structure. These are often used to prove lower bounds on solver performance.\n\n### 6.1. Planted Solutions and Hidden Structure\nGenerating hard *satisfiable* instances is challenging because random generation often produces unsatisfiable instances in the hard region. \"Planted\" solution methods guarantee satisfiability by constructing the formula around a pre-selected truth assignment.\n*   **q-hidden and KHidden-M:** These algorithms generate clauses that are satisfied by a specific assignment. To prevent the solver from easily finding this assignment, they mix in \"distractor\" clauses or use specific probability distributions (controlled by parameter $q$) to hide the solution's footprint. These are particularly effective against local search solvers like WalkSAT [cite: 28].\n*   **Balanced SAT:** This method creates $k$-SAT instances with $m$ clauses that are \"balanced\" to be difficult, often by ensuring that literals are distributed in a way that prevents unit propagation cascades [cite: 29].\n\n### 6.2. Combinatorial Designs\n*   **Pigeonhole Principle:** These formulas encode the impossibility of placing $n+1$ pigeons into $n$ holes. They are famously hard for resolution-based solvers (like basic DPLL) because the proof of unsatisfiability requires exponential size. However, modern solvers with cutting planes or symmetry breaking can sometimes solve them efficiently [cite: 30].\n*   **Quasigroups with Holes (QWH):** This problem involves completing a Latin square (like Sudoku) with missing entries. The hardness can be tuned by the number of \"holes\" (empty cells). These instances exhibit a phase transition and \"heavy-tailed\" runtime distributions, making them excellent benchmarks for both complete and incomplete solvers [cite: 31].\n*   **sgen:** This generator uses combinatorial block designs to create small but extremely difficult satisfiable instances. It partitions variables into small groups and imposes constraints that force solvers into deep search trees without obvious contradictions [cite: 30].\n\n## 7. Adversarial and Algorithm Configuration Methods\n\nA modern approach to generating hardness involves using the solvers themselves to guide the generation process.\n\n### 7.1. Algorithm Configuration Tools (SMAC)\nTools like SMAC (Sequential Model-based Algorithm Configuration) are typically used to optimize solver parameters. However, they can be \"inverted\" to optimize the *instance generator* parameters to maximize solver runtime [cite: 32, 33].\n*   **Method:** A parameterized generator (e.g., one that can vary clause lengths, variable activity, or modularity) is treated as the target. The configuration tool searches the parameter space for settings that maximize the runtime of a specific solver (e.g., Glucose or Lingeling).\n*   **Result:** This approach has successfully generated \"Hard Random Satisfiability\" (HRS) instances that are significantly harder than standard phase-transition random instances for specific solvers [cite: 33]. It can also generate small, satisfiable formulas that are surprisingly difficult for CDCL solvers [cite: 32].\n\n### 7.2. No-Triangle SAT\nThis specific adversarial method focuses on graph statistics. It generates instances that minimize the clustering coefficient (specifically, preventing triangles in the variable interaction graph). Research has shown that preventing triangles makes random instances considerably harder than standard random instances at the same ratio, likely because it inhibits the propagation of information between variables [cite: 1, 29].\n\n## 8. Comparative Analysis of Strengths and Weaknesses\n\n| Method Category | Leading Examples | Strengths | Weaknesses |\n| :--- | :--- | :--- | :--- |\n| **Random** | Uniform Random 3-SAT (Ratio 4.26) | Controllable hardness; theoretically understood; excellent for local search benchmarking. | Lacks industrial structure; irrelevant for CDCL development; limited size (small $n$). |\n| **Pseudo-Industrial** | Community Attachment (CA), Popularity-Similarity (PS) | Mimics real-world modularity and scale-free degree distributions; bridges gap between random and industrial. | Can be complex to implement; early models failed to capture all structural nuances simultaneously. |\n| **Cryptographic** | Logic Locking, Key Recovery (AES) | Extremely hard; ground truth available; high practical relevance for security. | XOR explosion in CNF; specific structure may not generalize to other industrial domains. |\n| **Neural/ML** | G2SAT, HardSATGEN | Learns implicit distributions; generates diverse pseudo-industrial instances. | Computationally expensive; risk of \"hardness collapse\" (generated instances are too easy). |\n| **Combinatorial** | QWH, sgen, q-hidden | Guaranteed satisfiability (planted); targets specific solver weaknesses (e.g., resolution proofs). | Can sometimes be defeated by specific heuristics (e.g., symmetry breaking); limited structural diversity. |\n| **Adversarial** | SMAC-tuned, No-Triangle | Automates hardness discovery; finds worst-case scenarios for specific solvers. | Hardness may be solver-specific (overfitting to one solver's weaknesses). |\n\n## 9. Conclusion\n\nThe generation of hard SAT examples has evolved from the simple selection of random clauses to a multi-faceted discipline incorporating network science, cryptography, and deep learning. While **Uniform Random 3-SAT** at the phase transition remains the theoretical baseline, it is no longer sufficient for evaluating modern CDCL solvers designed for structured problems.\n\n**Pseudo-industrial generators** like the **Popularity-Similarity model** and **HardSATGEN** represent the current state-of-the-art in bridging the gap between random and real-world instances. They offer the scalability of random generation with the structural complexity of industrial applications. Meanwhile, **cryptographic instances** provide the ultimate test for solver robustness, pushing the limits of what is computationally feasible.\n\nFuture research is increasingly focused on **neural generation**, specifically overcoming the trade-off between generation speed and hardness preservation. As solvers continue to improve, the \"arms race\" between solver efficiency and instance hardness will drive the development of even more sophisticated generative models, likely relying on adversarial learning to automatically identify and exploit the blind spots of future SAT algorithms.",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# Leading Methods for Generating Hard Examples of the Boolean Satisfiability Problem: A Comprehensive Analysis",
+      "header_level": 1,
+      "text": "# Leading Methods for Generating Hard Examples of the Boolean Satisfiability Problem: A Comprehensive Analysis\n\n**Key Points**\n*   **Random k-SAT and Phase Transitions:** The classical method for generating hard instances involves creating random $k$-SAT formulas (typically $k=3$) at a specific clause-to-variable ratio (approx. 4.26 for 3-SAT). These instances exhibit a \"phase transition\" from satisfiable to unsatisfiable, creating a peak in computational hardness. While theoretically significant, they often lack the structural properties of real-world problems.\n*   **Pseudo-Industrial Generators:** To bridge the gap between random and real-world instances, researchers have developed models that incorporate \"industrial\" characteristics such as scale-free node degree distributions (power-law), community structure (modularity), and self-similarity. Leading models include the Community Attachment (CA) and Popularity-Similarity (PS) models.\n*   **Cryptographic Instances:** Problems derived from cryptographic primitives (e.g., breaking encryption, hash collisions) or logic locking (obfuscated circuits) provide some of the hardest benchmarks. These instances are characterized by complex XOR chains and a lack of \"backdoors,\" making them exceptionally difficult for Conflict-Driven Clause Learning (CDCL) solvers, though they can suffer from \"scale explosion\" when converted to Conjunctive Normal Form (CNF).\n*   **Neural and Machine Learning Approaches:** Recent advancements utilize Graph Neural Networks (GNNs) to learn the structural distribution of hard industrial instances and generate new ones. Frameworks like G2SAT and HardSATGEN represent formulas as graphs and use split-merge processes to create new instances that attempt to preserve both the structure and computational hardness of the seed formulas.\n*   **Combinatorial and Planted Solutions:** Crafted instances based on combinatorial designs (e.g., Quasigroups with Holes, Pigeonhole Principle) or \"planted\" solutions (where a solution is hidden by construction, such as the q-hidden or sgen models) allow for the generation of satisfiable instances with tunable hardness, often used to benchmark local search algorithms.\n\n",
+      "start": 0,
+      "end": 2203
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## 1. Introduction",
+      "header_level": 2,
+      "text": "## 1. Introduction\n\nThe Boolean Satisfiability Problem (SAT) stands as a cornerstone of computer science, being the first problem proven to be NP-complete. Despite its worst-case exponential complexity, modern SAT solvers\u2014particularly those employing Conflict-Driven Clause Learning (CDCL)\u2014can routinely solve industrial instances containing millions of variables. This discrepancy between theoretical hardness and practical solvability has driven a massive research effort into understanding what makes a SAT instance \"hard.\"\n\nThe generation of hard SAT examples is critical for two primary reasons: benchmarking and security. First, solver developers require challenging and diverse datasets to identify weaknesses in heuristics and improve algorithmic performance. Second, in cryptography and hardware verification, the hardness of a SAT instance underpins the security of the system; if the instance is easily solvable, the encryption or protection mechanism is compromised.\n\nHistorically, hardness was associated with random instances sampled from the phase transition region. However, a dichotomy emerged: solvers optimized for random instances often failed on industrial ones, and vice versa. This led to the realization that \"hardness\" is context-dependent and heavily influenced by structural features such as modularity, variable degree distribution, and locality. Consequently, the field has evolved from simple uniform random generators to sophisticated pseudo-industrial models, cryptographic encodings, and deep-learning-based generative frameworks.\n\nThis report provides an exhaustive analysis of the leading methods for generating hard SAT examples. It categorizes these methods into random, pseudo-industrial, cryptographic, neural, and combinatorial approaches, evaluating the strengths and weaknesses of each in the context of modern SAT solving.\n\n",
+      "start": 2203,
+      "end": 4070
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 2. Random k-SAT and the Phase Transition Phenomenon",
+      "header_level": 2,
+      "text": "## 2. Random k-SAT and the Phase Transition Phenomenon\n\nThe generation of uniform random $k$-SAT instances is the most studied method for creating hard benchmarks. This approach is grounded in statistical physics and complexity theory, focusing on the transition between under-constrained and over-constrained systems.\n\n",
+      "start": 4070,
+      "end": 4390
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "### 2.1. Uniform Random Generation and the Critical Ratio",
+      "header_level": 3,
+      "text": "### 2.1. Uniform Random Generation and the Critical Ratio\nThe standard model for Random 3-SAT involves selecting $m$ clauses uniformly and independently from the set of all possible clauses of length 3 over $n$ variables. The hardness of these instances is governed by the control parameter $\\alpha = m/n$, known as the clause-to-variable ratio [cite: 1, 2].\n\nResearch has identified a \"phase transition\" phenomenon occurring at a critical threshold $r_k$. For Random 3-SAT, this threshold is experimentally determined to be approximately $\\alpha \\approx 4.26$ [cite: 1, 3].\n*   **Under-constrained Region ($\\alpha < 4.26$):** Formulas are almost always satisfiable. Solutions are abundant, and solvers can find them quickly.\n*   **Over-constrained Region ($\\alpha > 4.26$):** Formulas are almost always unsatisfiable. The contradiction can usually be found quickly via resolution or small cores of conflicting clauses [cite: 4].\n*   **The Critical Region ($\\alpha \\approx 4.26$):** This is the \"hard\" region. The probability of satisfiability drops sharply from 1 to 0. In this region, instances have few (if any) solutions, and proving satisfiability or unsatisfiability requires an exponential search effort [cite: 1].\n\n",
+      "start": 4390,
+      "end": 5613
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 2.2. Strengths of Random k-SAT",
+      "header_level": 3,
+      "text": "### 2.2. Strengths of Random k-SAT\n*   **Controllable Hardness:** The difficulty of the instances can be finely tuned by adjusting the ratio $m/n$. This allows researchers to generate instances that are consistently hard for a given size $n$ [cite: 5].\n*   **Theoretical Simplicity:** The uniform distribution allows for rigorous mathematical analysis. Upper and lower bounds for the threshold have been established (e.g., the O(1.321n) upper bound for specific randomized search algorithms) [cite: 1, 6].\n*   **Benchmarking Local Search:** Random instances are particularly effective for benchmarking Stochastic Local Search (SLS) solvers (e.g., WalkSAT), which often perform better on random instances than complete solvers [cite: 2, 7].\n\n",
+      "start": 5613,
+      "end": 6354
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 2.3. Weaknesses and Limitations",
+      "header_level": 3,
+      "text": "### 2.3. Weaknesses and Limitations\n*   **Lack of Structure:** Uniform random instances lack the internal structure found in real-world problems. They do not exhibit modularity or power-law degree distributions. Consequently, heuristics that exploit structure (like clause learning in CDCL) often perform poorly or degenerate into random guessing [cite: 5, 8].\n*   **Irrelevance to Industry:** Solvers optimized for random instances often fail on industrial instances and vice versa. A solver that dominates the random track of a SAT competition may be useless for hardware verification or planning tasks [cite: 5, 9].\n*   **Asymptotic Behavior:** While hard for their size, random instances must be kept relatively small (hundreds of variables) to be solvable in reasonable time. Industrial instances, by contrast, can handle millions of variables because of their hidden structure [cite: 1, 10].\n\n",
+      "start": 6354,
+      "end": 7253
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## 3. Pseudo-Industrial and Structured Generators",
+      "header_level": 2,
+      "text": "## 3. Pseudo-Industrial and Structured Generators\n\nTo address the disconnect between random benchmarks and real-world applications, the research community developed \"pseudo-industrial\" generators. These methods aim to create random instances that possess the structural characteristics\u2014specifically scale-free distributions and community structure\u2014observed in industrial formulas.\n\n",
+      "start": 7253,
+      "end": 7635
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### 3.1. Scale-Free and Power-Law Models",
+      "header_level": 3,
+      "text": "### 3.1. Scale-Free and Power-Law Models\nAnalysis of industrial instances (e.g., from hardware verification) reveals that they are \"scale-free.\" The number of occurrences ($k$) of a variable follows a power-law distribution $P(k) \\sim k^{-\\delta}$. In practical terms, this means most variables appear in very few clauses, while a few \"hub\" variables appear in a massive number of clauses [cite: 4, 5].\n\n*   **Generation Method:** Instead of selecting variables uniformly (probability $1/n$), variables are selected based on a non-uniform probability distribution $P(i) \\sim i^{-\\beta}$. This forces the resulting formula to exhibit a power-law distribution of variable occurrences [cite: 4].\n*   **Impact on Hardness:** Scale-free random instances show a phase transition similar to uniform random instances, but the threshold depends on the power-law exponent $\\beta$. For $\\beta > 1 - 1/k$, unsatisfiability is often due to small cores, potentially making them easier to solve than uniform instances [cite: 4].\n\n",
+      "start": 7635,
+      "end": 8650
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "### 3.2. Community Attachment (CA) and Modularity",
+      "header_level": 3,
+      "text": "### 3.2. Community Attachment (CA) and Modularity\nIndustrial instances often exhibit high \"modularity,\" meaning variables can be grouped into communities where connections (clauses) are dense within communities but sparse between them. Uniform random instances have very low modularity [cite: 8, 11].\n\n*   **The CA Model:** This model generates instances with a target modularity $Q$. It works by assigning variables to communities and preferentially generating clauses that connect variables within the same community.\n*   **Strengths:** High modularity correlates with the performance of CDCL solvers. By tuning modularity, researchers can study how \"divide and conquer\" strategies in solvers exploit community structure [cite: 11].\n*   **Weaknesses:** The CA model does not inherently produce scale-free distributions. It focuses solely on clustering, missing the \"hub\" variable characteristic of real instances [cite: 9].\n\n",
+      "start": 8650,
+      "end": 9577
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "### 3.3. Popularity-Similarity (PS) Models",
+      "header_level": 3,
+      "text": "### 3.3. Popularity-Similarity (PS) Models\nThe Popularity-Similarity model attempts to unify the previous approaches. It posits that connections in complex networks (and SAT formulas) are driven by two factors:\n1.  **Popularity:** Nodes (variables) with high degrees attract more connections (preferential attachment/scale-free).\n2.  **Similarity:** Nodes tend to connect to other nodes that are \"similar\" to them (homophily/clustering) [cite: 9, 12].\n\n*   **Mechanism:** Variables are mapped to a geometric space (e.g., a circle). Connections are formed based on a distance metric that accounts for both the variable's \"popularity\" (creation time/index) and \"similarity\" (angular distance).\n*   **Strengths:** This model successfully generates instances that are *both* scale-free and modular, offering a much closer approximation to industrial benchmarks than either CA or pure scale-free models [cite: 9, 12].\n\n",
+      "start": 9577,
+      "end": 10491
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "## 4. Cryptographic and Inversion-Based Instances",
+      "header_level": 2,
+      "text": "## 4. Cryptographic and Inversion-Based Instances\n\nCryptographic problems represent a distinct class of \"hard\" SAT instances. These are generated by encoding cryptographic primitives (encryption algorithms, hash functions) into CNF. The hardness stems from the mathematical design of the primitive, which is specifically engineered to resist analysis.\n\n",
+      "start": 10491,
+      "end": 10844
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "### 4.1. Encoding Encryption Algorithms",
+      "header_level": 3,
+      "text": "### 4.1. Encoding Encryption Algorithms\nStandard encryption algorithms like AES, DES, and MD5 can be transformed into SAT instances. For example, a \"Key Recovery Attack\" instance is formed by fixing a plaintext-ciphertext pair and asking the solver to find the secret key that maps the plaintext to the ciphertext [cite: 13, 14].\n\n*   **Logic Locking/Obfuscation:** In hardware security, circuits are \"locked\" by inserting additional gates (XOR/XNOR) controlled by a key. A SAT solver can be used to \"break\" this locking by finding a key that produces correct outputs. This \"SAT Attack\" on logic locking generates extremely hard instances, often used to evaluate the robustness of obfuscation schemes [cite: 14, 15].\n*   **Lattice-Based Cryptography:** Instances derived from lattice problems (e.g., Shortest Vector Problem) are used to generate hardness based on worst-case complexity assumptions. These are particularly relevant for post-quantum cryptography discussions [cite: 16].\n\n",
+      "start": 10844,
+      "end": 11830
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "### 4.2. Strengths of Cryptographic Instances",
+      "header_level": 3,
+      "text": "### 4.2. Strengths of Cryptographic Instances\n*   **Extreme Hardness:** These instances are designed to be hard. They often lack the \"backdoors\" or small dependent sets that CDCL solvers exploit.\n*   **Ground Truth:** In key recovery benchmarks, the solution (the key) is known to the generator, allowing for the creation of \"planted\" satisfiable instances that are guaranteed to be hard [cite: 13].\n*   **Practical Relevance:** Solving these instances has direct implications for cybersecurity. Improvements in solving these benchmarks translate to better cryptanalysis tools [cite: 17].\n\n",
+      "start": 11830,
+      "end": 12420
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "### 4.3. Weaknesses: The XOR Explosion",
+      "header_level": 3,
+      "text": "### 4.3. Weaknesses: The XOR Explosion\nA major weakness of cryptographic SAT generation is the \"scale explosion\" caused by XOR operations. Cryptographic primitives rely heavily on XORs for diffusion. When translated to CNF (which requires AND/OR logic), a single XOR gate over $k$ variables expands into $2^{k-1}$ clauses. This exponential blowup destroys the high-level semantics of the problem and creates massive files that are difficult for solvers to ingest and process efficiently [cite: 13, 18].\n*   **Mitigation:** Recent work proposes using Arithmetic Normal Form (ANF) or Graph Neural Networks that can handle XORs natively without CNF expansion [cite: 13].\n\n",
+      "start": 12420,
+      "end": 13089
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "## 5. Neural and Machine Learning Approaches",
+      "header_level": 2,
+      "text": "## 5. Neural and Machine Learning Approaches\n\nThe application of Deep Learning to SAT generation is a rapidly expanding frontier. These methods aim to \"learn\" the distribution of hard industrial instances and generate new, unique samples that preserve the structural and computational properties of the training set.\n\n",
+      "start": 13089,
+      "end": 13407
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "### 5.1. G2SAT: Graph-Based Generation",
+      "header_level": 3,
+      "text": "### 5.1. G2SAT: Graph-Based Generation\nG2SAT is a pioneering framework that represents SAT formulas as bipartite graphs (Literal-Clause Graphs). It views generation as a graph construction problem [cite: 19, 20].\n*   **Mechanism:** G2SAT uses a split-merge process. It decomposes real industrial graphs into trees (splitting) and then trains a Graph Neural Network (GNN) to learn how to merge these trees back together to form a valid SAT graph.\n*   **Strengths:** It is the first deep generative framework capable of producing formulas that resemble industrial instances in terms of graph metrics (modularity, degree distribution) [cite: 19, 21].\n*   **Weaknesses:** G2SAT is computationally slow because it requires sampling many tree pairs. More critically, it often fails to preserve \"hardness\"\u2014the generated instances can sometimes be much easier to solve than the seed instances due to the loss of subtle logical dependencies during the split-merge process [cite: 22].\n\n",
+      "start": 13407,
+      "end": 14383
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "### 5.2. HardSATGEN: Structure-Hardness Awareness",
+      "header_level": 3,
+      "text": "### 5.2. HardSATGEN: Structure-Hardness Awareness\nHardSATGEN improves upon G2SAT by introducing a fine-grained control mechanism to the split-merge paradigm. It explicitly targets the preservation of computational hardness [cite: 23, 24].\n*   **Mechanism:** It incorporates community detection and core structure analysis into the generation process. By maintaining the integrity of the \"core\" (the subset of clauses responsible for unsatisfiability or hardness), it avoids generating trivial instances.\n*   **Performance:** Experiments show HardSATGEN achieves significant gains over G2SAT, producing instances that are computationally comparable to the original industrial benchmarks while maintaining structural fidelity [cite: 24, 25].\n*   **Limitations:** The core-awareness mechanism makes HardSATGEN computationally expensive, making it difficult to generate massive datasets quickly [cite: 22].\n\n",
+      "start": 14383,
+      "end": 15287
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "### 5.3. DeepSAT and Hardness Collapse",
+      "header_level": 3,
+      "text": "### 5.3. DeepSAT and Hardness Collapse\nDeepSAT and similar frameworks attempt to use end-to-end learning, sometimes leveraging knowledge from Electronic Design Automation (EDA) to preprocess instances into And-Inverter Graphs (AIGs) before generation [cite: 26].\n*   **Hardness Collapse:** A recurring challenge in neural generation is \"hardness collapse,\" where the generator learns the statistical appearance of a hard formula but misses the precise logical constraints that make it hard. This results in generated datasets that look industrial but are trivially solvable [cite: 27]. Recent methods attempt to mitigate this by using GNN-based core detection to iteratively refine generated instances [cite: 27].\n\n",
+      "start": 15287,
+      "end": 16002
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "## 6. Combinatorial and Crafted Benchmarks",
+      "header_level": 2,
+      "text": "## 6. Combinatorial and Crafted Benchmarks\n\nCrafted benchmarks are designed to defeat specific solver strategies or to enforce a specific logical structure. These are often used to prove lower bounds on solver performance.\n\n",
+      "start": 16002,
+      "end": 16226
+    },
+    {
+      "idx": 19,
+      "section_type": "text",
+      "header": "### 6.1. Planted Solutions and Hidden Structure",
+      "header_level": 3,
+      "text": "### 6.1. Planted Solutions and Hidden Structure\nGenerating hard *satisfiable* instances is challenging because random generation often produces unsatisfiable instances in the hard region. \"Planted\" solution methods guarantee satisfiability by constructing the formula around a pre-selected truth assignment.\n*   **q-hidden and KHidden-M:** These algorithms generate clauses that are satisfied by a specific assignment. To prevent the solver from easily finding this assignment, they mix in \"distractor\" clauses or use specific probability distributions (controlled by parameter $q$) to hide the solution's footprint. These are particularly effective against local search solvers like WalkSAT [cite: 28].\n*   **Balanced SAT:** This method creates $k$-SAT instances with $m$ clauses that are \"balanced\" to be difficult, often by ensuring that literals are distributed in a way that prevents unit propagation cascades [cite: 29].\n\n",
+      "start": 16226,
+      "end": 17154
+    },
+    {
+      "idx": 20,
+      "section_type": "text",
+      "header": "### 6.2. Combinatorial Designs",
+      "header_level": 3,
+      "text": "### 6.2. Combinatorial Designs\n*   **Pigeonhole Principle:** These formulas encode the impossibility of placing $n+1$ pigeons into $n$ holes. They are famously hard for resolution-based solvers (like basic DPLL) because the proof of unsatisfiability requires exponential size. However, modern solvers with cutting planes or symmetry breaking can sometimes solve them efficiently [cite: 30].\n*   **Quasigroups with Holes (QWH):** This problem involves completing a Latin square (like Sudoku) with missing entries. The hardness can be tuned by the number of \"holes\" (empty cells). These instances exhibit a phase transition and \"heavy-tailed\" runtime distributions, making them excellent benchmarks for both complete and incomplete solvers [cite: 31].\n*   **sgen:** This generator uses combinatorial block designs to create small but extremely difficult satisfiable instances. It partitions variables into small groups and imposes constraints that force solvers into deep search trees without obvious contradictions [cite: 30].\n\n",
+      "start": 17154,
+      "end": 18181
+    },
+    {
+      "idx": 21,
+      "section_type": "text",
+      "header": "## 7. Adversarial and Algorithm Configuration Methods",
+      "header_level": 2,
+      "text": "## 7. Adversarial and Algorithm Configuration Methods\n\nA modern approach to generating hardness involves using the solvers themselves to guide the generation process.\n\n",
+      "start": 18181,
+      "end": 18349
+    },
+    {
+      "idx": 22,
+      "section_type": "text",
+      "header": "### 7.1. Algorithm Configuration Tools (SMAC)",
+      "header_level": 3,
+      "text": "### 7.1. Algorithm Configuration Tools (SMAC)\nTools like SMAC (Sequential Model-based Algorithm Configuration) are typically used to optimize solver parameters. However, they can be \"inverted\" to optimize the *instance generator* parameters to maximize solver runtime [cite: 32, 33].\n*   **Method:** A parameterized generator (e.g., one that can vary clause lengths, variable activity, or modularity) is treated as the target. The configuration tool searches the parameter space for settings that maximize the runtime of a specific solver (e.g., Glucose or Lingeling).\n*   **Result:** This approach has successfully generated \"Hard Random Satisfiability\" (HRS) instances that are significantly harder than standard phase-transition random instances for specific solvers [cite: 33]. It can also generate small, satisfiable formulas that are surprisingly difficult for CDCL solvers [cite: 32].\n\n",
+      "start": 18349,
+      "end": 19242
+    },
+    {
+      "idx": 23,
+      "section_type": "text",
+      "header": "### 7.2. No-Triangle SAT",
+      "header_level": 3,
+      "text": "### 7.2. No-Triangle SAT\nThis specific adversarial method focuses on graph statistics. It generates instances that minimize the clustering coefficient (specifically, preventing triangles in the variable interaction graph). Research has shown that preventing triangles makes random instances considerably harder than standard random instances at the same ratio, likely because it inhibits the propagation of information between variables [cite: 1, 29].\n\n",
+      "start": 19242,
+      "end": 19695
+    },
+    {
+      "idx": 24,
+      "section_type": "text",
+      "header": "## 8. Comparative Analysis of Strengths and Weaknesses",
+      "header_level": 2,
+      "text": "## 8. Comparative Analysis of Strengths and Weaknesses\n\n",
+      "start": 19695,
+      "end": 19751
+    },
+    {
+      "idx": 25,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Method Category | Leading Examples | Strengths | Weaknesses |\n| :--- | :--- | :--- | :--- |\n| **Random** | Uniform Random 3-SAT (Ratio 4.26) | Controllable hardness; theoretically understood; excellent for local search benchmarking. | Lacks industrial structure; irrelevant for CDCL development; limited size (small $n$). |\n| **Pseudo-Industrial** | Community Attachment (CA), Popularity-Similarity (PS) | Mimics real-world modularity and scale-free degree distributions; bridges gap between random and industrial. | Can be complex to implement; early models failed to capture all structural nuances simultaneously. |\n| **Cryptographic** | Logic Locking, Key Recovery (AES) | Extremely hard; ground truth available; high practical relevance for security. | XOR explosion in CNF; specific structure may not generalize to other industrial domains. |\n| **Neural/ML** | G2SAT, HardSATGEN | Learns implicit distributions; generates diverse pseudo-industrial instances. | Computationally expensive; risk of \"hardness collapse\" (generated instances are too easy). |\n| **Combinatorial** | QWH, sgen, q-hidden | Guaranteed satisfiability (planted); targets specific solver weaknesses (e.g., resolution proofs). | Can sometimes be defeated by specific heuristics (e.g., symmetry breaking); limited structural diversity. |\n| **Adversarial** | SMAC-tuned, No-Triangle | Automates hardness discovery; finds worst-case scenarios for specific solvers. | Hardness may be solver-specific (overfitting to one solver's weaknesses). |",
+      "start": 19751,
+      "end": 21268
+    },
+    {
+      "idx": 26,
+      "section_type": "text",
+      "header": "## 9. Conclusion",
+      "header_level": 2,
+      "text": "## 9. Conclusion\n\nThe generation of hard SAT examples has evolved from the simple selection of random clauses to a multi-faceted discipline incorporating network science, cryptography, and deep learning. While **Uniform Random 3-SAT** at the phase transition remains the theoretical baseline, it is no longer sufficient for evaluating modern CDCL solvers designed for structured problems.\n\n**Pseudo-industrial generators** like the **Popularity-Similarity model** and **HardSATGEN** represent the current state-of-the-art in bridging the gap between random and real-world instances. They offer the scalability of random generation with the structural complexity of industrial applications. Meanwhile, **cryptographic instances** provide the ultimate test for solver robustness, pushing the limits of what is computationally feasible.\n\nFuture research is increasingly focused on **neural generation**, specifically overcoming the trade-off between generation speed and hardness preservation. As solvers continue to improve, the \"arms race\" between solver efficiency and instance hardness will drive the development of even more sophisticated generative models, likely relying on adversarial learning to automatically identify and exploit the blind spots of future SAT algorithms.",
+      "start": 21269,
+      "end": 22547
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# Leading Methods for Generating Hard Examples of the Boolean Satisfiability Problem: A Comprehensive Analysis",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "**Key Points**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_10",
+      "section_idx": 0,
+      "idx_in_section": 10,
+      "text": "Frameworks like G2SAT and HardSATGEN represent formulas as graphs and use split-merge processes to create new instances that attempt to preserve both the structure and computational hardness of the seed formulas.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_11",
+      "section_idx": 0,
+      "idx_in_section": 11,
+      "text": "*  **Combinatorial and Planted Solutions:** Crafted instances based on combinatorial designs (e.g., Quasigroups with Holes, Pigeonhole Principle) or \"planted\" solutions (where a solution is hidden by construction, such as the q-hidden or sgen models) allow for the generation of satisfiable instances with tunable hardness, often used to benchmark local search algorithms.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "text": "*  **Random k-SAT and Phase Transitions:** The classical method for generating hard instances involves creating random $k$-SAT formulas (typically $k=3$) at a specific clause-to-variable ratio (approx. 4.26 for 3-SAT).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_3",
+      "section_idx": 0,
+      "idx_in_section": 3,
+      "text": "These instances exhibit a \"phase transition\" from satisfiable to unsatisfiable, creating a peak in computational hardness.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_4",
+      "section_idx": 0,
+      "idx_in_section": 4,
+      "text": "While theoretically significant, they often lack the structural properties of real-world problems.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_5",
+      "section_idx": 0,
+      "idx_in_section": 5,
+      "text": "*  **Pseudo-Industrial Generators:** To bridge the gap between random and real-world instances, researchers have developed models that incorporate \"industrial\" characteristics such as scale-free node degree distributions (power-law), community structure (modularity), and self-similarity.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_6",
+      "section_idx": 0,
+      "idx_in_section": 6,
+      "text": "Leading models include the Community Attachment (CA) and Popularity-Similarity (PS) models.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_7",
+      "section_idx": 0,
+      "idx_in_section": 7,
+      "text": "*  **Cryptographic Instances:** Problems derived from cryptographic primitives (e.g., breaking encryption, hash collisions) or logic locking (obfuscated circuits) provide some of the hardest benchmarks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_8",
+      "section_idx": 0,
+      "idx_in_section": 8,
+      "text": "These instances are characterized by complex XOR chains and a lack of \"backdoors,\" making them exceptionally difficult for Conflict-Driven Clause Learning (CDCL) solvers, though they can suffer from \"scale explosion\" when converted to Conjunctive Normal Form (CNF).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_9",
+      "section_idx": 0,
+      "idx_in_section": 9,
+      "text": "*  **Neural and Machine Learning Approaches:** Recent advancements utilize Graph Neural Networks (GNNs) to learn the structural distribution of hard industrial instances and generate new ones.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "## 4. Cryptographic and Inversion-Based Instances",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "Cryptographic problems represent a distinct class of \"hard\" SAT instances.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "These are generated by encoding cryptographic primitives (encryption algorithms, hash functions) into CNF.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "The hardness stems from the mathematical design of the primitive, which is specifically engineered to resist analysis.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "### 4.1. Encoding Encryption Algorithms",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFketutU1ZaFq8IaN97lrMKyMbr6SwR90wQucgDOti5DBkDX0JhDU4j9hwY3shQCRyUkZJyx1IAYJTY6BlSkhPDiXo-ADKt2-_134kz1NZCwg6VKXKCHW5kSkBiCaEbgVTgjxLVqH_vbFVlIb14jrJyyTR7ReYlwqdMy06vp4Aw0baXOxO7nSOxN5LnXF4Xaflw3TDTpG4kbDfxOgT1RP8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "Standard encryption algorithms like AES, DES, and MD5 can be transformed into SAT instances.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFketutU1ZaFq8IaN97lrMKyMbr6SwR90wQucgDOti5DBkDX0JhDU4j9hwY3shQCRyUkZJyx1IAYJTY6BlSkhPDiXo-ADKt2-_134kz1NZCwg6VKXKCHW5kSkBiCaEbgVTgjxLVqH_vbFVlIb14jrJyyTR7ReYlwqdMy06vp4Aw0baXOxO7nSOxN5LnXF4Xaflw3TDTpG4kbDfxOgT1RP8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "For example, a \"Key Recovery Attack\" instance is formed by fixing a plaintext-ciphertext pair and asking the solver to find the secret key that maps the plaintext to the ciphertext.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFketutU1ZaFq8IaN97lrMKyMbr6SwR90wQucgDOti5DBkDX0JhDU4j9hwY3shQCRyUkZJyx1IAYJTY6BlSkhPDiXo-ADKt2-_134kz1NZCwg6VKXKCHW5kSkBiCaEbgVTgjxLVqH_vbFVlIb14jrJyyTR7ReYlwqdMy06vp4Aw0baXOxO7nSOxN5LnXF4Xaflw3TDTpG4kbDfxOgT1RP8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "*  **Logic Locking/Obfuscation:** In hardware security, circuits are \"locked\" by inserting additional gates (XOR/XNOR) controlled by a key.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFketutU1ZaFq8IaN97lrMKyMbr6SwR90wQucgDOti5DBkDX0JhDU4j9hwY3shQCRyUkZJyx1IAYJTY6BlSkhPDiXo-ADKt2-_134kz1NZCwg6VKXKCHW5kSkBiCaEbgVTgjxLVqH_vbFVlIb14jrJyyTR7ReYlwqdMy06vp4Aw0baXOxO7nSOxN5LnXF4Xaflw3TDTpG4kbDfxOgT1RP8="
+        ],
+        [
+          "ucdavis.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSqT4xikxMJtMiDq7Txsf_xUimcROJXNXcJkVz0tW4Cnbt0D26ZF2o1SJpuwhypCmkTAmQ_2oFo3StUQ-vtIhQVcq8RJnoJahoMK-eoQeckO34W0yf3AY4S-eXoyNVdTCt28cyPP6NKs9Rd6bD8XrX"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "A SAT solver can be used to \"break\" this locking by finding a key that produces correct outputs.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFketutU1ZaFq8IaN97lrMKyMbr6SwR90wQucgDOti5DBkDX0JhDU4j9hwY3shQCRyUkZJyx1IAYJTY6BlSkhPDiXo-ADKt2-_134kz1NZCwg6VKXKCHW5kSkBiCaEbgVTgjxLVqH_vbFVlIb14jrJyyTR7ReYlwqdMy06vp4Aw0baXOxO7nSOxN5LnXF4Xaflw3TDTpG4kbDfxOgT1RP8="
+        ],
+        [
+          "ucdavis.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSqT4xikxMJtMiDq7Txsf_xUimcROJXNXcJkVz0tW4Cnbt0D26ZF2o1SJpuwhypCmkTAmQ_2oFo3StUQ-vtIhQVcq8RJnoJahoMK-eoQeckO34W0yf3AY4S-eXoyNVdTCt28cyPP6NKs9Rd6bD8XrX"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "This \"SAT Attack\" on logic locking generates extremely hard instances, often used to evaluate the robustness of obfuscation schemes.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFketutU1ZaFq8IaN97lrMKyMbr6SwR90wQucgDOti5DBkDX0JhDU4j9hwY3shQCRyUkZJyx1IAYJTY6BlSkhPDiXo-ADKt2-_134kz1NZCwg6VKXKCHW5kSkBiCaEbgVTgjxLVqH_vbFVlIb14jrJyyTR7ReYlwqdMy06vp4Aw0baXOxO7nSOxN5LnXF4Xaflw3TDTpG4kbDfxOgT1RP8="
+        ],
+        [
+          "ucdavis.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSqT4xikxMJtMiDq7Txsf_xUimcROJXNXcJkVz0tW4Cnbt0D26ZF2o1SJpuwhypCmkTAmQ_2oFo3StUQ-vtIhQVcq8RJnoJahoMK-eoQeckO34W0yf3AY4S-eXoyNVdTCt28cyPP6NKs9Rd6bD8XrX"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "text": "*  **Lattice-Based Cryptography:** Instances derived from lattice problems (e.g., Shortest Vector Problem) are used to generate hardness based on worst-case complexity assumptions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "utexas.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETx-Bhpdm-P6sKzk3EzdJs_ESgPsKAol8XG21qecAx1AVUkq_gK9eb_nd93h5KFxPXRNR5CySXFLMYIuysCVkwUS5HVqBckLlNS8wdY93X3GQCgJ5nr2POQuOyfmmblRCi-ZBgsoiH2w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_7",
+      "section_idx": 11,
+      "idx_in_section": 7,
+      "text": "These are particularly relevant for post-quantum cryptography discussions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "utexas.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETx-Bhpdm-P6sKzk3EzdJs_ESgPsKAol8XG21qecAx1AVUkq_gK9eb_nd93h5KFxPXRNR5CySXFLMYIuysCVkwUS5HVqBckLlNS8wdY93X3GQCgJ5nr2POQuOyfmmblRCi-ZBgsoiH2w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "### 4.2. Strengths of Cryptographic Instances",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "*  **Extreme Hardness:** These instances are designed to be hard.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_2",
+      "section_idx": 12,
+      "idx_in_section": 2,
+      "text": "They often lack the \"backdoors\" or small dependent sets that CDCL solvers exploit.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_3",
+      "section_idx": 12,
+      "idx_in_section": 3,
+      "text": "*  **Ground Truth:** In key recovery benchmarks, the solution (the key) is known to the generator, allowing for the creation of \"planted\" satisfiable instances that are guaranteed to be hard.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_4",
+      "section_idx": 12,
+      "idx_in_section": 4,
+      "text": "*  **Practical Relevance:** Solving these instances has direct implications for cybersecurity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy59pyircv0yLAInKpSbv-SwvdHrM8I4fxO5sp3XNG-N2acD4E-wJUI5j1HCMssK1nvuuriGneYQA4kPJjW2UF39saar6AOYkhnwfF8paMlswIPgpCVjB6FYzdSj7H"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_5",
+      "section_idx": 12,
+      "idx_in_section": 5,
+      "text": "Improvements in solving these benchmarks translate to better cryptanalysis tools.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy59pyircv0yLAInKpSbv-SwvdHrM8I4fxO5sp3XNG-N2acD4E-wJUI5j1HCMssK1nvuuriGneYQA4kPJjW2UF39saar6AOYkhnwfF8paMlswIPgpCVjB6FYzdSj7H"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "### 4.3. Weaknesses: The XOR Explosion",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "A major weakness of cryptographic SAT generation is the \"scale explosion\" caused by XOR operations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_2",
+      "section_idx": 13,
+      "idx_in_section": 2,
+      "text": "Cryptographic primitives rely heavily on XORs for diffusion.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_3",
+      "section_idx": 13,
+      "idx_in_section": 3,
+      "text": "When translated to CNF (which requires AND/OR logic), a single XOR gate over $k$ variables expands into $2^{k-1}$ clauses.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_4",
+      "section_idx": 13,
+      "idx_in_section": 4,
+      "text": "This exponential blowup destroys the high-level semantics of the problem and creates massive files that are difficult for solvers to ingest and process efficiently.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGRJalXB3dvHmya5PZIhl5vTC33xo4NeDYIa-xRaym9GY5KUOgM6DOLNn2WCpCXyYMYb7BhnhNc-jmQaHMbyHh-MbkL55XeuisnLUbRTzJ-8m-iZ-6I7QbQ2zLaZmB0q0xjQuDTYafHWU3ljMXtNL3zOtN5cIe5zjlTgFUTK405jIHakqWCxh7X9sH-SMyXn1U="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_5",
+      "section_idx": 13,
+      "idx_in_section": 5,
+      "text": "*  **Mitigation:** Recent work proposes using Arithmetic Normal Form (ANF) or Graph Neural Networks that can handle XORs natively without CNF expansion.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG51ROBZjxFPiIYekIzsHM_5PLdXW0358gjZSZQvFqG3cn-K9F3UreA4eAeuA5vJ0jC7qqxmVZf5azaeqaVkQed_e8sHDgocRI7fJALGYTqtmIH4CzCycY_smT6qyYitT6DYMhnStVbhhKbvL4jSHHyDIVduHqajy6Vr3_juqCas1F9lZiARHUbgYErPF8NN6_Z_6EW4zUvvij_NqUmEOTAYLVR3VKcuCGVVDdNW9ZnKdw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "## 5. Neural and Machine Learning Approaches",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "The application of Deep Learning to SAT generation is a rapidly expanding frontier.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_2",
+      "section_idx": 14,
+      "idx_in_section": 2,
+      "text": "These methods aim to \"learn\" the distribution of hard industrial instances and generate new, unique samples that preserve the structural and computational properties of the training set.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "### 5.1. G2SAT: Graph-Based Generation",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHSRyeNKY-aNHJIOTzvS8-K4o2LqTpJcD7XkcpJPjdRtfhEiI2aWQl-KAEbm_LCmf0cGWcW1Crmq1N1S-FuaUnKyXeEg8fvhX0_L5pfnttxSiIIwoe6uicZ2YRy0Ix0XzRFtTXbpO6BDApEo1eiaPmWG2E="
+        ],
+        [
+          "nips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGWCcjdcOhzJpb1pJdZ4IJ75c7jIT7uDi1nZVE1g0OaNg20T6wVlrOnqT9u7FkiXCmwUbF4ZZklf0qhjuNHc32vnOtK4IpUJpWt6PepmegvAQsWpg1_ZGrWw2R-2OgR8gZQ_8xQwbscsKLKQZiu_wjUZdNvQhUNIbyjZEymo0CC"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "G2SAT is a pioneering framework that represents SAT formulas as bipartite graphs (Literal-Clause Graphs).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHSRyeNKY-aNHJIOTzvS8-K4o2LqTpJcD7XkcpJPjdRtfhEiI2aWQl-KAEbm_LCmf0cGWcW1Crmq1N1S-FuaUnKyXeEg8fvhX0_L5pfnttxSiIIwoe6uicZ2YRy0Ix0XzRFtTXbpO6BDApEo1eiaPmWG2E="
+        ],
+        [
+          "nips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGWCcjdcOhzJpb1pJdZ4IJ75c7jIT7uDi1nZVE1g0OaNg20T6wVlrOnqT9u7FkiXCmwUbF4ZZklf0qhjuNHc32vnOtK4IpUJpWt6PepmegvAQsWpg1_ZGrWw2R-2OgR8gZQ_8xQwbscsKLKQZiu_wjUZdNvQhUNIbyjZEymo0CC"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_2",
+      "section_idx": 15,
+      "idx_in_section": 2,
+      "text": "It views generation as a graph construction problem.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHSRyeNKY-aNHJIOTzvS8-K4o2LqTpJcD7XkcpJPjdRtfhEiI2aWQl-KAEbm_LCmf0cGWcW1Crmq1N1S-FuaUnKyXeEg8fvhX0_L5pfnttxSiIIwoe6uicZ2YRy0Ix0XzRFtTXbpO6BDApEo1eiaPmWG2E="
+        ],
+        [
+          "nips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGWCcjdcOhzJpb1pJdZ4IJ75c7jIT7uDi1nZVE1g0OaNg20T6wVlrOnqT9u7FkiXCmwUbF4ZZklf0qhjuNHc32vnOtK4IpUJpWt6PepmegvAQsWpg1_ZGrWw2R-2OgR8gZQ_8xQwbscsKLKQZiu_wjUZdNvQhUNIbyjZEymo0CC"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_3",
+      "section_idx": 15,
+      "idx_in_section": 3,
+      "text": "*  **Mechanism:** G2SAT uses a split-merge process.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_4",
+      "section_idx": 15,
+      "idx_in_section": 4,
+      "text": "It decomposes real industrial graphs into trees (splitting) and then trains a Graph Neural Network (GNN) to learn how to merge these trees back together to form a valid SAT graph.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_5",
+      "section_idx": 15,
+      "idx_in_section": 5,
+      "text": "*  **Strengths:** It is the first deep generative framework capable of producing formulas that resemble industrial instances in terms of graph metrics (modularity, degree distribution).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHSRyeNKY-aNHJIOTzvS8-K4o2LqTpJcD7XkcpJPjdRtfhEiI2aWQl-KAEbm_LCmf0cGWcW1Crmq1N1S-FuaUnKyXeEg8fvhX0_L5pfnttxSiIIwoe6uicZ2YRy0Ix0XzRFtTXbpO6BDApEo1eiaPmWG2E="
+        ],
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgJ4J0K65SrLou_1-zRok7U9t_xDogMQ0vwmQ4NeiMsG7KgZ1_hQZLCE6m0Vz_80v07-j7YoYdFIxNoU8I24Qv7ny0ivl1jkTRaf6Zt1FbFFIbTaGu9g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_6",
+      "section_idx": 15,
+      "idx_in_section": 6,
+      "text": "*  **Weaknesses:** G2SAT is computationally slow because it requires sampling many tree pairs.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEi9a13oSR87iPmcASrqv5AscjCwE5lOzrlELImImJ3KRax1tCiKoZ8a6__1m4RTOe57DM1UNeUwHNCND0vfgBey38zFrT8fy-jtUMkGXYBqNKqv2LkPA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_7",
+      "section_idx": 15,
+      "idx_in_section": 7,
+      "text": "More critically, it often fails to preserve \"hardness\"\u2014the generated instances can sometimes be much easier to solve than the seed instances due to the loss of subtle logical dependencies during the split-merge process.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEi9a13oSR87iPmcASrqv5AscjCwE5lOzrlELImImJ3KRax1tCiKoZ8a6__1m4RTOe57DM1UNeUwHNCND0vfgBey38zFrT8fy-jtUMkGXYBqNKqv2LkPA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "### 5.2. HardSATGEN: Structure-Hardness Awareness",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEB6hdt5f-5MXT-1imFJzctxjZ7pnKVJEAybFN94F_wnRqQmfMWJbqIV0F91GXkSaa50ecN7tBvlP7VXhcGj6oAof2M7nyWJi_JdDCLHRj8Way5xviygw=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCi5gfGIOWlg8YzwIevlgHjPpEUXVpjsXu8-UD1Iso3CCpfEMBTDW_lu3Hg-dG6mwlpBwFxqQgBbfH8S_G72Pw9hCX2neSQvXqhEBKLWA0YhuVNhKnVdX6vDjZm9bHIvJGtPZAN5QS4E7gfFVpXDGvonIlQlp7Z8p3zQ5SNt4iEWQlPzdF6TA9Jg3zJS4Lck2opq46ENP4hQoaryEPYTcXCTTbBvlQQPXYN_0icO2ayHHPw3zgXF-KO_IL34sO-6xVMA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "HardSATGEN improves upon G2SAT by introducing a fine-grained control mechanism to the split-merge paradigm.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEB6hdt5f-5MXT-1imFJzctxjZ7pnKVJEAybFN94F_wnRqQmfMWJbqIV0F91GXkSaa50ecN7tBvlP7VXhcGj6oAof2M7nyWJi_JdDCLHRj8Way5xviygw=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCi5gfGIOWlg8YzwIevlgHjPpEUXVpjsXu8-UD1Iso3CCpfEMBTDW_lu3Hg-dG6mwlpBwFxqQgBbfH8S_G72Pw9hCX2neSQvXqhEBKLWA0YhuVNhKnVdX6vDjZm9bHIvJGtPZAN5QS4E7gfFVpXDGvonIlQlp7Z8p3zQ5SNt4iEWQlPzdF6TA9Jg3zJS4Lck2opq46ENP4hQoaryEPYTcXCTTbBvlQQPXYN_0icO2ayHHPw3zgXF-KO_IL34sO-6xVMA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "It explicitly targets the preservation of computational hardness.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEB6hdt5f-5MXT-1imFJzctxjZ7pnKVJEAybFN94F_wnRqQmfMWJbqIV0F91GXkSaa50ecN7tBvlP7VXhcGj6oAof2M7nyWJi_JdDCLHRj8Way5xviygw=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCi5gfGIOWlg8YzwIevlgHjPpEUXVpjsXu8-UD1Iso3CCpfEMBTDW_lu3Hg-dG6mwlpBwFxqQgBbfH8S_G72Pw9hCX2neSQvXqhEBKLWA0YhuVNhKnVdX6vDjZm9bHIvJGtPZAN5QS4E7gfFVpXDGvonIlQlp7Z8p3zQ5SNt4iEWQlPzdF6TA9Jg3zJS4Lck2opq46ENP4hQoaryEPYTcXCTTbBvlQQPXYN_0icO2ayHHPw3zgXF-KO_IL34sO-6xVMA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_3",
+      "section_idx": 16,
+      "idx_in_section": 3,
+      "text": "*  **Mechanism:** It incorporates community detection and core structure analysis into the generation process.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_4",
+      "section_idx": 16,
+      "idx_in_section": 4,
+      "text": "By maintaining the integrity of the \"core\" (the subset of clauses responsible for unsatisfiability or hardness), it avoids generating trivial instances.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_5",
+      "section_idx": 16,
+      "idx_in_section": 5,
+      "text": "*  **Performance:** Experiments show HardSATGEN achieves significant gains over G2SAT, producing instances that are computationally comparable to the original industrial benchmarks while maintaining structural fidelity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCi5gfGIOWlg8YzwIevlgHjPpEUXVpjsXu8-UD1Iso3CCpfEMBTDW_lu3Hg-dG6mwlpBwFxqQgBbfH8S_G72Pw9hCX2neSQvXqhEBKLWA0YhuVNhKnVdX6vDjZm9bHIvJGtPZAN5QS4E7gfFVpXDGvonIlQlp7Z8p3zQ5SNt4iEWQlPzdF6TA9Jg3zJS4Lck2opq46ENP4hQoaryEPYTcXCTTbBvlQQPXYN_0icO2ayHHPw3zgXF-KO_IL34sO-6xVMA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFXoCxf0xND4va0iBo8nV1WwcG_Pkj9HWwM8rMwTIeN6zJ5N4MiQVpQuxBzePEsCHro2IJ4zeTjOIeQ4kefDN4CtwTBT5am3PtxXLzikLfV2Vf0GwVlFDIraM3rvVhFaT7V3AL3827Et6H3GrQwSXB3ohstOPTm2muyrI03KM6nRHTj3QYpGcGZmRGmRavSpFq0Tb7eiu9wuXOxqBlPnSMBtmPrjd5HjKFuyz5OxjqipGUvMWaZYZ3bZGAEYsd3mQqnh9jCZYCp3oZns2yUcwYOdDPRDHxOlS4kmVK3vtcL"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_6",
+      "section_idx": 16,
+      "idx_in_section": 6,
+      "text": "*  **Limitations:** The core-awareness mechanism makes HardSATGEN computationally expensive, making it difficult to generate massive datasets quickly.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEi9a13oSR87iPmcASrqv5AscjCwE5lOzrlELImImJ3KRax1tCiKoZ8a6__1m4RTOe57DM1UNeUwHNCND0vfgBey38zFrT8fy-jtUMkGXYBqNKqv2LkPA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "### 5.3. DeepSAT and Hardness Collapse",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFsEKJexllRMHAdi7IrT5Pw0lJPnQLxkOQvAfvErVTOR9YOLR63bw2YADPHOf6dzQ67RmA_Y7aJwRiyj0hhrXpgorPJZf9F9161bJ-bHtLmbmVgQYmhog=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "DeepSAT and similar frameworks attempt to use end-to-end learning, sometimes leveraging knowledge from Electronic Design Automation (EDA) to preprocess instances into And-Inverter Graphs (AIGs) before generation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFsEKJexllRMHAdi7IrT5Pw0lJPnQLxkOQvAfvErVTOR9YOLR63bw2YADPHOf6dzQ67RmA_Y7aJwRiyj0hhrXpgorPJZf9F9161bJ-bHtLmbmVgQYmhog=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "**Hardness Collapse:** A recurring challenge in neural generation is \"hardness collapse,\" where the generator learns the statistical appearance of a hard formula but misses the precise logical constraints that make it hard.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE0F59AO-ndRuI5JKb9ozJA-0-xjmIF1HPGHCst683HCiHYVweQ96dHxmzVkdd8MaUcgEbSXShvcbrMDoLLTUnaDVI3ISc0agK2DKAOVWteYC2Pf3baRsGQX45OfsfM"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_3",
+      "section_idx": 17,
+      "idx_in_section": 3,
+      "text": "This results in generated datasets that look industrial but are trivially solvable.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE0F59AO-ndRuI5JKb9ozJA-0-xjmIF1HPGHCst683HCiHYVweQ96dHxmzVkdd8MaUcgEbSXShvcbrMDoLLTUnaDVI3ISc0agK2DKAOVWteYC2Pf3baRsGQX45OfsfM"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_4",
+      "section_idx": 17,
+      "idx_in_section": 4,
+      "text": "Recent methods attempt to mitigate this by using GNN-based core detection to iteratively refine generated instances.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE0F59AO-ndRuI5JKb9ozJA-0-xjmIF1HPGHCst683HCiHYVweQ96dHxmzVkdd8MaUcgEbSXShvcbrMDoLLTUnaDVI3ISc0agK2DKAOVWteYC2Pf3baRsGQX45OfsfM"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "## 6. Combinatorial and Crafted Benchmarks",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "Crafted benchmarks are designed to defeat specific solver strategies or to enforce a specific logical structure.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "These are often used to prove lower bounds on solver performance.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_0",
+      "section_idx": 19,
+      "idx_in_section": 0,
+      "text": "### 6.1. Planted Solutions and Hidden Structure",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_1",
+      "section_idx": 19,
+      "idx_in_section": 1,
+      "text": "Generating hard *satisfiable* instances is challenging because random generation often produces unsatisfiable instances in the hard region.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_2",
+      "section_idx": 19,
+      "idx_in_section": 2,
+      "text": "\"Planted\" solution methods guarantee satisfiability by constructing the formula around a pre-selected truth assignment.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_3",
+      "section_idx": 19,
+      "idx_in_section": 3,
+      "text": "*  **q-hidden and KHidden-M:** These algorithms generate clauses that are satisfied by a specific assignment.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMQXmAx9kH7U84xb2GD4m1wsJwZCahdrtocxyIfx5Fb9hD8dw5linBtlS3bu0l78-oISKPcjbtI1wMjvyM90meZkGMFvi691qWiJB4km-nVuw2lQKiTg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_4",
+      "section_idx": 19,
+      "idx_in_section": 4,
+      "text": "To prevent the solver from easily finding this assignment, they mix in \"distractor\" clauses or use specific probability distributions (controlled by parameter $q$) to hide the solution's footprint.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMQXmAx9kH7U84xb2GD4m1wsJwZCahdrtocxyIfx5Fb9hD8dw5linBtlS3bu0l78-oISKPcjbtI1wMjvyM90meZkGMFvi691qWiJB4km-nVuw2lQKiTg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_5",
+      "section_idx": 19,
+      "idx_in_section": 5,
+      "text": "These are particularly effective against local search solvers like WalkSAT.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "jair.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHy2PlTwmqKZJZn3CfEiIlgGvdU4NfTv9uK6cUd9HmiEiGA9kNHtuXv_YRoMMmLhc59UiGLEHmW2jdjeWrwSsZNRcpC_DPoztBKtgkRz72yltuteunxKjRz1JTyaGvuZjqm6iEpSoZ-FsdBnWXALiMSDWIysEO0B9PM9EQt"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_6",
+      "section_idx": 19,
+      "idx_in_section": 6,
+      "text": "*  **Balanced SAT:** This method creates $k$-SAT instances with $m$ clauses that are \"balanced\" to be difficult, often by ensuring that literals are distributed in a way that prevents unit propagation cascades.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMQXmAx9kH7U84xb2GD4m1wsJwZCahdrtocxyIfx5Fb9hD8dw5linBtlS3bu0l78-oISKPcjbtI1wMjvyM90meZkGMFvi691qWiJB4km-nVuw2lQKiTg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "## 1. Introduction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "The Boolean Satisfiability Problem (SAT) stands as a cornerstone of computer science, being the first problem proven to be NP-complete.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_10",
+      "section_idx": 1,
+      "idx_in_section": 10,
+      "text": "Consequently, the field has evolved from simple uniform random generators to sophisticated pseudo-industrial models, cryptographic encodings, and deep-learning-based generative frameworks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_11",
+      "section_idx": 1,
+      "idx_in_section": 11,
+      "text": "This report provides an exhaustive analysis of the leading methods for generating hard SAT examples.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_12",
+      "section_idx": 1,
+      "idx_in_section": 12,
+      "text": "It categorizes these methods into random, pseudo-industrial, cryptographic, neural, and combinatorial approaches, evaluating the strengths and weaknesses of each in the context of modern SAT solving.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "Despite its worst-case exponential complexity, modern SAT solvers\u2014particularly those employing Conflict-Driven Clause Learning (CDCL)\u2014can routinely solve industrial instances containing millions of variables.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "This discrepancy between theoretical hardness and practical solvability has driven a massive research effort into understanding what makes a SAT instance \"hard.\"",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "The generation of hard SAT examples is critical for two primary reasons: benchmarking and security.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "First, solver developers require challenging and diverse datasets to identify weaknesses in heuristics and improve algorithmic performance.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_6",
+      "section_idx": 1,
+      "idx_in_section": 6,
+      "text": "Second, in cryptography and hardware verification, the hardness of a SAT instance underpins the security of the system; if the instance is easily solvable, the encryption or protection mechanism is compromised.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_7",
+      "section_idx": 1,
+      "idx_in_section": 7,
+      "text": "Historically, hardness was associated with random instances sampled from the phase transition region.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_8",
+      "section_idx": 1,
+      "idx_in_section": 8,
+      "text": "However, a dichotomy emerged: solvers optimized for random instances often failed on industrial ones, and vice versa.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_9",
+      "section_idx": 1,
+      "idx_in_section": 9,
+      "text": "This led to the realization that \"hardness\" is context-dependent and heavily influenced by structural features such as modularity, variable degree distribution, and locality.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_0",
+      "section_idx": 20,
+      "idx_in_section": 0,
+      "text": "### 6.2. Combinatorial Designs",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_1",
+      "section_idx": 20,
+      "idx_in_section": 1,
+      "text": "*  **Pigeonhole Principle:** These formulas encode the impossibility of placing $n+1$ pigeons into $n$ holes.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFv3hBzmg9aMGskKASx-RYbxBYBEJDWd1VXxhoAyoxh1Cgay32YUnoL4f7N-pzDsaWjMBjMBdF6hcHbwmrixxGqeBa8hRNvXwed5-11pzS0nT14nlySLXA0wrvZLRp5qFLh-HTCmLs0n65muQmpobyCvCMw-huenunDwm_X-vIbZSv-ZzNEueeT1bN9OIiRzVp1nEDrRbjQTP5ANkYIYW0YgI_29ubgQ-ogBcM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_2",
+      "section_idx": 20,
+      "idx_in_section": 2,
+      "text": "They are famously hard for resolution-based solvers (like basic DPLL) because the proof of unsatisfiability requires exponential size.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFv3hBzmg9aMGskKASx-RYbxBYBEJDWd1VXxhoAyoxh1Cgay32YUnoL4f7N-pzDsaWjMBjMBdF6hcHbwmrixxGqeBa8hRNvXwed5-11pzS0nT14nlySLXA0wrvZLRp5qFLh-HTCmLs0n65muQmpobyCvCMw-huenunDwm_X-vIbZSv-ZzNEueeT1bN9OIiRzVp1nEDrRbjQTP5ANkYIYW0YgI_29ubgQ-ogBcM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_3",
+      "section_idx": 20,
+      "idx_in_section": 3,
+      "text": "However, modern solvers with cutting planes or symmetry breaking can sometimes solve them efficiently.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFv3hBzmg9aMGskKASx-RYbxBYBEJDWd1VXxhoAyoxh1Cgay32YUnoL4f7N-pzDsaWjMBjMBdF6hcHbwmrixxGqeBa8hRNvXwed5-11pzS0nT14nlySLXA0wrvZLRp5qFLh-HTCmLs0n65muQmpobyCvCMw-huenunDwm_X-vIbZSv-ZzNEueeT1bN9OIiRzVp1nEDrRbjQTP5ANkYIYW0YgI_29ubgQ-ogBcM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_4",
+      "section_idx": 20,
+      "idx_in_section": 4,
+      "text": "*  **Quasigroups with Holes (QWH):** This problem involves completing a Latin square (like Sudoku) with missing entries.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uoa.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHuxD1CNMePi-49QNO4woPRvpdGkFjFp1yhP_SQvkp_Jn7wLk1XuE6BMqRJPL585zykw-jVa-iXekJEiZR-dTsqCrRneLhaVLUNWaGVa2RmuEl9hXu8BMb_B22vIrgLH87a3gF6"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_5",
+      "section_idx": 20,
+      "idx_in_section": 5,
+      "text": "The hardness can be tuned by the number of \"holes\" (empty cells).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uoa.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHuxD1CNMePi-49QNO4woPRvpdGkFjFp1yhP_SQvkp_Jn7wLk1XuE6BMqRJPL585zykw-jVa-iXekJEiZR-dTsqCrRneLhaVLUNWaGVa2RmuEl9hXu8BMb_B22vIrgLH87a3gF6"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_6",
+      "section_idx": 20,
+      "idx_in_section": 6,
+      "text": "These instances exhibit a phase transition and \"heavy-tailed\" runtime distributions, making them excellent benchmarks for both complete and incomplete solvers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uoa.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHuxD1CNMePi-49QNO4woPRvpdGkFjFp1yhP_SQvkp_Jn7wLk1XuE6BMqRJPL585zykw-jVa-iXekJEiZR-dTsqCrRneLhaVLUNWaGVa2RmuEl9hXu8BMb_B22vIrgLH87a3gF6"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_7",
+      "section_idx": 20,
+      "idx_in_section": 7,
+      "text": "*  **sgen:** This generator uses combinatorial block designs to create small but extremely difficult satisfiable instances.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFv3hBzmg9aMGskKASx-RYbxBYBEJDWd1VXxhoAyoxh1Cgay32YUnoL4f7N-pzDsaWjMBjMBdF6hcHbwmrixxGqeBa8hRNvXwed5-11pzS0nT14nlySLXA0wrvZLRp5qFLh-HTCmLs0n65muQmpobyCvCMw-huenunDwm_X-vIbZSv-ZzNEueeT1bN9OIiRzVp1nEDrRbjQTP5ANkYIYW0YgI_29ubgQ-ogBcM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_8",
+      "section_idx": 20,
+      "idx_in_section": 8,
+      "text": "It partitions variables into small groups and imposes constraints that force solvers into deep search trees without obvious contradictions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFv3hBzmg9aMGskKASx-RYbxBYBEJDWd1VXxhoAyoxh1Cgay32YUnoL4f7N-pzDsaWjMBjMBdF6hcHbwmrixxGqeBa8hRNvXwed5-11pzS0nT14nlySLXA0wrvZLRp5qFLh-HTCmLs0n65muQmpobyCvCMw-huenunDwm_X-vIbZSv-ZzNEueeT1bN9OIiRzVp1nEDrRbjQTP5ANkYIYW0YgI_29ubgQ-ogBcM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_0",
+      "section_idx": 21,
+      "idx_in_section": 0,
+      "text": "## 7. Adversarial and Algorithm Configuration Methods",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_1",
+      "section_idx": 21,
+      "idx_in_section": 1,
+      "text": "A modern approach to generating hardness involves using the solvers themselves to guide the generation process.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_0",
+      "section_idx": 22,
+      "idx_in_section": 0,
+      "text": "### 7.1. Algorithm Configuration Tools (SMAC)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aaai.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH_MVZ7J21MZ2PiVddKzDIqvqZ3UT6asCNmmTPx6iEjpbATmAu1H0OCg-O9CrQDbAOp_7S9DZrQ96BaABh8NYgHS9qYtDDmbUujsG-GhktNS4SFUxYOVjeWgT5ZQAeInxwqg9oh8rEiXH3oVBs="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHC30nmpSRwdzCxDITVnxh1LR444cExjey3ZgQozKfN1YJcIGmlzD0sEvORGbv1l2rtZlcxdQdYkg7u-0xs8j_OlfIh_vi0v9BtZiaF345zcpvthIUhvClkcqgjdNGHP6TgfZOqL-bfiuSdYKd_5VInL8rsRw7KLpxCbhrJkvtxKSrjZR0ZiIuqyvNT0BDF3BM9N7hwh6riQCsOZX7mdKgtiqYA5NiQlbqhbFTN"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_1",
+      "section_idx": 22,
+      "idx_in_section": 1,
+      "text": "Tools like SMAC (Sequential Model-based Algorithm Configuration) are typically used to optimize solver parameters.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aaai.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH_MVZ7J21MZ2PiVddKzDIqvqZ3UT6asCNmmTPx6iEjpbATmAu1H0OCg-O9CrQDbAOp_7S9DZrQ96BaABh8NYgHS9qYtDDmbUujsG-GhktNS4SFUxYOVjeWgT5ZQAeInxwqg9oh8rEiXH3oVBs="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHC30nmpSRwdzCxDITVnxh1LR444cExjey3ZgQozKfN1YJcIGmlzD0sEvORGbv1l2rtZlcxdQdYkg7u-0xs8j_OlfIh_vi0v9BtZiaF345zcpvthIUhvClkcqgjdNGHP6TgfZOqL-bfiuSdYKd_5VInL8rsRw7KLpxCbhrJkvtxKSrjZR0ZiIuqyvNT0BDF3BM9N7hwh6riQCsOZX7mdKgtiqYA5NiQlbqhbFTN"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_2",
+      "section_idx": 22,
+      "idx_in_section": 2,
+      "text": "However, they can be \"inverted\" to optimize the *instance generator* parameters to maximize solver runtime.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aaai.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH_MVZ7J21MZ2PiVddKzDIqvqZ3UT6asCNmmTPx6iEjpbATmAu1H0OCg-O9CrQDbAOp_7S9DZrQ96BaABh8NYgHS9qYtDDmbUujsG-GhktNS4SFUxYOVjeWgT5ZQAeInxwqg9oh8rEiXH3oVBs="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHC30nmpSRwdzCxDITVnxh1LR444cExjey3ZgQozKfN1YJcIGmlzD0sEvORGbv1l2rtZlcxdQdYkg7u-0xs8j_OlfIh_vi0v9BtZiaF345zcpvthIUhvClkcqgjdNGHP6TgfZOqL-bfiuSdYKd_5VInL8rsRw7KLpxCbhrJkvtxKSrjZR0ZiIuqyvNT0BDF3BM9N7hwh6riQCsOZX7mdKgtiqYA5NiQlbqhbFTN"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_3",
+      "section_idx": 22,
+      "idx_in_section": 3,
+      "text": "*  **Method:** A parameterized generator (e.g., one that can vary clause lengths, variable activity, or modularity) is treated as the target.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_4",
+      "section_idx": 22,
+      "idx_in_section": 4,
+      "text": "The configuration tool searches the parameter space for settings that maximize the runtime of a specific solver (e.g., Glucose or Lingeling).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_5",
+      "section_idx": 22,
+      "idx_in_section": 5,
+      "text": "*  **Result:** This approach has successfully generated \"Hard Random Satisfiability\" (HRS) instances that are significantly harder than standard phase-transition random instances for specific solvers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHC30nmpSRwdzCxDITVnxh1LR444cExjey3ZgQozKfN1YJcIGmlzD0sEvORGbv1l2rtZlcxdQdYkg7u-0xs8j_OlfIh_vi0v9BtZiaF345zcpvthIUhvClkcqgjdNGHP6TgfZOqL-bfiuSdYKd_5VInL8rsRw7KLpxCbhrJkvtxKSrjZR0ZiIuqyvNT0BDF3BM9N7hwh6riQCsOZX7mdKgtiqYA5NiQlbqhbFTN"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_6",
+      "section_idx": 22,
+      "idx_in_section": 6,
+      "text": "It can also generate small, satisfiable formulas that are surprisingly difficult for CDCL solvers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aaai.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH_MVZ7J21MZ2PiVddKzDIqvqZ3UT6asCNmmTPx6iEjpbATmAu1H0OCg-O9CrQDbAOp_7S9DZrQ96BaABh8NYgHS9qYtDDmbUujsG-GhktNS4SFUxYOVjeWgT5ZQAeInxwqg9oh8rEiXH3oVBs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_0",
+      "section_idx": 23,
+      "idx_in_section": 0,
+      "text": "### 7.2. No-Triangle SAT",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMQXmAx9kH7U84xb2GD4m1wsJwZCahdrtocxyIfx5Fb9hD8dw5linBtlS3bu0l78-oISKPcjbtI1wMjvyM90meZkGMFvi691qWiJB4km-nVuw2lQKiTg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_1",
+      "section_idx": 23,
+      "idx_in_section": 1,
+      "text": "This specific adversarial method focuses on graph statistics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMQXmAx9kH7U84xb2GD4m1wsJwZCahdrtocxyIfx5Fb9hD8dw5linBtlS3bu0l78-oISKPcjbtI1wMjvyM90meZkGMFvi691qWiJB4km-nVuw2lQKiTg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_2",
+      "section_idx": 23,
+      "idx_in_section": 2,
+      "text": "It generates instances that minimize the clustering coefficient (specifically, preventing triangles in the variable interaction graph).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMQXmAx9kH7U84xb2GD4m1wsJwZCahdrtocxyIfx5Fb9hD8dw5linBtlS3bu0l78-oISKPcjbtI1wMjvyM90meZkGMFvi691qWiJB4km-nVuw2lQKiTg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_3",
+      "section_idx": 23,
+      "idx_in_section": 3,
+      "text": "Research has shown that preventing triangles makes random instances considerably harder than standard random instances at the same ratio, likely because it inhibits the propagation of information between variables.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMQXmAx9kH7U84xb2GD4m1wsJwZCahdrtocxyIfx5Fb9hD8dw5linBtlS3bu0l78-oISKPcjbtI1wMjvyM90meZkGMFvi691qWiJB4km-nVuw2lQKiTg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_0",
+      "section_idx": 24,
+      "idx_in_section": 0,
+      "text": "## 8. Comparative Analysis of Strengths and Weaknesses",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_0",
+      "section_idx": 26,
+      "idx_in_section": 0,
+      "text": "## 9. Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_1",
+      "section_idx": 26,
+      "idx_in_section": 1,
+      "text": "The generation of hard SAT examples has evolved from the simple selection of random clauses to a multi-faceted discipline incorporating network science, cryptography, and deep learning.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_2",
+      "section_idx": 26,
+      "idx_in_section": 2,
+      "text": "While **Uniform Random 3-SAT** at the phase transition remains the theoretical baseline, it is no longer sufficient for evaluating modern CDCL solvers designed for structured problems.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_3",
+      "section_idx": 26,
+      "idx_in_section": 3,
+      "text": "**Pseudo-industrial generators** like the **Popularity-Similarity model** and **HardSATGEN** represent the current state-of-the-art in bridging the gap between random and real-world instances.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_4",
+      "section_idx": 26,
+      "idx_in_section": 4,
+      "text": "They offer the scalability of random generation with the structural complexity of industrial applications.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_5",
+      "section_idx": 26,
+      "idx_in_section": 5,
+      "text": "Meanwhile, **cryptographic instances** provide the ultimate test for solver robustness, pushing the limits of what is computationally feasible.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_6",
+      "section_idx": 26,
+      "idx_in_section": 6,
+      "text": "Future research is increasingly focused on **neural generation**, specifically overcoming the trade-off between generation speed and hardness preservation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_7",
+      "section_idx": 26,
+      "idx_in_section": 7,
+      "text": "As solvers continue to improve, the \"arms race\" between solver efficiency and instance hardness will drive the development of even more sophisticated generative models, likely relying on adversarial learning to automatically identify and exploit the blind spots of future SAT algorithms.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 2. Random k-SAT and the Phase Transition Phenomenon",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "The generation of uniform random $k$-SAT instances is the most studied method for creating hard benchmarks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "This approach is grounded in statistical physics and complexity theory, focusing on the transition between under-constrained and over-constrained systems.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "### 2.1. Uniform Random Generation and the Critical Ratio",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "liacs.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGAP_vX7j2gFSdfXkQauEm2dLlbh_jUyENqQYBHxvZoIQezE5qVOcAYqPOmGa4zsCDzH3JGBcvs-xa0liM8MhNGhbZi5-6CWe0NFiQipYhcihZbH8JlbPO2Lq8XCSg="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "The standard model for Random 3-SAT involves selecting $m$ clauses uniformly and independently from the set of all possible clauses of length 3 over $n$ variables.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "liacs.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGAP_vX7j2gFSdfXkQauEm2dLlbh_jUyENqQYBHxvZoIQezE5qVOcAYqPOmGa4zsCDzH3JGBcvs-xa0liM8MhNGhbZi5-6CWe0NFiQipYhcihZbH8JlbPO2Lq8XCSg="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_10",
+      "section_idx": 3,
+      "idx_in_section": 10,
+      "text": "The probability of satisfiability drops sharply from 1 to 0.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_11",
+      "section_idx": 3,
+      "idx_in_section": 11,
+      "text": "In this region, instances have few (if any) solutions, and proving satisfiability or unsatisfiability requires an exponential search effort.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "The hardness of these instances is governed by the control parameter $\\alpha = m/n$, known as the clause-to-variable ratio.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "liacs.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGAP_vX7j2gFSdfXkQauEm2dLlbh_jUyENqQYBHxvZoIQezE5qVOcAYqPOmGa4zsCDzH3JGBcvs-xa0liM8MhNGhbZi5-6CWe0NFiQipYhcihZbH8JlbPO2Lq8XCSg="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_3",
+      "section_idx": 3,
+      "idx_in_section": 3,
+      "text": "Research has identified a \"phase transition\" phenomenon occurring at a critical threshold $r_k$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF3a_ygIL4Oe5_wwwD40j05uzcGSWGlihot-2whEIWRbgAPssXYUykERShSeJiHbDuqoMLUPlGW7fZyJclcHAA8ERvgBISnHiGhvT4OyNf4fu_KrFT8VbTAPmN_kPPFgV3jObEu5Vug1YV5LMA0M8FgNpRl0ntiwgSlko08jaQ0cl2goKEIxKJwcnto_VnFUiLqjLVjyyUf"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_4",
+      "section_idx": 3,
+      "idx_in_section": 4,
+      "text": "For Random 3-SAT, this threshold is experimentally determined to be approximately $\\alpha \\approx 4.26$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF3a_ygIL4Oe5_wwwD40j05uzcGSWGlihot-2whEIWRbgAPssXYUykERShSeJiHbDuqoMLUPlGW7fZyJclcHAA8ERvgBISnHiGhvT4OyNf4fu_KrFT8VbTAPmN_kPPFgV3jObEu5Vug1YV5LMA0M8FgNpRl0ntiwgSlko08jaQ0cl2goKEIxKJwcnto_VnFUiLqjLVjyyUf"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_5",
+      "section_idx": 3,
+      "idx_in_section": 5,
+      "text": "*  **Under-constrained Region ($\\alpha < 4.26$):** Formulas are almost always satisfiable.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_6",
+      "section_idx": 3,
+      "idx_in_section": 6,
+      "text": "Solutions are abundant, and solvers can find them quickly.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_7",
+      "section_idx": 3,
+      "idx_in_section": 7,
+      "text": "*  **Over-constrained Region ($\\alpha > 4.26$):** Formulas are almost always unsatisfiable.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_8",
+      "section_idx": 3,
+      "idx_in_section": 8,
+      "text": "The contradiction can usually be found quickly via resolution or small cores of conflicting clauses.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_9",
+      "section_idx": 3,
+      "idx_in_section": 9,
+      "text": "*  **The Critical Region ($\\alpha \\approx 4.26$):** This is the \"hard\" region.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 2.2. Strengths of Random k-SAT",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "*  **Controllable Hardness:** The difficulty of the instances can be finely tuned by adjusting the ratio $m/n$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "This allows researchers to generate instances that are consistently hard for a given size $n$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "*  **Theoretical Simplicity:** The uniform distribution allows for rigorous mathematical analysis.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFIpmm00BWyHnGKVb5lTCm7vm6NQcMti-4JWs6IZU-_FAzVpltoDB_RQlqJIbFEgoMRPGqUb8AeCVBA-47kiZZiCJ_IPYClfrf2lwuCJ0iqVIAqcJqxjyGn7Hf8erjt7Gjw7uEut_ujUqJl5TS78bv2H6leay1mFS6m6lgznR0BkkhK"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "Upper and lower bounds for the threshold have been established (e.g., the O(1.321n) upper bound for specific randomized search algorithms).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFIpmm00BWyHnGKVb5lTCm7vm6NQcMti-4JWs6IZU-_FAzVpltoDB_RQlqJIbFEgoMRPGqUb8AeCVBA-47kiZZiCJ_IPYClfrf2lwuCJ0iqVIAqcJqxjyGn7Hf8erjt7Gjw7uEut_ujUqJl5TS78bv2H6leay1mFS6m6lgznR0BkkhK"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "*  **Benchmarking Local Search:** Random instances are particularly effective for benchmarking Stochastic Local Search (SLS) solvers (e.g., WalkSAT),",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "liacs.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGAP_vX7j2gFSdfXkQauEm2dLlbh_jUyENqQYBHxvZoIQezE5qVOcAYqPOmGa4zsCDzH3JGBcvs-xa0liM8MhNGhbZi5-6CWe0NFiQipYhcihZbH8JlbPO2Lq8XCSg="
+        ],
+        [
+          "cmu.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHEO-zs_owef-5R9WCMy-XkNBvZ1LJLEoHIsKlj866TEl9rxzvkT5OuaMijE31ZSMwj_rRP5rLf4eOkb94F1U8GzvZN8_1BVlZ3hXtfCLn5DWg6jYsECivlPn6i4PG6OuHd20VlYOYv7ya56k7yJsxIl66Wh1GWXw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": "which often perform better on random instances than complete solvers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "liacs.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGAP_vX7j2gFSdfXkQauEm2dLlbh_jUyENqQYBHxvZoIQezE5qVOcAYqPOmGa4zsCDzH3JGBcvs-xa0liM8MhNGhbZi5-6CWe0NFiQipYhcihZbH8JlbPO2Lq8XCSg="
+        ],
+        [
+          "cmu.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHEO-zs_owef-5R9WCMy-XkNBvZ1LJLEoHIsKlj866TEl9rxzvkT5OuaMijE31ZSMwj_rRP5rLf4eOkb94F1U8GzvZN8_1BVlZ3hXtfCLn5DWg6jYsECivlPn6i4PG6OuHd20VlYOYv7ya56k7yJsxIl66Wh1GWXw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 2.3. Weaknesses and Limitations",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "*  **Lack of Structure:** Uniform random instances lack the internal structure found in real-world problems.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ],
+        [
+          "jair.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlXU-XqOhPmJpOWUhJHcW0SeRp-mIaZwDBGWujFToUmAaqcus7OVzW0S6whLFVak25I3E6BeiJC9urp2rURYKjEOZfmL8gbUoQHCIrg6kqlTHMP-AduMmQbiaD5b1Yp3RH8l-dDK7pIZaqjB5ZqTCQS_lrBtUSsUM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "They do not exhibit modularity or power-law degree distributions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ],
+        [
+          "jair.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlXU-XqOhPmJpOWUhJHcW0SeRp-mIaZwDBGWujFToUmAaqcus7OVzW0S6whLFVak25I3E6BeiJC9urp2rURYKjEOZfmL8gbUoQHCIrg6kqlTHMP-AduMmQbiaD5b1Yp3RH8l-dDK7pIZaqjB5ZqTCQS_lrBtUSsUM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "Consequently, heuristics that exploit structure (like clause learning in CDCL) often perform poorly or degenerate into random guessing.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ],
+        [
+          "jair.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlXU-XqOhPmJpOWUhJHcW0SeRp-mIaZwDBGWujFToUmAaqcus7OVzW0S6whLFVak25I3E6BeiJC9urp2rURYKjEOZfmL8gbUoQHCIrg6kqlTHMP-AduMmQbiaD5b1Yp3RH8l-dDK7pIZaqjB5ZqTCQS_lrBtUSsUM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "*  **Irrelevance to Industry:** Solvers optimized for random instances often fail on industrial instances and vice versa.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqbhs4_L--1k8hNwQhY-6o_HjE299A2vejNOstCyQ-p2znhjgiKrdp7CTDg7jRtIE1nXB_DVZ3iyCi-GcFYSLC8_8HNYhtlWwDJrVsK_OVRC4EMQoxc1dQsMgltE3JltSb4-9rknlSDldfBKyzRrOIekYw1kXP_SOU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "A solver that dominates the random track of a SAT competition may be useless for hardware verification or planning tasks.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqbhs4_L--1k8hNwQhY-6o_HjE299A2vejNOstCyQ-p2znhjgiKrdp7CTDg7jRtIE1nXB_DVZ3iyCi-GcFYSLC8_8HNYhtlWwDJrVsK_OVRC4EMQoxc1dQsMgltE3JltSb4-9rknlSDldfBKyzRrOIekYw1kXP_SOU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_6",
+      "section_idx": 5,
+      "idx_in_section": 6,
+      "text": "*  **Asymptotic Behavior:** While hard for their size, random instances must be kept relatively small (hundreds of variables) to be solvable in reasonable time.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "aaai.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8slFI3ZSbSHbXXSiFEGVLSE2-pHCRrQY_SxHJmU7MB7hi3Tig1pEZvqhJTO0xs4YQ8K6X--4Dwuyhy-IFAlEBoVr60EJvpLNs_vZv3gL6pb39hstIhslP0mfZWdW70x2ofkB6B5mTTf5_O50EmhOydaw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_7",
+      "section_idx": 5,
+      "idx_in_section": 7,
+      "text": "Industrial instances, by contrast, can handle millions of variables because of their hidden structure.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF79CkFaJQ5USjHtwqbLEdh4AeyUq5rTzgzoWlECllrF9DidzWPNCyFSW8mxFpSLdjStelUQBTA6OsBtRZDZpiP4mGpXnaYTQt4ih5UM1hTrkaH3UKKQr0oa5ywrx25QR0r5oAf0A3zl7Lp1c75CwGysurLt8Yg6h9WmA=="
+        ],
+        [
+          "aaai.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8slFI3ZSbSHbXXSiFEGVLSE2-pHCRrQY_SxHJmU7MB7hi3Tig1pEZvqhJTO0xs4YQ8K6X--4Dwuyhy-IFAlEBoVr60EJvpLNs_vZv3gL6pb39hstIhslP0mfZWdW70x2ofkB6B5mTTf5_O50EmhOydaw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## 3. Pseudo-Industrial and Structured Generators",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "To address the disconnect between random benchmarks and real-world applications, the research community developed \"pseudo-industrial\" generators.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "These methods aim to create random instances that possess the structural characteristics\u2014specifically scale-free distributions and community structure\u2014observed in industrial formulas.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### 3.1. Scale-Free and Power-Law Models",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ],
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "Analysis of industrial instances (e.g., from hardware verification) reveals that they are \"scale-free.\"",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ],
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "The number of occurrences ($k$) of a variable follows a power-law distribution $P(k) \\sim k^{-\\delta}$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ],
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "In practical terms, this means most variables appear in very few clauses, while a few \"hub\" variables appear in a massive number of clauses.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ],
+        [
+          "csic.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_JICBvZojmef0PmjGo0Ayoa_2DpJMgR5vv3lwJQRXSDzz0zMJ61eyrY94kv0iaM2LFyt2Kh1NO9j9loNMuq8EQ6-pg1BvE_9-fE2WQ6Ec56fQbo9gWLod3J2TSo_dmpk5Tlrppmb3"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_4",
+      "section_idx": 7,
+      "idx_in_section": 4,
+      "text": "*  **Generation Method:** Instead of selecting variables uniformly (probability $1/n$), variables are selected based on a non-uniform probability distribution $P(i) \\sim i^{-\\beta}$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_5",
+      "section_idx": 7,
+      "idx_in_section": 5,
+      "text": "This forces the resulting formula to exhibit a power-law distribution of variable occurrences.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_6",
+      "section_idx": 7,
+      "idx_in_section": 6,
+      "text": "*  **Impact on Hardness:** Scale-free random instances show a phase transition similar to uniform random instances, but the threshold depends on the power-law exponent $\\beta$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_7",
+      "section_idx": 7,
+      "idx_in_section": 7,
+      "text": "For $\\beta > 1 - 1/k$, unsatisfiability is often due to small cores, potentially making them easier to solve than uniform instances.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG26Q3J6LlAm7ePqswBIbiiYaHW8ThGyHOEVRvJy15kbpGTcxH5MDvgTFtmvN67iCr7x4MfqKxw319eR5U-HINZXmNh4WTU2yEG73Gi6wGzWJ7pPKlDaHesoCsOUNE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "### 3.2. Community Attachment (CA) and Modularity",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "jair.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlXU-XqOhPmJpOWUhJHcW0SeRp-mIaZwDBGWujFToUmAaqcus7OVzW0S6whLFVak25I3E6BeiJC9urp2rURYKjEOZfmL8gbUoQHCIrg6kqlTHMP-AduMmQbiaD5b1Yp3RH8l-dDK7pIZaqjB5ZqTCQS_lrBtUSsUM="
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFTdJ9o1OZ3C7W35TDFrfiu6ohAdhLkNXRfB3aMAnMbvA35c3igljwJmrLFK5-GrNkbzgC4psXYGLDJnyW2doDFkuIsqfSskVUUoMf7edSnW04F2fwFda7ytj96R-iOWQ-ROjQLn9PPLxH6yyI77waJ73RaMDFDgw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "Industrial instances often exhibit high \"modularity,\" meaning variables can be grouped into communities where connections (clauses) are dense within communities but sparse between them.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "jair.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlXU-XqOhPmJpOWUhJHcW0SeRp-mIaZwDBGWujFToUmAaqcus7OVzW0S6whLFVak25I3E6BeiJC9urp2rURYKjEOZfmL8gbUoQHCIrg6kqlTHMP-AduMmQbiaD5b1Yp3RH8l-dDK7pIZaqjB5ZqTCQS_lrBtUSsUM="
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFTdJ9o1OZ3C7W35TDFrfiu6ohAdhLkNXRfB3aMAnMbvA35c3igljwJmrLFK5-GrNkbzgC4psXYGLDJnyW2doDFkuIsqfSskVUUoMf7edSnW04F2fwFda7ytj96R-iOWQ-ROjQLn9PPLxH6yyI77waJ73RaMDFDgw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "Uniform random instances have very low modularity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "jair.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlXU-XqOhPmJpOWUhJHcW0SeRp-mIaZwDBGWujFToUmAaqcus7OVzW0S6whLFVak25I3E6BeiJC9urp2rURYKjEOZfmL8gbUoQHCIrg6kqlTHMP-AduMmQbiaD5b1Yp3RH8l-dDK7pIZaqjB5ZqTCQS_lrBtUSsUM="
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFTdJ9o1OZ3C7W35TDFrfiu6ohAdhLkNXRfB3aMAnMbvA35c3igljwJmrLFK5-GrNkbzgC4psXYGLDJnyW2doDFkuIsqfSskVUUoMf7edSnW04F2fwFda7ytj96R-iOWQ-ROjQLn9PPLxH6yyI77waJ73RaMDFDgw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_3",
+      "section_idx": 8,
+      "idx_in_section": 3,
+      "text": "*  **The CA Model:** This model generates instances with a target modularity $Q$.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_4",
+      "section_idx": 8,
+      "idx_in_section": 4,
+      "text": "It works by assigning variables to communities and preferentially generating clauses that connect variables within the same community.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_5",
+      "section_idx": 8,
+      "idx_in_section": 5,
+      "text": "*  **Strengths:** High modularity correlates with the performance of CDCL solvers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFTdJ9o1OZ3C7W35TDFrfiu6ohAdhLkNXRfB3aMAnMbvA35c3igljwJmrLFK5-GrNkbzgC4psXYGLDJnyW2doDFkuIsqfSskVUUoMf7edSnW04F2fwFda7ytj96R-iOWQ-ROjQLn9PPLxH6yyI77waJ73RaMDFDgw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_6",
+      "section_idx": 8,
+      "idx_in_section": 6,
+      "text": "By tuning modularity, researchers can study how \"divide and conquer\" strategies in solvers exploit community structure.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFTdJ9o1OZ3C7W35TDFrfiu6ohAdhLkNXRfB3aMAnMbvA35c3igljwJmrLFK5-GrNkbzgC4psXYGLDJnyW2doDFkuIsqfSskVUUoMf7edSnW04F2fwFda7ytj96R-iOWQ-ROjQLn9PPLxH6yyI77waJ73RaMDFDgw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_7",
+      "section_idx": 8,
+      "idx_in_section": 7,
+      "text": "*  **Weaknesses:** The CA model does not inherently produce scale-free distributions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqbhs4_L--1k8hNwQhY-6o_HjE299A2vejNOstCyQ-p2znhjgiKrdp7CTDg7jRtIE1nXB_DVZ3iyCi-GcFYSLC8_8HNYhtlWwDJrVsK_OVRC4EMQoxc1dQsMgltE3JltSb4-9rknlSDldfBKyzRrOIekYw1kXP_SOU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_8",
+      "section_idx": 8,
+      "idx_in_section": 8,
+      "text": "It focuses solely on clustering, missing the \"hub\" variable characteristic of real instances.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqbhs4_L--1k8hNwQhY-6o_HjE299A2vejNOstCyQ-p2znhjgiKrdp7CTDg7jRtIE1nXB_DVZ3iyCi-GcFYSLC8_8HNYhtlWwDJrVsK_OVRC4EMQoxc1dQsMgltE3JltSb4-9rknlSDldfBKyzRrOIekYw1kXP_SOU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "### 3.3. Popularity-Similarity (PS) Models",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "The Popularity-Similarity model attempts to unify the previous approaches.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "It posits that connections in complex networks (and SAT formulas) are driven by two factors:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "1. **Popularity:** Nodes (variables) with high degrees attract more connections (preferential attachment/scale-free).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_4",
+      "section_idx": 9,
+      "idx_in_section": 4,
+      "text": "2. **Similarity:** Nodes tend to connect to other nodes that are \"similar\" to them (homophily/clustering).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqbhs4_L--1k8hNwQhY-6o_HjE299A2vejNOstCyQ-p2znhjgiKrdp7CTDg7jRtIE1nXB_DVZ3iyCi-GcFYSLC8_8HNYhtlWwDJrVsK_OVRC4EMQoxc1dQsMgltE3JltSb4-9rknlSDldfBKyzRrOIekYw1kXP_SOU"
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEs9vtVwo4dBTLbRLlNksQ5iGT9ZTCURRBpT--EcMUNHvwOjvLA2KOA9jW9riBqsV1DtRS0-8GGQNrqfsK2f2jVgxj6t-MfMLmJZJ8K7lPJoJlPw9bBiIAnn4OlM5ZVK-8twSdw-g-10W73pf0nW1AVtFUeWLB87ApPZjSLGQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_5",
+      "section_idx": 9,
+      "idx_in_section": 5,
+      "text": "*  **Mechanism:** Variables are mapped to a geometric space (e.g., a circle).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqbhs4_L--1k8hNwQhY-6o_HjE299A2vejNOstCyQ-p2znhjgiKrdp7CTDg7jRtIE1nXB_DVZ3iyCi-GcFYSLC8_8HNYhtlWwDJrVsK_OVRC4EMQoxc1dQsMgltE3JltSb4-9rknlSDldfBKyzRrOIekYw1kXP_SOU"
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEs9vtVwo4dBTLbRLlNksQ5iGT9ZTCURRBpT--EcMUNHvwOjvLA2KOA9jW9riBqsV1DtRS0-8GGQNrqfsK2f2jVgxj6t-MfMLmJZJ8K7lPJoJlPw9bBiIAnn4OlM5ZVK-8twSdw-g-10W73pf0nW1AVtFUeWLB87ApPZjSLGQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_6",
+      "section_idx": 9,
+      "idx_in_section": 6,
+      "text": "Connections are formed based on a distance metric that accounts for both the variable's \"popularity\" (creation time/index) and \"similarity\" (angular distance).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqbhs4_L--1k8hNwQhY-6o_HjE299A2vejNOstCyQ-p2znhjgiKrdp7CTDg7jRtIE1nXB_DVZ3iyCi-GcFYSLC8_8HNYhtlWwDJrVsK_OVRC4EMQoxc1dQsMgltE3JltSb4-9rknlSDldfBKyzRrOIekYw1kXP_SOU"
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEs9vtVwo4dBTLbRLlNksQ5iGT9ZTCURRBpT--EcMUNHvwOjvLA2KOA9jW9riBqsV1DtRS0-8GGQNrqfsK2f2jVgxj6t-MfMLmJZJ8K7lPJoJlPw9bBiIAnn4OlM5ZVK-8twSdw-g-10W73pf0nW1AVtFUeWLB87ApPZjSLGQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_7",
+      "section_idx": 9,
+      "idx_in_section": 7,
+      "text": "*  **Strengths:** This model successfully generates instances that are *both* scale-free and modular, offering a much closer approximation to industrial benchmarks than either CA or pure scale-free models.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHqbhs4_L--1k8hNwQhY-6o_HjE299A2vejNOstCyQ-p2znhjgiKrdp7CTDg7jRtIE1nXB_DVZ3iyCi-GcFYSLC8_8HNYhtlWwDJrVsK_OVRC4EMQoxc1dQsMgltE3JltSb4-9rknlSDldfBKyzRrOIekYw1kXP_SOU"
+        ],
+        [
+          "ugr.es",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEs9vtVwo4dBTLbRLlNksQ5iGT9ZTCURRBpT--EcMUNHvwOjvLA2KOA9jW9riBqsV1DtRS0-8GGQNrqfsK2f2jVgxj6t-MfMLmJZJ8K7lPJoJlPw9bBiIAnn4OlM5ZVK-8twSdw-g-10W73pf0nW1AVtFUeWLB87ApPZjSLGQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

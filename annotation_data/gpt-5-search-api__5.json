@@ -1,0 +1,813 @@
+{
+  "model_name": "gpt-5-search-api",
+  "example_id": "5",
+  "question": "Please provide a detailed answer to the following question:\n\nIn robotics, what are the leading methods for learning terrain traversibility costs automatically from robot experience?",
+  "answer": "Below is a detailed survey of the *leading methods* for *automatically learning terrain traversability costs* (or traversal difficulty) from robot experience. Traversability cost refers to how \u201cdifficult\u201d, risky, or expensive (in energy, time, risk, vibration, etc.) it is for a robot to traverse a patch of terrain. I structure the discussion by method classes, key examples, strengths & limitations, and open challenges.  \n\n---\n\n## Key Paradigms for Learning Traversability Costs\n\n1. **Self-supervised / Near-to-Far Learning**  \n   These methods use *proprioceptive feedback* from the robot (e.g. IMU, odometry error, vibrations, slippage) as a \u201cground truth\u201d of how bad traversing terrain feels, then learn to predict that from *exteroceptive* sensors (RGB, RGB-D, LiDAR, elevation maps) while the robot drives.  \n\n   - *\"How Does It Feel? Self-Supervised Costmap Learning\"* (2022): Combines visual + geometric data with IMU accelerations, plus velocity information, to predict continuous traversability costmaps. Result: smoother and more reliable navigation; up to ~57% fewer interventions vs occupancy baseline. ([emergentmind.com](https://www.emergentmind.com/papers/2209.10788?utm_source=openai))  \n   - *TerraPN* (2022): Online self-supervised learning of terrain properties (traction, bumpiness, deformability) using RGB input plus odometry and IMU feedback; constructs cost maps that classify terrain surfaces by interaction cost. ([arxiv.org](https://arxiv.org/abs/2202.12873?utm_source=openai))  \n\n   **Strengths:** Need minimal labeling; adapt with the robot\u2019s own experience; capture dynamic effects (vibrations, slip) not visible in geometry.  \n   **Limitations:** Requires the robot to *drive* through all kinds of terrain (so cannot predict for unseen or dangerous terrains ahead of time); exteroceptive sensors may mislead; can be slow to generalize to new environments.  \n\n2. **Risk-aware / Uncertainty-aware Learning**  \n   These methods explicitly model uncertainty in the learned traversability cost and plan accordingly, emphasizing safety and avoiding terrain where the cost or risk is uncertain or high.  \n\n   - *EVORA: Deep Evidential Traversability Learning* (2023/2024): Learns a discrete traction distribution + latent uncertainties (both aleatoric and epistemic), using evidential deep learning. The planner simulates worst-case expected traction and penalizes high uncertainty. Validated on wheeled and quadruped robots. ([arxiv.org](https://arxiv.org/abs/2311.06234?utm_source=openai))  \n   - *Learning Risk-aware Costmaps* (Legged robot in caves, etc.): Using CVaR (Conditional Value at Risk) \u2013 learns tail risks (e.g. worst 10%, 20%), outputs cost maps that are more robust to outliers and perception error. ([pubmed.ncbi.nlm.nih.gov](https://pubmed.ncbi.nlm.nih.gov/35005225/?utm_source=openai))  \n\n   **Strengths:** Safer in unstructured or unknown environments; penalizes high-uncertainty or high-risk terrain.  \n   **Limitations:** More complex training; may be conservative (avoid terrain that could be passable); uncertainty calibration matters; may require lots of data or multiple robot trials.\n\n3. **Learning from Human Demonstrations (Inverse Reinforcement Learning / Learning from Demonstration)**  \n   Instead of using only robot\u2019s physical feedback, these methods learn a *reward or cost function* that matches human preference or behavior, from trajectories/demonstrations.  \n\n   - *Risk Cost Mapping via Human Demonstration* (2024): Uses Maximum Causal Entropy IRL on elevation and robot pose/feature vectors from human-demonstrated trajectories; produces cost maps that match human preference to avoid risky terrain. Gains: increased success, reduced slope/gradient, more reliable paths. ([sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai))  \n\n   **Strengths:** Captures implicit human bias (risk awareness, comfort, etc.); can help reduce undesirable behavior like overly cautious or overly risky.  \n   **Limitations:** Requires quality human demonstrations; may not cover all terrains; human behavior may be suboptimal or inconsistent; generalization is tricky.\n\n4. **Reinforcement Learning / Value-Function / Robot-centric Methods**  \n   These approaches train robots (or controllers) to *optimize traversal* through interaction, implicitly learning traversability costs in their value functions, sometimes combined with exteroceptive input.  \n\n   - *Traversability-Aware Legged Navigation by Learning from Real-World Visual Data* (2024): Builds a traversability estimator based on the *value function* of the robot\u2019s locomotion controller; trained via RL to avoid hard terrain, using RGB-D visuals + proprioceptive feedback. ([cuhkleggedrobotlab.github.io](https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai))  \n\n   **Strengths:** Learns a cost that is directly tied to what the controller cares about (efficiency, energy, safety, etc.); may learn subtle tradeoffs (speed vs safety).  \n   **Limitations:** RL tends to require many trials; risk of overfitting; may have sample inefficiency; safety during exploration is a concern.\n\n5. **Multiple Cost / Multi-objective Prediction Models**  \n   Rather than collapsing all difficulty into a single scalar cost, these methods predict *multiple cost components* (e.g. roughness, energy consumption, max slope, risk of slipping, vibration), possibly to be weighted later.  \n\n   - *Robust Traversability Prediction Using Multiple Costs* (2024): Uses CNN + MLP to predict multiple cost metrics from visual inputs for a quadruped robot (in random terrain), learned via physics simulation; addresses noise in exteroceptive observations. ([pure.seoultech.ac.kr](https://pure.seoultech.ac.kr/en/publications/robust-traversability-prediction-using-multiple-costs-for-quadrup?utm_source=openai))  \n\n   **Strengths:** More interpretable; allows planners to trade off different concerns; components can share representations.  \n   **Limitations:** More complex output; need supervision or simulation for multiple metrics; combining them requires setting meaningful weights or trade-off policies.\n\n---\n\n## Comparative View & How They Fit Together\n\n| Method Type | Input Sources | Cost Supervisors / Labels | Prediction Target | When It\u2019s Used / Advantages |\n|-------------|----------------|----------------------------|--------------------|------------------------------|\n| Self-supervised Near-to-Far | RGB/RGB-D/LiDAR + velocity/proprioceptive sensors | IMU vibrations, odometry slip & timing | Continuous costmaps (time, vibration, risk) ahead of robot | Off-road, unknown terrains; when minimizing human labelling |\n| Risk-aware + Uncertainty | Same + uncertainty models | Similar feedback + uncertainty modeling loss (e.g. evidential loss, CVaR) | Cost + uncertainty maps / worst-case costs | Safety-critical missions, unpredictable terrain types |\n| IRL / Demonstration-based | Exteroceptive + trajectory data | Human demonstrated paths + features | Reward/cost function reflecting human preference | When human behavior is the target style, safer or desired behavior |\n| RL / Value Function-based | Proprioceptive + exteroceptive + dynamics | Sparse or shaped rewards via interaction | Value or cost predictions embedded in policy/planner | For robot-centric estimation, when robot has to learn behavior end-to-end |\n| Multi-cost Models | Visual/geometric inputs, maybe simulation | Separate metrics (energy, time, vibration) supervised via experience or sim | Vector of cost metrics | When multiple constraints matter (e.g. energy vs safety vs speed) |\n\n---\n\n## Key Recent Examples\n\n- **EVORA**: Introduces evidential learning to model both kinds of uncertainty, improving navigation performance in wheeled and quadruped robots. ([arxiv.org](https://arxiv.org/abs/2311.06234?utm_source=openai))  \n- **\u201cHow Does It Feel?\u201d Self-Supervised**: Demonstrates large improvements (smoother behavior, fewer interventions) by learning from proprioceptive feedback. ([emergentmind.com](https://www.emergentmind.com/papers/2209.10788?utm_source=openai))  \n- **Traversability-Aware Legged Navigation**: Uses robot\u2019s own locomotion controller value function; sample-efficient RL + RGB-D + proprioceptive fusion. ([cuhkleggedrobotlab.github.io](https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai))  \n- **Risk Cost Mapping via IRL**: Human demonstrations + elevation features + IRL give cost maps that align with human risk preferences. ([sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai))  \n\n---\n\n## Challenges and Limitations\n\n- **Generalization**: Environments vary a lot (rocky, muddy, snowy, vegetated), and models trained in one region may fail elsewhere.  \n- **Data Efficiency / Safety**: Collecting robot-experience labels is slow or risky; exploring dangerous terrain to label it is often undesirable.  \n- **Sensor Noise and Calibration**: Proprioceptive sensors may give noisy data; exteroceptive features may over-or under-estimate terrain difficulty (e.g., grass looks rough but may be traversable).  \n- **Trade-offs**: Speed vs safety vs energy vs mission goals; integrating multiple objectives complicates planning.  \n- **Uncertainty Modeling**: Knowing when to trust predictions is critical, especially when planning ahead from visual data; mis-estimated uncertainty may lead to disastrous paths.  \n\n---\n\n## Emerging Trends and Open Directions\n\n- **Evidential / Bayesian methods** that represent both aleatoric (inherent) and epistemic (lack-of-data) uncertainty appear promising (e.g. EVORA).  \n- **Value-based and robot-centric cost estimates** (e.g. based on the robot\u2019s own dynamic controller or energy model) yield more meaningful costs than human heuristics.  \n- **Active / online learning** and lifelong learning: robots updating cost models during deployment.  \n- **Combining simulation + real-world experience** to bootstrap multiple cost components.  \n- **Risk measures beyond expectation** (e.g. CVaR, worst-case) to capture rare but catastrophic failures.  \n\n---\n\nIf you like, I can also provide a categorized summary of methods by what cost metric they target (energy, slip, vibration, etc.), or how they deal with unseen terrains. Want me to pull that together?",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "Below is a detailed survey of the *leading methods* for *automatically learning terrain traversability costs* (or traversal difficulty) from robot experience. Traversability cost refers to how \u201cdifficult\u201d, risky, or expensive (in energy, time, risk, vibration, etc.) it is for a robot to traverse a patch of terrain. I structure the discussion by method classes, key examples, strengths & limitations, and open challenges.  \n\n---\n\n",
+      "start": 0,
+      "end": 431
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## Key Paradigms for Learning Traversability Costs",
+      "header_level": 2,
+      "text": "## Key Paradigms for Learning Traversability Costs\n\n1. **Self-supervised / Near-to-Far Learning**  \n   These methods use *proprioceptive feedback* from the robot (e.g. IMU, odometry error, vibrations, slippage) as a \u201cground truth\u201d of how bad traversing terrain feels, then learn to predict that from *exteroceptive* sensors (RGB, RGB-D, LiDAR, elevation maps) while the robot drives.  \n\n   - *\"How Does It Feel? Self-Supervised Costmap Learning\"* (2022): Combines visual + geometric data with IMU accelerations, plus velocity information, to predict continuous traversability costmaps. Result: smoother and more reliable navigation; up to ~57% fewer interventions vs occupancy baseline. ([emergentmind.com](https://www.emergentmind.com/papers/2209.10788?utm_source=openai))  \n   - *TerraPN* (2022): Online self-supervised learning of terrain properties (traction, bumpiness, deformability) using RGB input plus odometry and IMU feedback; constructs cost maps that classify terrain surfaces by interaction cost. ([arxiv.org](https://arxiv.org/abs/2202.12873?utm_source=openai))  \n\n   **Strengths:** Need minimal labeling; adapt with the robot\u2019s own experience; capture dynamic effects (vibrations, slip) not visible in geometry.  \n   **Limitations:** Requires the robot to *drive* through all kinds of terrain (so cannot predict for unseen or dangerous terrains ahead of time); exteroceptive sensors may mislead; can be slow to generalize to new environments.  \n\n2. **Risk-aware / Uncertainty-aware Learning**  \n   These methods explicitly model uncertainty in the learned traversability cost and plan accordingly, emphasizing safety and avoiding terrain where the cost or risk is uncertain or high.  \n\n   - *EVORA: Deep Evidential Traversability Learning* (2023/2024): Learns a discrete traction distribution + latent uncertainties (both aleatoric and epistemic), using evidential deep learning. The planner simulates worst-case expected traction and penalizes high uncertainty. Validated on wheeled and quadruped robots. ([arxiv.org](https://arxiv.org/abs/2311.06234?utm_source=openai))  \n   - *Learning Risk-aware Costmaps* (Legged robot in caves, etc.): Using CVaR (Conditional Value at Risk) \u2013 learns tail risks (e.g. worst 10%, 20%), outputs cost maps that are more robust to outliers and perception error. ([pubmed.ncbi.nlm.nih.gov](https://pubmed.ncbi.nlm.nih.gov/35005225/?utm_source=openai))  \n\n   **Strengths:** Safer in unstructured or unknown environments; penalizes high-uncertainty or high-risk terrain.  \n   **Limitations:** More complex training; may be conservative (avoid terrain that could be passable); uncertainty calibration matters; may require lots of data or multiple robot trials.\n\n3. **Learning from Human Demonstrations (Inverse Reinforcement Learning / Learning from Demonstration)**  \n   Instead of using only robot\u2019s physical feedback, these methods learn a *reward or cost function* that matches human preference or behavior, from trajectories/demonstrations.  \n\n   - *Risk Cost Mapping via Human Demonstration* (2024): Uses Maximum Causal Entropy IRL on elevation and robot pose/feature vectors from human-demonstrated trajectories; produces cost maps that match human preference to avoid risky terrain. Gains: increased success, reduced slope/gradient, more reliable paths. ([sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai))  \n\n   **Strengths:** Captures implicit human bias (risk awareness, comfort, etc.); can help reduce undesirable behavior like overly cautious or overly risky.  \n   **Limitations:** Requires quality human demonstrations; may not cover all terrains; human behavior may be suboptimal or inconsistent; generalization is tricky.\n\n4. **Reinforcement Learning / Value-Function / Robot-centric Methods**  \n   These approaches train robots (or controllers) to *optimize traversal* through interaction, implicitly learning traversability costs in their value functions, sometimes combined with exteroceptive input.  \n\n   - *Traversability-Aware Legged Navigation by Learning from Real-World Visual Data* (2024): Builds a traversability estimator based on the *value function* of the robot\u2019s locomotion controller; trained via RL to avoid hard terrain, using RGB-D visuals + proprioceptive feedback. ([cuhkleggedrobotlab.github.io](https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai))  \n\n   **Strengths:** Learns a cost that is directly tied to what the controller cares about (efficiency, energy, safety, etc.); may learn subtle tradeoffs (speed vs safety).  \n   **Limitations:** RL tends to require many trials; risk of overfitting; may have sample inefficiency; safety during exploration is a concern.\n\n5. **Multiple Cost / Multi-objective Prediction Models**  \n   Rather than collapsing all difficulty into a single scalar cost, these methods predict *multiple cost components* (e.g. roughness, energy consumption, max slope, risk of slipping, vibration), possibly to be weighted later.  \n\n   - *Robust Traversability Prediction Using Multiple Costs* (2024): Uses CNN + MLP to predict multiple cost metrics from visual inputs for a quadruped robot (in random terrain), learned via physics simulation; addresses noise in exteroceptive observations. ([pure.seoultech.ac.kr](https://pure.seoultech.ac.kr/en/publications/robust-traversability-prediction-using-multiple-costs-for-quadrup?utm_source=openai))  \n\n   **Strengths:** More interpretable; allows planners to trade off different concerns; components can share representations.  \n   **Limitations:** More complex output; need supervision or simulation for multiple metrics; combining them requires setting meaningful weights or trade-off policies.\n\n---\n\n",
+      "start": 431,
+      "end": 6174
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## Comparative View & How They Fit Together",
+      "header_level": 2,
+      "text": "## Comparative View & How They Fit Together\n\n",
+      "start": 6174,
+      "end": 6219
+    },
+    {
+      "idx": 3,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Method Type | Input Sources | Cost Supervisors / Labels | Prediction Target | When It\u2019s Used / Advantages |\n|-------------|----------------|----------------------------|--------------------|------------------------------|\n| Self-supervised Near-to-Far | RGB/RGB-D/LiDAR + velocity/proprioceptive sensors | IMU vibrations, odometry slip & timing | Continuous costmaps (time, vibration, risk) ahead of robot | Off-road, unknown terrains; when minimizing human labelling |\n| Risk-aware + Uncertainty | Same + uncertainty models | Similar feedback + uncertainty modeling loss (e.g. evidential loss, CVaR) | Cost + uncertainty maps / worst-case costs | Safety-critical missions, unpredictable terrain types |\n| IRL / Demonstration-based | Exteroceptive + trajectory data | Human demonstrated paths + features | Reward/cost function reflecting human preference | When human behavior is the target style, safer or desired behavior |\n| RL / Value Function-based | Proprioceptive + exteroceptive + dynamics | Sparse or shaped rewards via interaction | Value or cost predictions embedded in policy/planner | For robot-centric estimation, when robot has to learn behavior end-to-end |\n| Multi-cost Models | Visual/geometric inputs, maybe simulation | Separate metrics (energy, time, vibration) supervised via experience or sim | Vector of cost metrics | When multiple constraints matter (e.g. energy vs safety vs speed) |",
+      "start": 6219,
+      "end": 7632
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "\n---\n\n",
+      "start": 7632,
+      "end": 7638
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "## Key Recent Examples",
+      "header_level": 2,
+      "text": "## Key Recent Examples\n\n- **EVORA**: Introduces evidential learning to model both kinds of uncertainty, improving navigation performance in wheeled and quadruped robots. ([arxiv.org](https://arxiv.org/abs/2311.06234?utm_source=openai))  \n- **\u201cHow Does It Feel?\u201d Self-Supervised**: Demonstrates large improvements (smoother behavior, fewer interventions) by learning from proprioceptive feedback. ([emergentmind.com](https://www.emergentmind.com/papers/2209.10788?utm_source=openai))  \n- **Traversability-Aware Legged Navigation**: Uses robot\u2019s own locomotion controller value function; sample-efficient RL + RGB-D + proprioceptive fusion. ([cuhkleggedrobotlab.github.io](https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai))  \n- **Risk Cost Mapping via IRL**: Human demonstrations + elevation features + IRL give cost maps that align with human risk preferences. ([sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai))  \n\n---\n\n",
+      "start": 7638,
+      "end": 8644
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## Challenges and Limitations",
+      "header_level": 2,
+      "text": "## Challenges and Limitations\n\n- **Generalization**: Environments vary a lot (rocky, muddy, snowy, vegetated), and models trained in one region may fail elsewhere.  \n- **Data Efficiency / Safety**: Collecting robot-experience labels is slow or risky; exploring dangerous terrain to label it is often undesirable.  \n- **Sensor Noise and Calibration**: Proprioceptive sensors may give noisy data; exteroceptive features may over-or under-estimate terrain difficulty (e.g., grass looks rough but may be traversable).  \n- **Trade-offs**: Speed vs safety vs energy vs mission goals; integrating multiple objectives complicates planning.  \n- **Uncertainty Modeling**: Knowing when to trust predictions is critical, especially when planning ahead from visual data; mis-estimated uncertainty may lead to disastrous paths.  \n\n---\n\n",
+      "start": 8644,
+      "end": 9466
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "## Emerging Trends and Open Directions",
+      "header_level": 2,
+      "text": "## Emerging Trends and Open Directions\n\n- **Evidential / Bayesian methods** that represent both aleatoric (inherent) and epistemic (lack-of-data) uncertainty appear promising (e.g. EVORA).  \n- **Value-based and robot-centric cost estimates** (e.g. based on the robot\u2019s own dynamic controller or energy model) yield more meaningful costs than human heuristics.  \n- **Active / online learning** and lifelong learning: robots updating cost models during deployment.  \n- **Combining simulation + real-world experience** to bootstrap multiple cost components.  \n- **Risk measures beyond expectation** (e.g. CVaR, worst-case) to capture rare but catastrophic failures.  \n\n---\n\nIf you like, I can also provide a categorized summary of methods by what cost metric they target (energy, slip, vibration, etc.), or how they deal with unseen terrains. Want me to pull that together?",
+      "start": 9466,
+      "end": 10336
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "Below is a detailed survey of the *leading methods* for *automatically learning terrain traversability costs* (or traversal difficulty) from robot experience.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "Traversability cost refers to how \u201cdifficult\u201d, risky, or expensive (in energy, time, risk, vibration, etc.) it is for a robot to traverse a patch of terrain.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "text": "I structure the discussion by method classes, key examples, strengths & limitations, and open challenges.  \n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "## Key Paradigms for Learning Traversability Costs",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "1. **Self-supervised / Near-to-Far Learning**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_10",
+      "section_idx": 1,
+      "idx_in_section": 10,
+      "text": "2. **Risk-aware / Uncertainty-aware Learning**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_11",
+      "section_idx": 1,
+      "idx_in_section": 11,
+      "text": "These methods explicitly model uncertainty in the learned traversability cost and plan accordingly, emphasizing safety and avoiding terrain where the cost or risk is uncertain or high.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_12",
+      "section_idx": 1,
+      "idx_in_section": 12,
+      "text": "- *EVORA: Deep Evidential Traversability Learning* (2023/2024): Learns a discrete traction distribution + latent uncertainties (both aleatoric and epistemic), using evidential deep learning.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "EVORA: Deep Evidential Traversability Learning for Risk-Aware Off-Road Autonomy",
+          "https://arxiv.org/abs/2311.06234?utm_source=openai"
+        ],
+        [
+          "Learning Risk-aware Costmaps for Traversability in Challenging Environments - PubMed",
+          "https://pubmed.ncbi.nlm.nih.gov/35005225/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_13",
+      "section_idx": 1,
+      "idx_in_section": 13,
+      "text": "The planner simulates worst-case expected traction and penalizes high uncertainty.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "EVORA: Deep Evidential Traversability Learning for Risk-Aware Off-Road Autonomy",
+          "https://arxiv.org/abs/2311.06234?utm_source=openai"
+        ],
+        [
+          "Learning Risk-aware Costmaps for Traversability in Challenging Environments - PubMed",
+          "https://pubmed.ncbi.nlm.nih.gov/35005225/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_14",
+      "section_idx": 1,
+      "idx_in_section": 14,
+      "text": "Validated on wheeled and quadruped robots.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "EVORA: Deep Evidential Traversability Learning for Risk-Aware Off-Road Autonomy",
+          "https://arxiv.org/abs/2311.06234?utm_source=openai"
+        ],
+        [
+          "Learning Risk-aware Costmaps for Traversability in Challenging Environments - PubMed",
+          "https://pubmed.ncbi.nlm.nih.gov/35005225/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_16",
+      "section_idx": 1,
+      "idx_in_section": 16,
+      "text": "- *Learning Risk-aware Costmaps* (Legged robot in caves, etc.): Using CVaR (Conditional Value at Risk) \u2013 learns tail risks (e.g. worst 10%, 20%), outputs cost maps that are more robust to outliers and perception error.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "EVORA: Deep Evidential Traversability Learning for Risk-Aware Off-Road Autonomy",
+          "https://arxiv.org/abs/2311.06234?utm_source=openai"
+        ],
+        [
+          "Learning Risk-aware Costmaps for Traversability in Challenging Environments - PubMed",
+          "https://pubmed.ncbi.nlm.nih.gov/35005225/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_18",
+      "section_idx": 1,
+      "idx_in_section": 18,
+      "text": "**Strengths:** Safer in unstructured or unknown environments; penalizes high-uncertainty or high-risk terrain.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_19",
+      "section_idx": 1,
+      "idx_in_section": 19,
+      "text": "**Limitations:** More complex training; may be conservative (avoid terrain that could be passable); uncertainty calibration matters; may require lots of data or multiple robot trials.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "These methods use *proprioceptive feedback* from the robot (e.g. IMU, odometry error, vibrations, slippage) as a \u201cground truth\u201d of how bad traversing terrain feels, then learn to predict that from *exteroceptive* sensors (RGB, RGB-D, LiDAR, elevation maps) while the robot drives.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_20",
+      "section_idx": 1,
+      "idx_in_section": 20,
+      "text": "3. **Learning from Human Demonstrations (Inverse Reinforcement Learning / Learning from Demonstration)**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_21",
+      "section_idx": 1,
+      "idx_in_section": 21,
+      "text": "Instead of using only robot\u2019s physical feedback, these methods learn a *reward or cost function* that matches human preference or behavior, from trajectories/demonstrations.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_22",
+      "section_idx": 1,
+      "idx_in_section": 22,
+      "text": "- *Risk Cost Mapping via Human Demonstration* (2024): Uses Maximum Causal Entropy IRL on elevation and robot pose/feature vectors from human-demonstrated trajectories; produces cost maps that match human preference to avoid risky terrain.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "A reliable traversability learning method based on human-demonstrated risk cost mapping for mobile robots over uneven terrain - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_23",
+      "section_idx": 1,
+      "idx_in_section": 23,
+      "text": "Gains: increased success, reduced slope/gradient, more reliable paths.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "A reliable traversability learning method based on human-demonstrated risk cost mapping for mobile robots over uneven terrain - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_25",
+      "section_idx": 1,
+      "idx_in_section": 25,
+      "text": "**Strengths:** Captures implicit human bias (risk awareness, comfort, etc.); can help reduce undesirable behavior like overly cautious or overly risky.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_26",
+      "section_idx": 1,
+      "idx_in_section": 26,
+      "text": "**Limitations:** Requires quality human demonstrations; may not cover all terrains; human behavior may be suboptimal or inconsistent; generalization is tricky.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_27",
+      "section_idx": 1,
+      "idx_in_section": 27,
+      "text": "4. **Reinforcement Learning / Value-Function / Robot-centric Methods**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_28",
+      "section_idx": 1,
+      "idx_in_section": 28,
+      "text": "These approaches train robots (or controllers) to *optimize traversal* through interaction, implicitly learning traversability costs in their value functions, sometimes combined with exteroceptive input.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_29",
+      "section_idx": 1,
+      "idx_in_section": 29,
+      "text": "- *Traversability-Aware Legged Navigation by Learning from Real-World Visual Data* (2024): Builds a traversability estimator based on the *value function* of the robot\u2019s locomotion controller; trained via RL to avoid hard terrain, using RGB-D visuals + proprioceptive feedback.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Traversability-Aware Legged Navigation by Learning from Real-World Visual Data | CUHK Legged Robot Lab (CUHKLRL)",
+          "https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "- *\"How Does It Feel? Self-Supervised Costmap Learning\"* (2022): Combines visual + geometric data with IMU accelerations, plus velocity information, to predict continuous traversability costmaps.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Self-Supervised Costmap Learning for Off-Road Traversability",
+          "https://www.emergentmind.com/papers/2209.10788?utm_source=openai"
+        ],
+        [
+          "TerraPN: Unstructured Terrain Navigation using Online Self-Supervised Learning",
+          "https://arxiv.org/abs/2202.12873?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_31",
+      "section_idx": 1,
+      "idx_in_section": 31,
+      "text": "**Strengths:** Learns a cost that is directly tied to what the controller cares about (efficiency, energy, safety, etc.); may learn subtle tradeoffs (speed vs safety).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_32",
+      "section_idx": 1,
+      "idx_in_section": 32,
+      "text": "**Limitations:** RL tends to require many trials; risk of overfitting; may have sample inefficiency; safety during exploration is a concern.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_33",
+      "section_idx": 1,
+      "idx_in_section": 33,
+      "text": "5. **Multiple Cost / Multi-objective Prediction Models**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_34",
+      "section_idx": 1,
+      "idx_in_section": 34,
+      "text": "Rather than collapsing all difficulty into a single scalar cost, these methods predict *multiple cost components* (e.g. roughness, energy consumption, max slope, risk of slipping, vibration), possibly to be weighted later.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_35",
+      "section_idx": 1,
+      "idx_in_section": 35,
+      "text": "- *Robust Traversability Prediction Using Multiple Costs* (2024): Uses CNN + MLP to predict multiple cost metrics from visual inputs for a quadruped robot (in random terrain), learned via physics simulation; addresses noise in exteroceptive observations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Robust Traversability Prediction Using Multiple Costs for Quadruped Robot in Random Terrains - Seoul National University of Science & Technology",
+          "https://pure.seoultech.ac.kr/en/publications/robust-traversability-prediction-using-multiple-costs-for-quadrup?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_37",
+      "section_idx": 1,
+      "idx_in_section": 37,
+      "text": "**Strengths:** More interpretable; allows planners to trade off different concerns; components can share representations.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_38",
+      "section_idx": 1,
+      "idx_in_section": 38,
+      "text": "**Limitations:** More complex output; need supervision or simulation for multiple metrics; combining them requires setting meaningful weights or trade-off policies.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_39",
+      "section_idx": 1,
+      "idx_in_section": 39,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "Result: smoother and more reliable navigation; up to ~57% fewer interventions vs occupancy baseline.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Self-Supervised Costmap Learning for Off-Road Traversability",
+          "https://www.emergentmind.com/papers/2209.10788?utm_source=openai"
+        ],
+        [
+          "TerraPN: Unstructured Terrain Navigation using Online Self-Supervised Learning",
+          "https://arxiv.org/abs/2202.12873?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_6",
+      "section_idx": 1,
+      "idx_in_section": 6,
+      "text": "- *TerraPN* (2022): Online self-supervised learning of terrain properties (traction, bumpiness, deformability) using RGB input plus odometry and IMU feedback; constructs cost maps that classify terrain surfaces by interaction cost.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Self-Supervised Costmap Learning for Off-Road Traversability",
+          "https://www.emergentmind.com/papers/2209.10788?utm_source=openai"
+        ],
+        [
+          "TerraPN: Unstructured Terrain Navigation using Online Self-Supervised Learning",
+          "https://arxiv.org/abs/2202.12873?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_8",
+      "section_idx": 1,
+      "idx_in_section": 8,
+      "text": "**Strengths:** Need minimal labeling; adapt with the robot\u2019s own experience; capture dynamic effects (vibrations, slip) not visible in geometry.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_9",
+      "section_idx": 1,
+      "idx_in_section": 9,
+      "text": "**Limitations:** Requires the robot to *drive* through all kinds of terrain (so cannot predict for unseen or dangerous terrains ahead of time); exteroceptive sensors may mislead; can be slow to generalize to new environments.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## Comparative View & How They Fit Together",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "## Key Recent Examples",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "- **EVORA**: Introduces evidential learning to model both kinds of uncertainty, improving navigation performance in wheeled and quadruped robots.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "EVORA: Deep Evidential Traversability Learning for Risk-Aware Off-Road Autonomy",
+          "https://arxiv.org/abs/2311.06234?utm_source=openai"
+        ],
+        [
+          "Self-Supervised Costmap Learning for Off-Road Traversability",
+          "https://www.emergentmind.com/papers/2209.10788?utm_source=openai"
+        ],
+        [
+          "Traversability-Aware Legged Navigation by Learning from Real-World Visual Data | CUHK Legged Robot Lab (CUHKLRL)",
+          "https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai"
+        ],
+        [
+          "A reliable traversability learning method based on human-demonstrated risk cost mapping for mobile robots over uneven terrain - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "- **\u201cHow Does It Feel?\u201d Self-Supervised**: Demonstrates large improvements (smoother behavior, fewer interventions) by learning from proprioceptive feedback.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "EVORA: Deep Evidential Traversability Learning for Risk-Aware Off-Road Autonomy",
+          "https://arxiv.org/abs/2311.06234?utm_source=openai"
+        ],
+        [
+          "Self-Supervised Costmap Learning for Off-Road Traversability",
+          "https://www.emergentmind.com/papers/2209.10788?utm_source=openai"
+        ],
+        [
+          "Traversability-Aware Legged Navigation by Learning from Real-World Visual Data | CUHK Legged Robot Lab (CUHKLRL)",
+          "https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai"
+        ],
+        [
+          "A reliable traversability learning method based on human-demonstrated risk cost mapping for mobile robots over uneven terrain - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "- **Traversability-Aware Legged Navigation**: Uses robot\u2019s own locomotion controller value function; sample-efficient RL + RGB-D + proprioceptive fusion.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "EVORA: Deep Evidential Traversability Learning for Risk-Aware Off-Road Autonomy",
+          "https://arxiv.org/abs/2311.06234?utm_source=openai"
+        ],
+        [
+          "Self-Supervised Costmap Learning for Off-Road Traversability",
+          "https://www.emergentmind.com/papers/2209.10788?utm_source=openai"
+        ],
+        [
+          "Traversability-Aware Legged Navigation by Learning from Real-World Visual Data | CUHK Legged Robot Lab (CUHKLRL)",
+          "https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai"
+        ],
+        [
+          "A reliable traversability learning method based on human-demonstrated risk cost mapping for mobile robots over uneven terrain - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "- **Risk Cost Mapping via IRL**: Human demonstrations + elevation features + IRL give cost maps that align with human risk preferences.   \n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "EVORA: Deep Evidential Traversability Learning for Risk-Aware Off-Road Autonomy",
+          "https://arxiv.org/abs/2311.06234?utm_source=openai"
+        ],
+        [
+          "Self-Supervised Costmap Learning for Off-Road Traversability",
+          "https://www.emergentmind.com/papers/2209.10788?utm_source=openai"
+        ],
+        [
+          "Traversability-Aware Legged Navigation by Learning from Real-World Visual Data | CUHK Legged Robot Lab (CUHKLRL)",
+          "https://cuhkleggedrobotlab.github.io/publication/traver_hb/?utm_source=openai"
+        ],
+        [
+          "A reliable traversability learning method based on human-demonstrated risk cost mapping for mobile robots over uneven terrain - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0952197624014970?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## Challenges and Limitations",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "- **Generalization**: Environments vary a lot (rocky, muddy, snowy, vegetated), and models trained in one region may fail elsewhere.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "- **Data Efficiency / Safety**: Collecting robot-experience labels is slow or risky; exploring dangerous terrain to label it is often undesirable.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "- **Sensor Noise and Calibration**: Proprioceptive sensors may give noisy data; exteroceptive features may over-or under-estimate terrain difficulty (e.g., grass looks rough but may be traversable).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "- **Trade-offs**: Speed vs safety vs energy vs mission goals; integrating multiple objectives complicates planning.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "text": "- **Uncertainty Modeling**: Knowing when to trust predictions is critical, especially when planning ahead from visual data; mis-estimated uncertainty may lead to disastrous paths.  \n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "## Emerging Trends and Open Directions",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "- **Evidential / Bayesian methods** that represent both aleatoric (inherent) and epistemic (lack-of-data) uncertainty appear promising (e.g. EVORA).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "- **Value-based and robot-centric cost estimates** (e.g. based on the robot\u2019s own dynamic controller or energy model) yield more meaningful costs than human heuristics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "- **Active / online learning** and lifelong learning: robots updating cost models during deployment.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_4",
+      "section_idx": 7,
+      "idx_in_section": 4,
+      "text": "- **Combining simulation + real-world experience** to bootstrap multiple cost components.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_5",
+      "section_idx": 7,
+      "idx_in_section": 5,
+      "text": "- **Risk measures beyond expectation** (e.g. CVaR, worst-case) to capture rare but catastrophic failures.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_6",
+      "section_idx": 7,
+      "idx_in_section": 6,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_7",
+      "section_idx": 7,
+      "idx_in_section": 7,
+      "text": "If you like, I can also provide a categorized summary of methods by what cost metric they target (energy, slip, vibration, etc.), or how they deal with unseen terrains.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_8",
+      "section_idx": 7,
+      "idx_in_section": 8,
+      "text": "Want me to pull that together?",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    }
+  ]
+}

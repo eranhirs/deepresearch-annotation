@@ -1,0 +1,1059 @@
+{
+  "model_name": "gpt-5-search-api",
+  "example_id": "6",
+  "question": "Please provide a detailed answer to the following question:\n\nwhat are the most important open challenges in using neural networks in combination with PDE solvers for fluid simulation?",
+  "answer": "Below is a detailed summary of the major open challenges in combining neural networks with PDE solvers for fluid simulation. Drawing from recent research (2024-2025), it covers what\u2019s holding back progress, what issues people are working on, and where breakthroughs are most needed.\n\n---\n\n## Key Challenges\n\n### 1. Multiscale, Stiff Physics & High Gradients  \n- Many fluid problems display widely separated scales (e.g. boundary layers, turbulence, shocks). Neural approaches like PINNs suffer \u201cspectral bias\u201d: they tend to learn low-frequency components first and struggle to capture fine-scale or high-frequency features well. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n- In stiff flow regimes (high Reynolds number, strong nonlinearity), PINNs may get stuck in local minima or converge to physically implausible states (e.g. missing vortex shedding), unless specialized architectures or training tricks are used. ([arxiv.org](https://arxiv.org/abs/2306.00230?utm_source=openai))  \n\n### 2. Training Efficiency, Computational Cost & Scalability  \n- Training a PINN can be far slower than running a classical CFD solver for a fixed well-posed forward problem. In \u201cExperience report of\u2026 pitfalls\u201d, the authors found that to match a simple finite difference CFD solver in accuracy, PINNs needed orders of magnitude more time. ([emergentmind.com](https://www.emergentmind.com/papers/2205.14249?utm_source=openai))  \n- When applied to large domains, 3D, high resolution, or parametric sweep contexts (many boundary conditions/materials/etc.), the cost of computing PDE residuals via automatic differentiation, sampling collocation points, and holding large neural networks in memory becomes limiting. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n\n### 3. Enforcing Boundary & Initial Conditions: Hard vs Soft Constraints  \n- Many PINNs implement BCs and ICs \u201csoftly\u201d via penalty terms in the loss function. If those penalty weights are not well tuned, the solution may violate the physical constraints or \u201ctrade off\u201d compliance in unhelpful ways. ([chishiki-ai.org](https://www.chishiki-ai.org/training-pinn/01-pinn/01-pinn.html?utm_source=openai))  \n- For irregular geometries, complex BCs (moving boundaries, free surfaces, etc.), or when data is noisy or incomplete, enforcing hard satisfaction of BCs is nontrivial. Research into \u201chard-constraint architectures\u201d or augmented Lagrangian methods is ongoing. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n\n### 4. Handling Discontinuities, Shocks, Instabilities, and Turbulence  \n- Problems with discontinuities (shocks, contact discontinuities in hyperbolic equations, turbulence) are especially challenging. PINNs can \u201csmooth over\u201d discontinuities unless collocation points are clustered near them, but that often requires prior knowledge of their location. ([sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0045782525002051?utm_source=openai))  \n- Turbulent flows present additional difficulties: chaotic dynamics, sensitivity to initial conditions, energy cascades across many scales. Standard PINNs typically struggle to represent the detailed structure of turbulence without huge cost or specialized modeling (e.g. turbulence models, LES, etc.). ([arxiv.org](https://arxiv.org/abs/2503.17704?utm_source=openai))  \n\n### 5. Data Requirements & Generalization  \n- While PINNs are often pitched as requiring minimal data, in practice for many fluid flows, having accurate data (e.g. boundary conditions, initial fields, interior samples) is crucial. Sparse or noisy data makes convergence harder. ([mdpi.com](https://www.mdpi.com/2311-5521/10/9/226?utm_source=openai))  \n- Generalization to different geometries, boundary/initial conditions, or parameter regimes (e.g. different Reynolds numbers, varying physical properties) is limited. Models often need retraining or fine-tuning. ([arxiv.org](https://arxiv.org/abs/2503.17704?utm_source=openai))  \n\n### 6. Theoretical Foundations, Error Bounds & Guarantees  \n- There is not yet a fully general theory for convergence rates, error bounds, or stability of PINNs and related hybrid methods, especially for nonlinear and high-dimensional PDEs. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n- Spectral bias, ill-conditioning of loss landscapes, and lack of guarantee of satisfying conservation laws exactly make it hard to know when a solution is \u201cgood enough\u201d, especially in safety- or physics-critical settings. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n\n### 7. Mesh Representation, Geometry & Discretization Compatibility  \n- Many classical fluid solvers use unstructured meshes (triangular, tetrahedral, etc.), adaptive mesh refinement, or cell-based discretizations. Neural network architectures (especially grid-based convolutional ones) often assume structured grids, or have trouble scaling to arbitrary mesh topologies. ([arxiv.org](https://arxiv.org/abs/2502.18591?utm_source=openai))  \n- Complex boundary geometries (e.g. curved walls, topological changes, moving boundaries) are difficult to encode cleanly into NN architectures or to ensure that discretization (if any) captures geometry well.  \n\n### 8. Integration of Physical Models & Hybrid Methods  \n- Purely data-driven neural surrogates may violate conservation laws, leading to unphysical predictions (e.g. mass loss, non-divergence-free fields, energy nonconservation). Embedding physics helps but balancing flexibility with physical fidelity is hard. ([link.springer.com](https://link.springer.com/article/10.1007/s13367-025-00140-6?utm_source=openai))  \n- Hybrid methods (neural correction of numerical solvers, turbulence closures, etc.) show promise, but combining them in ways that are stable, accurate, computationally efficient, and robust for many flow types is nontrivial.  \n\n---\n\n## Emerging Solutions & Directions\n\nThese aren\u2019t fully solved yet, but represent some of the most promising research directions:\n\n- **Adaptive sampling / mesh quantization**: allocating computational effort (e.g. collocation points, quantization bit-width, neural complexity) more where the solution is complex (e.g. near shocks, boundary layers). For example, \u201cAdaptive Mesh Quantization\u201d dynamically varies model bit-width spatially. ([arxiv.org](https://arxiv.org/abs/2511.18474?utm_source=openai))  \n- **Parametric PINNs and meta-learning**: learn models that can generalize over parameter ranges (Reynolds numbers, geometry shapes) so you don\u2019t need full retraining in every case. PT-PINNs is one example. ([arxiv.org](https://arxiv.org/abs/2503.17704?utm_source=openai))  \n- **Transported memory / architectures compatible with unstructured meshes**: making NN architectures that work seamlessly with solvers that have only neighbor-cell connectivity, so they integrate into industrial workflows. ([arxiv.org](https://arxiv.org/abs/2502.18591?utm_source=openai))  \n- **Training strategies to escape local minima**: periodically re-initializing parameters, balancing losses adaptively, hard constraints, etc. For example, re-initialization strategies in stiff flows helped PINNs escape local minima. ([nature.com](https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai))  \n\n---\n\n## Summary\n\nIn short, the biggest open challenges in neural + PDE solvers for fluid simulation are:\n\n1. Capturing multiscale behavior and high-frequency features (shocks, turbulence, boundary layers).  \n2. Ensuring efficient, stable, and scalable training (avoiding local minima, reducing computational cost).  \n3. Enforcing boundary and initial conditions, geometry constraints, and conservation laws robustly.  \n4. Managing data scarcity, generalization to varying parameters and geometries.  \n5. Bolstering theoretical understanding: error estimates, convergence, stability.  \n\nIf you like, I can also pull up a recent survey or timeline showing which problems are closest to being \u201csolved\u201d and which remain especially open. Would you prefer that?",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "Below is a detailed summary of the major open challenges in combining neural networks with PDE solvers for fluid simulation. Drawing from recent research (2024-2025), it covers what\u2019s holding back progress, what issues people are working on, and where breakthroughs are most needed.\n\n---\n\n",
+      "start": 0,
+      "end": 289
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## Key Challenges",
+      "header_level": 2,
+      "text": "## Key Challenges\n\n",
+      "start": 289,
+      "end": 308
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "### 1. Multiscale, Stiff Physics & High Gradients  ",
+      "header_level": 3,
+      "text": "### 1. Multiscale, Stiff Physics & High Gradients  \n- Many fluid problems display widely separated scales (e.g. boundary layers, turbulence, shocks). Neural approaches like PINNs suffer \u201cspectral bias\u201d: they tend to learn low-frequency components first and struggle to capture fine-scale or high-frequency features well. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n- In stiff flow regimes (high Reynolds number, strong nonlinearity), PINNs may get stuck in local minima or converge to physically implausible states (e.g. missing vortex shedding), unless specialized architectures or training tricks are used. ([arxiv.org](https://arxiv.org/abs/2306.00230?utm_source=openai))  \n\n",
+      "start": 308,
+      "end": 1059
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "### 2. Training Efficiency, Computational Cost & Scalability  ",
+      "header_level": 3,
+      "text": "### 2. Training Efficiency, Computational Cost & Scalability  \n- Training a PINN can be far slower than running a classical CFD solver for a fixed well-posed forward problem. In \u201cExperience report of\u2026 pitfalls\u201d, the authors found that to match a simple finite difference CFD solver in accuracy, PINNs needed orders of magnitude more time. ([emergentmind.com](https://www.emergentmind.com/papers/2205.14249?utm_source=openai))  \n- When applied to large domains, 3D, high resolution, or parametric sweep contexts (many boundary conditions/materials/etc.), the cost of computing PDE residuals via automatic differentiation, sampling collocation points, and holding large neural networks in memory becomes limiting. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n\n",
+      "start": 1059,
+      "end": 1889
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 3. Enforcing Boundary & Initial Conditions: Hard vs Soft Constraints  ",
+      "header_level": 3,
+      "text": "### 3. Enforcing Boundary & Initial Conditions: Hard vs Soft Constraints  \n- Many PINNs implement BCs and ICs \u201csoftly\u201d via penalty terms in the loss function. If those penalty weights are not well tuned, the solution may violate the physical constraints or \u201ctrade off\u201d compliance in unhelpful ways. ([chishiki-ai.org](https://www.chishiki-ai.org/training-pinn/01-pinn/01-pinn.html?utm_source=openai))  \n- For irregular geometries, complex BCs (moving boundaries, free surfaces, etc.), or when data is noisy or incomplete, enforcing hard satisfaction of BCs is nontrivial. Research into \u201chard-constraint architectures\u201d or augmented Lagrangian methods is ongoing. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n\n",
+      "start": 1889,
+      "end": 2669
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 4. Handling Discontinuities, Shocks, Instabilities, and Turbulence  ",
+      "header_level": 3,
+      "text": "### 4. Handling Discontinuities, Shocks, Instabilities, and Turbulence  \n- Problems with discontinuities (shocks, contact discontinuities in hyperbolic equations, turbulence) are especially challenging. PINNs can \u201csmooth over\u201d discontinuities unless collocation points are clustered near them, but that often requires prior knowledge of their location. ([sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0045782525002051?utm_source=openai))  \n- Turbulent flows present additional difficulties: chaotic dynamics, sensitivity to initial conditions, energy cascades across many scales. Standard PINNs typically struggle to represent the detailed structure of turbulence without huge cost or specialized modeling (e.g. turbulence models, LES, etc.). ([arxiv.org](https://arxiv.org/abs/2503.17704?utm_source=openai))  \n\n",
+      "start": 2669,
+      "end": 3505
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "### 5. Data Requirements & Generalization  ",
+      "header_level": 3,
+      "text": "### 5. Data Requirements & Generalization  \n- While PINNs are often pitched as requiring minimal data, in practice for many fluid flows, having accurate data (e.g. boundary conditions, initial fields, interior samples) is crucial. Sparse or noisy data makes convergence harder. ([mdpi.com](https://www.mdpi.com/2311-5521/10/9/226?utm_source=openai))  \n- Generalization to different geometries, boundary/initial conditions, or parameter regimes (e.g. different Reynolds numbers, varying physical properties) is limited. Models often need retraining or fine-tuning. ([arxiv.org](https://arxiv.org/abs/2503.17704?utm_source=openai))  \n\n",
+      "start": 3505,
+      "end": 4138
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### 6. Theoretical Foundations, Error Bounds & Guarantees  ",
+      "header_level": 3,
+      "text": "### 6. Theoretical Foundations, Error Bounds & Guarantees  \n- There is not yet a fully general theory for convergence rates, error bounds, or stability of PINNs and related hybrid methods, especially for nonlinear and high-dimensional PDEs. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n- Spectral bias, ill-conditioning of loss landscapes, and lack of guarantee of satisfying conservation laws exactly make it hard to know when a solution is \u201cgood enough\u201d, especially in safety- or physics-critical settings. ([emergentmind.com](https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai))  \n\n",
+      "start": 4138,
+      "end": 4837
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "### 7. Mesh Representation, Geometry & Discretization Compatibility  ",
+      "header_level": 3,
+      "text": "### 7. Mesh Representation, Geometry & Discretization Compatibility  \n- Many classical fluid solvers use unstructured meshes (triangular, tetrahedral, etc.), adaptive mesh refinement, or cell-based discretizations. Neural network architectures (especially grid-based convolutional ones) often assume structured grids, or have trouble scaling to arbitrary mesh topologies. ([arxiv.org](https://arxiv.org/abs/2502.18591?utm_source=openai))  \n- Complex boundary geometries (e.g. curved walls, topological changes, moving boundaries) are difficult to encode cleanly into NN architectures or to ensure that discretization (if any) captures geometry well.  \n\n",
+      "start": 4837,
+      "end": 5490
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "### 8. Integration of Physical Models & Hybrid Methods  ",
+      "header_level": 3,
+      "text": "### 8. Integration of Physical Models & Hybrid Methods  \n- Purely data-driven neural surrogates may violate conservation laws, leading to unphysical predictions (e.g. mass loss, non-divergence-free fields, energy nonconservation). Embedding physics helps but balancing flexibility with physical fidelity is hard. ([link.springer.com](https://link.springer.com/article/10.1007/s13367-025-00140-6?utm_source=openai))  \n- Hybrid methods (neural correction of numerical solvers, turbulence closures, etc.) show promise, but combining them in ways that are stable, accurate, computationally efficient, and robust for many flow types is nontrivial.  \n\n---\n\n",
+      "start": 5490,
+      "end": 6141
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "## Emerging Solutions & Directions",
+      "header_level": 2,
+      "text": "## Emerging Solutions & Directions\n\nThese aren\u2019t fully solved yet, but represent some of the most promising research directions:\n\n- **Adaptive sampling / mesh quantization**: allocating computational effort (e.g. collocation points, quantization bit-width, neural complexity) more where the solution is complex (e.g. near shocks, boundary layers). For example, \u201cAdaptive Mesh Quantization\u201d dynamically varies model bit-width spatially. ([arxiv.org](https://arxiv.org/abs/2511.18474?utm_source=openai))  \n- **Parametric PINNs and meta-learning**: learn models that can generalize over parameter ranges (Reynolds numbers, geometry shapes) so you don\u2019t need full retraining in every case. PT-PINNs is one example. ([arxiv.org](https://arxiv.org/abs/2503.17704?utm_source=openai))  \n- **Transported memory / architectures compatible with unstructured meshes**: making NN architectures that work seamlessly with solvers that have only neighbor-cell connectivity, so they integrate into industrial workflows. ([arxiv.org](https://arxiv.org/abs/2502.18591?utm_source=openai))  \n- **Training strategies to escape local minima**: periodically re-initializing parameters, balancing losses adaptively, hard constraints, etc. For example, re-initialization strategies in stiff flows helped PINNs escape local minima. ([nature.com](https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai))  \n\n---\n\n",
+      "start": 6141,
+      "end": 7539
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "## Summary",
+      "header_level": 2,
+      "text": "## Summary\n\nIn short, the biggest open challenges in neural + PDE solvers for fluid simulation are:\n\n1. Capturing multiscale behavior and high-frequency features (shocks, turbulence, boundary layers).  \n2. Ensuring efficient, stable, and scalable training (avoiding local minima, reducing computational cost).  \n3. Enforcing boundary and initial conditions, geometry constraints, and conservation laws robustly.  \n4. Managing data scarcity, generalization to varying parameters and geometries.  \n5. Bolstering theoretical understanding: error estimates, convergence, stability.  \n\nIf you like, I can also pull up a recent survey or timeline showing which problems are closest to being \u201csolved\u201d and which remain especially open. Would you prefer that?",
+      "start": 7539,
+      "end": 8289
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "Below is a detailed summary of the major open challenges in combining neural networks with PDE solvers for fluid simulation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "Drawing from recent research (2024-2025), it covers what\u2019s holding back progress, what issues people are working on, and where breakthroughs are most needed.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "## Emerging Solutions & Directions",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "These aren\u2019t fully solved yet, but represent some of the most promising research directions:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_10",
+      "section_idx": 10,
+      "idx_in_section": 10,
+      "text": "- **Training strategies to escape local minima**: periodically re-initializing parameters, balancing losses adaptively, hard constraints, etc.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Adaptive Mesh-Quantization for Neural PDE Solvers",
+          "https://arxiv.org/abs/2511.18474?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ],
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ],
+        [
+          "Physics informed neural networks for fluid flow analysis with repetitive parameter initialization | Scientific Reports",
+          "https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_11",
+      "section_idx": 10,
+      "idx_in_section": 11,
+      "text": "For example, re-initialization strategies in stiff flows helped PINNs escape local minima.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Adaptive Mesh-Quantization for Neural PDE Solvers",
+          "https://arxiv.org/abs/2511.18474?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ],
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ],
+        [
+          "Physics informed neural networks for fluid flow analysis with repetitive parameter initialization | Scientific Reports",
+          "https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_12",
+      "section_idx": 10,
+      "idx_in_section": 12,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "- **Adaptive sampling / mesh quantization**: allocating computational effort (e.g. collocation points, quantization bit-width, neural complexity) more where the solution is complex (e.g. near shocks, boundary layers).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Adaptive Mesh-Quantization for Neural PDE Solvers",
+          "https://arxiv.org/abs/2511.18474?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ],
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ],
+        [
+          "Physics informed neural networks for fluid flow analysis with repetitive parameter initialization | Scientific Reports",
+          "https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "For example, \u201cAdaptive Mesh Quantization\u201d dynamically varies model bit-width spatially.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Adaptive Mesh-Quantization for Neural PDE Solvers",
+          "https://arxiv.org/abs/2511.18474?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ],
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ],
+        [
+          "Physics informed neural networks for fluid flow analysis with repetitive parameter initialization | Scientific Reports",
+          "https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_5",
+      "section_idx": 10,
+      "idx_in_section": 5,
+      "text": "- **Parametric PINNs and meta-learning**: learn models that can generalize over parameter ranges (Reynolds numbers, geometry shapes) so you don\u2019t need full retraining in every case.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Adaptive Mesh-Quantization for Neural PDE Solvers",
+          "https://arxiv.org/abs/2511.18474?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ],
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ],
+        [
+          "Physics informed neural networks for fluid flow analysis with repetitive parameter initialization | Scientific Reports",
+          "https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_6",
+      "section_idx": 10,
+      "idx_in_section": 6,
+      "text": "PT-PINNs is one example.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Adaptive Mesh-Quantization for Neural PDE Solvers",
+          "https://arxiv.org/abs/2511.18474?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ],
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ],
+        [
+          "Physics informed neural networks for fluid flow analysis with repetitive parameter initialization | Scientific Reports",
+          "https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_8",
+      "section_idx": 10,
+      "idx_in_section": 8,
+      "text": "- **Transported memory / architectures compatible with unstructured meshes**: making NN architectures that work seamlessly with solvers that have only neighbor-cell connectivity, so they integrate into industrial workflows.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Adaptive Mesh-Quantization for Neural PDE Solvers",
+          "https://arxiv.org/abs/2511.18474?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ],
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ],
+        [
+          "Physics informed neural networks for fluid flow analysis with repetitive parameter initialization | Scientific Reports",
+          "https://www.nature.com/articles/s41598-025-99354-5?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "## Summary",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "In short, the biggest open challenges in neural + PDE solvers for fluid simulation are:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "1. Capturing multiscale behavior and high-frequency features (shocks, turbulence, boundary layers).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "2. Ensuring efficient, stable, and scalable training (avoiding local minima, reducing computational cost).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "3. Enforcing boundary and initial conditions, geometry constraints, and conservation laws robustly.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "4. Managing data scarcity, generalization to varying parameters and geometries.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "text": "5. Bolstering theoretical understanding: error estimates, convergence, stability.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_7",
+      "section_idx": 11,
+      "idx_in_section": 7,
+      "text": "If you like, I can also pull up a recent survey or timeline showing which problems are closest to being \u201csolved\u201d and which remain especially open.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_8",
+      "section_idx": 11,
+      "idx_in_section": 8,
+      "text": "Would you prefer that?",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "## Key Challenges",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "### 1. Multiscale, Stiff Physics & High Gradients",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ],
+        [
+          "Predictive Limitations of Physics-Informed Neural Networks in Vortex Shedding",
+          "https://arxiv.org/abs/2306.00230?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "- Many fluid problems display widely separated scales (e.g. boundary layers, turbulence, shocks).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ],
+        [
+          "Predictive Limitations of Physics-Informed Neural Networks in Vortex Shedding",
+          "https://arxiv.org/abs/2306.00230?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "Neural approaches like PINNs suffer \u201cspectral bias\u201d: they tend to learn low-frequency components first and struggle to capture fine-scale or high-frequency features well.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ],
+        [
+          "Predictive Limitations of Physics-Informed Neural Networks in Vortex Shedding",
+          "https://arxiv.org/abs/2306.00230?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "- In stiff flow regimes (high Reynolds number, strong nonlinearity), PINNs may get stuck in local minima or converge to physically implausible states (e.g. missing vortex shedding), unless specialized architectures or training tricks are used.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ],
+        [
+          "Predictive Limitations of Physics-Informed Neural Networks in Vortex Shedding",
+          "https://arxiv.org/abs/2306.00230?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "### 2. Training Efficiency, Computational Cost & Scalability",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Experience report of physics-informed neural networks in fluid simulations: pitfalls and frustration",
+          "https://www.emergentmind.com/papers/2205.14249?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "- Training a PINN can be far slower than running a classical CFD solver for a fixed well-posed forward problem.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Experience report of physics-informed neural networks in fluid simulations: pitfalls and frustration",
+          "https://www.emergentmind.com/papers/2205.14249?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "In \u201cExperience report of\u2026 pitfalls\u201d, the authors found that to match a simple finite difference CFD solver in accuracy, PINNs needed orders of magnitude more time.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Experience report of physics-informed neural networks in fluid simulations: pitfalls and frustration",
+          "https://www.emergentmind.com/papers/2205.14249?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_4",
+      "section_idx": 3,
+      "idx_in_section": 4,
+      "text": "- When applied to large domains, 3D, high resolution, or parametric sweep contexts (many boundary conditions/materials/etc.), the cost of computing PDE residuals via automatic differentiation, sampling collocation points, and holding large neural networks in memory becomes limiting.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Experience report of physics-informed neural networks in fluid simulations: pitfalls and frustration",
+          "https://www.emergentmind.com/papers/2205.14249?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 3. Enforcing Boundary & Initial Conditions: Hard vs Soft Constraints",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "01: Physics-Informed Neural Networks (PINNs) \u2014 Physics Informed Machine Learning",
+          "https://www.chishiki-ai.org/training-pinn/01-pinn/01-pinn.html?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "- Many PINNs implement BCs and ICs \u201csoftly\u201d via penalty terms in the loss function.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "01: Physics-Informed Neural Networks (PINNs) \u2014 Physics Informed Machine Learning",
+          "https://www.chishiki-ai.org/training-pinn/01-pinn/01-pinn.html?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "If those penalty weights are not well tuned, the solution may violate the physical constraints or \u201ctrade off\u201d compliance in unhelpful ways.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "01: Physics-Informed Neural Networks (PINNs) \u2014 Physics Informed Machine Learning",
+          "https://www.chishiki-ai.org/training-pinn/01-pinn/01-pinn.html?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "- For irregular geometries, complex BCs (moving boundaries, free surfaces, etc.), or when data is noisy or incomplete, enforcing hard satisfaction of BCs is nontrivial.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "01: Physics-Informed Neural Networks (PINNs) \u2014 Physics Informed Machine Learning",
+          "https://www.chishiki-ai.org/training-pinn/01-pinn/01-pinn.html?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "Research into \u201chard-constraint architectures\u201d or augmented Lagrangian methods is ongoing.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "01: Physics-Informed Neural Networks (PINNs) \u2014 Physics Informed Machine Learning",
+          "https://www.chishiki-ai.org/training-pinn/01-pinn/01-pinn.html?utm_source=openai"
+        ],
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 4. Handling Discontinuities, Shocks, Instabilities, and Turbulence",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "RoePINNs: An integration of advanced CFD solvers with Physics-Informed Neural Networks and application in arterial flow modeling - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0045782525002051?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "Problems with discontinuities (shocks, contact discontinuities in hyperbolic equations, turbulence) are especially challenging.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "RoePINNs: An integration of advanced CFD solvers with Physics-Informed Neural Networks and application in arterial flow modeling - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0045782525002051?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "PINNs can \u201csmooth over\u201d discontinuities unless collocation points are clustered near them, but that often requires prior knowledge of their location.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "RoePINNs: An integration of advanced CFD solvers with Physics-Informed Neural Networks and application in arterial flow modeling - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0045782525002051?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "Turbulent flows present additional difficulties: chaotic dynamics, sensitivity to initial conditions, energy cascades across many scales.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "RoePINNs: An integration of advanced CFD solvers with Physics-Informed Neural Networks and application in arterial flow modeling - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0045782525002051?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "Standard PINNs typically struggle to represent the detailed structure of turbulence without huge cost or specialized modeling (e.g. turbulence models, LES, etc.).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "RoePINNs: An integration of advanced CFD solvers with Physics-Informed Neural Networks and application in arterial flow modeling - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0045782525002051?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "### 5. Data Requirements & Generalization",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Machine Learning in Fluid Dynamics\u2014Physics-Informed Neural Networks (PINNs) Using Sparse Data: A Review",
+          "https://www.mdpi.com/2311-5521/10/9/226?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "- While PINNs are often pitched as requiring minimal data, in practice for many fluid flows, having accurate data (e.g. boundary conditions, initial fields, interior samples) is crucial.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Machine Learning in Fluid Dynamics\u2014Physics-Informed Neural Networks (PINNs) Using Sparse Data: A Review",
+          "https://www.mdpi.com/2311-5521/10/9/226?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "Sparse or noisy data makes convergence harder.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Machine Learning in Fluid Dynamics\u2014Physics-Informed Neural Networks (PINNs) Using Sparse Data: A Review",
+          "https://www.mdpi.com/2311-5521/10/9/226?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "- Generalization to different geometries, boundary/initial conditions, or parameter regimes (e.g. different Reynolds numbers, varying physical properties) is limited.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Machine Learning in Fluid Dynamics\u2014Physics-Informed Neural Networks (PINNs) Using Sparse Data: A Review",
+          "https://www.mdpi.com/2311-5521/10/9/226?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "text": "Models often need retraining or fine-tuning.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Machine Learning in Fluid Dynamics\u2014Physics-Informed Neural Networks (PINNs) Using Sparse Data: A Review",
+          "https://www.mdpi.com/2311-5521/10/9/226?utm_source=openai"
+        ],
+        [
+          "PT-PINNs: A Parametric Engineering Turbulence Solver based on Physics-Informed Neural Networks",
+          "https://arxiv.org/abs/2503.17704?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### 6. Theoretical Foundations, Error Bounds & Guarantees",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "- There is not yet a fully general theory for convergence rates, error bounds, or stability of PINNs and related hybrid methods, especially for nonlinear and high-dimensional PDEs.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "- Spectral bias, ill-conditioning of loss landscapes, and lack of guarantee of satisfying conservation laws exactly make it hard to know when a solution is \u201cgood enough\u201d, especially in safety- or physics-critical settings.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-Informed Neural Networks (PINNs)",
+          "https://www.emergentmind.com/topics/physics-informed-neural-networks-pinns?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "### 7. Mesh Representation, Geometry & Discretization Compatibility",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "- Many classical fluid solvers use unstructured meshes (triangular, tetrahedral, etc.), adaptive mesh refinement, or cell-based discretizations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "Neural network architectures (especially grid-based convolutional ones) often assume structured grids, or have trouble scaling to arbitrary mesh topologies.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_4",
+      "section_idx": 8,
+      "idx_in_section": 4,
+      "text": "- Complex boundary geometries (e.g. curved walls, topological changes, moving boundaries) are difficult to encode cleanly into NN architectures or to ensure that discretization (if any) captures geometry well.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Transported Memory Networks accelerating Computational Fluid Dynamics",
+          "https://arxiv.org/abs/2502.18591?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "### 8. Integration of Physical Models & Hybrid Methods",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-informed neural networks for complex fluids: opportunities and limitations | Korea-Australia Rheology Journal",
+          "https://link.springer.com/article/10.1007/s13367-025-00140-6?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "- Purely data-driven neural surrogates may violate conservation laws, leading to unphysical predictions (e.g. mass loss, non-divergence-free fields, energy nonconservation).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-informed neural networks for complex fluids: opportunities and limitations | Korea-Australia Rheology Journal",
+          "https://link.springer.com/article/10.1007/s13367-025-00140-6?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "Embedding physics helps but balancing flexibility with physical fidelity is hard.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-informed neural networks for complex fluids: opportunities and limitations | Korea-Australia Rheology Journal",
+          "https://link.springer.com/article/10.1007/s13367-025-00140-6?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_4",
+      "section_idx": 9,
+      "idx_in_section": 4,
+      "text": "- Hybrid methods (neural correction of numerical solvers, turbulence closures, etc.) show promise, but combining them in ways that are stable, accurate, computationally efficient, and robust for many flow types is nontrivial.  \n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Physics-informed neural networks for complex fluids: opportunities and limitations | Korea-Australia Rheology Journal",
+          "https://link.springer.com/article/10.1007/s13367-025-00140-6?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

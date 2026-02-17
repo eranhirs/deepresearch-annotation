@@ -1,0 +1,3262 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "6",
+  "question": "Please provide a detailed answer to the following question:\n\nwhat are the most important open challenges in using neural networks in combination with PDE solvers for fluid simulation?",
+  "answer": "# Comprehensive Review of Open Challenges in Neural Network-Enhanced Fluid Simulation\n\n### Key Points\n*   **Generalization and Extrapolation:** Neural networks (NNs) frequently fail to generalize to flow regimes (e.g., higher Reynolds numbers), geometries, or boundary conditions outside their training distribution, limiting their utility as robust industrial solvers.\n*   **Spectral Bias and Multiscale Resolution:** Deep learning models exhibit a \"spectral bias,\" preferentially learning low-frequency patterns while struggling to capture high-frequency features essential for turbulence and sharp interfaces.\n*   **Optimization Pathology and Stiffness:** The loss landscapes of Physics-Informed Neural Networks (PINNs) are often ill-conditioned and stiff, particularly for the Navier-Stokes equations, leading to convergence failures or the need for complex hyperparameter tuning.\n*   **Hybrid Integration and Differentiability:** Coupling NNs with traditional PDE solvers creates challenges regarding differentiability; standard solvers do not support automatic differentiation, necessitating complex workarounds like adjoint methods or zeroth-order gradient estimation.\n*   **Scalability to 3D and Industrial Complexity:** While 2D toy problems are solvable, scaling NNs to 3D turbulent flows introduces severe memory bottlenecks and training latency that often exceed the costs of traditional numerical methods.\n\n### Executive Summary\nThe integration of neural networks with Partial Differential Equation (PDE) solvers for fluid dynamics represents a paradigm shift in scientific computing, promising to accelerate simulations by orders of magnitude and solve inverse problems previously deemed intractable. However, the transition from \"promising proofs-of-concept\" to robust industrial tools is currently obstructed by fundamental mathematical and computational challenges. Research indicates that while data-driven methods can act as rapid surrogates, they lack the inherent conservation guarantees of numerical methods, often violating mass or momentum balance when extrapolating beyond training data. Conversely, physics-driven approaches like PINNs, which embed PDE residuals into the loss function, suffer from severe optimization pathologies, often behaving like \"stiff\" solvers that fail to capture transient phenomena like vortex shedding without auxiliary data. Furthermore, the \"black-box\" nature of neural networks complicates their integration into legacy CFD (Computational Fluid Dynamics) workflows, raising critical issues regarding stability, interpretability, and the handling of complex 3D geometries. This report details these open challenges, synthesizing current literature to define the frontier of neural-fluid co-simulation.\n\n---\n\n## 1. Introduction: The Convergence of Deep Learning and CFD\n\nComputational Fluid Dynamics (CFD) has traditionally relied on the numerical discretization of the Navier-Stokes equations using methods such as Finite Difference (FDM), Finite Volume (FVM), and Finite Element (FEM). While highly accurate, these methods are computationally expensive, scaling poorly with the resolution required to capture multiscale turbulent phenomena [cite: 1, 2]. The recent surge in Deep Learning (DL) has motivated the development of neural network-based solvers intended to augment or replace these traditional workflows.\n\nThese approaches generally fall into two categories: **Data-driven methods**, which learn mappings from inputs to flow fields using vast datasets of pre-computed simulations [cite: 2], and **Physics-driven methods** (primarily PINNs), which minimize PDE residuals directly without necessarily requiring labeled data [cite: 3, 4]. Despite reported speedups of $100\\times$ to $1000\\times$ in specific inference tasks [cite: 3, 5], significant barriers remain. The field is currently grappling with the realization that NNs are not magic bullets; they struggle with the chaotic nature of fluid dynamics, the stiffness of the governing equations, and the strict requirements for physical conservation [cite: 6, 7].\n\n## 2. Generalization and Extrapolation Limits\n\nOne of the most pervasive challenges in neural fluid simulation is the inability of models to generalize well to physical parameters, geometries, or boundary conditions that lie outside the training distribution. Unlike traditional solvers, which are derived from first principles and are universally applicable (within their discretization limits), neural networks are interpolators that degrade rapidly when asked to extrapolate.\n\n### 2.1 The Reynolds Number Barrier\nFluid flows are characterized by the Reynolds number ($Re$), which dictates the ratio of inertial to viscous forces. As $Re$ increases, flows become more chaotic and multiscale. Research consistently shows that models trained on low-$Re$ flows fail to predict high-$Re$ turbulence [cite: 8, 9].\n*   **Spectral Shift:** Higher $Re$ flows contain smaller energetic scales (Kolmogorov scales). A network trained on smooth, laminar flows learns a mapping dominated by low-frequency functions. When applied to high-$Re$ regimes, the network cannot spontaneously generate the required high-frequency spectrum, leading to \"over-smoothed\" solutions that physically resemble lower $Re$ flows [cite: 9, 10].\n*   **Training Instability:** Attempts to train PINNs directly on high-$Re$ equations often fail because the convective terms (non-linearities) dominate the diffusive terms, making the PDE residual loss function extremely rugged and difficult to minimize [cite: 11, 12].\n\n### 2.2 Geometric and Boundary Condition Generalization\nIn industrial CFD, a solver must handle diverse shapes, from airfoils to engine intakes. Neural networks, particularly Convolutional Neural Networks (CNNs), are typically tied to a fixed grid topology or specific geometric representation.\n*   **Retraining Requirements:** Standard PINNs often require retraining from scratch for every new geometry or boundary condition configuration, negating their inference speed advantage [cite: 7, 10]. While \"Operator Learning\" (e.g., DeepONet, Fourier Neural Operators) attempts to learn the solution operator itself, these models still struggle with complex, irregular geometries that differ significantly from the training set [cite: 13, 14].\n*   **Boundary Complexity:** Imposing complex boundary conditions (BCs) in NNs is non-trivial. While simple Dirichlet BCs can be hard-coded, complex industrial BCs (e.g., mixed Neumann/Dirichlet, inlets/outlets) are usually added as soft constraints in the loss function. This leads to a competition between the boundary loss and the PDE residual loss, often resulting in unphysical solutions near boundaries [cite: 14, 15].\n\n### 2.3 Temporal Extrapolation\nData-driven models trained on short time sequences often diverge when integrated over long time horizons. Errors accumulate recursively, leading to \"drift\" where the simulation leaves the manifold of physically valid states [cite: 2, 10]. This is particularly problematic for chaotic systems where small errors grow exponentially.\n\n## 3. Optimization Pathologies: Stiffness and Spectral Bias\n\nThe training of neural networks for fluid dynamics is fundamentally an optimization problem. When the loss function includes PDE residuals (as in PINNs), the optimization landscape becomes pathological, presenting unique challenges not found in standard computer vision or NLP tasks.\n\n### 3.1 Spectral Bias (The \"F-Principle\")\nNeural networks exhibit a phenomenon known as \"spectral bias,\" where they converge to low-frequency components of the target function much faster than high-frequency components [cite: 16, 17].\n*   **Impact on Turbulence:** Turbulent flows are defined by a cascade of energy across a wide range of frequencies. Spectral bias causes NNs to act as low-pass filters, accurately capturing the mean flow but failing to resolve the small-scale eddies and fluctuations that characterize turbulence [cite: 18, 19].\n*   **Failure Modes:** In vortex shedding simulations, this bias can cause the model to revert to a steady-state (laminar) solution even when the physical parameters dictate unsteady, chaotic shedding, simply because the steady solution is \"smoother\" and easier to learn [cite: 6, 7].\n*   **Mitigation Struggles:** Techniques like Fourier Features [cite: 16, 20] or multi-scale architectures [cite: 21] attempt to force the network to learn higher frequencies, but these often introduce high-frequency noise or instability during training.\n\n### 3.2 Numerical Stiffness and Gradient Imbalance\nThe Navier-Stokes equations are often \"stiff,\" meaning they contain coupled terms acting on vastly different time and length scales (e.g., fast acoustic waves vs. slow advection, or thin boundary layers vs. bulk flow).\n*   **Gradient Pathologies:** In a PINN loss function, the gradients from different terms (e.g., the continuity equation vs. the momentum equation) can vary by orders of magnitude. This causes the optimizer to prioritize one term over another, leading to solutions that might satisfy mass conservation but violate momentum conservation, or vice versa [cite: 22, 23].\n*   **Stiff Regimes:** As the system becomes stiffer (e.g., high Reynolds number or multiphase flows with sharp interfaces), the condition number of the Hessian matrix in the optimization landscape degrades, making standard gradient descent methods (Adam, L-BFGS) slow or prone to getting stuck in local minima [cite: 12, 23].\n\n### 3.3 Weighting and Hyperparameter Sensitivity\nTo combat stiffness, researchers employ complex weighting schemes to balance the different loss terms (PDE residuals, initial conditions, boundary conditions). However, finding the optimal weights is a non-convex hyperparameter search problem. Dynamic weighting schemes (e.g., Neural Tangent Kernel analysis) add computational overhead and do not guarantee convergence for all flow regimes [cite: 12, 22].\n\n## 4. The Hybrid Interface: Coupling NNs with PDE Solvers\n\nA promising direction is the creation of hybrid solvers that combine the differentiability and speed of NNs with the accuracy of traditional numerical methods. However, bridging these two distinct computational paradigms creates significant friction.\n\n### 4.1 Differentiability of Solvers\nEnd-to-end training of a hybrid model (e.g., a NN correcting a coarse-grid CFD solver) requires backpropagating gradients through the CFD solver.\n*   **The Black-Box Problem:** Most industrial CFD codes (e.g., OpenFOAM, ANSYS) are \"black boxes\" written in C++ or Fortran without automatic differentiation (AD) support. They cannot be easily integrated into a PyTorch/TensorFlow training loop [cite: 24, 25].\n*   **Adjoint Methods vs. AD:** While adjoint methods can provide gradients, they are complex to implement and computationally heavy. Rewriting solvers in differentiable frameworks (like JAX) is an active area of research [cite: 25, 26], but it requires abandoning decades of optimized legacy code.\n*   **Zeroth-Order Estimation:** Some researchers attempt to use zeroth-order (derivative-free) gradient estimators to train NNs coupled with black-box solvers. While this bypasses the AD requirement, these estimators are high-variance and scale poorly with the number of parameters, limiting the complexity of the NN that can be trained [cite: 24, 27].\n\n### 4.2 Stability of Coupled Systems\nWhen a neural network is used to predict closure terms (e.g., subgrid-scale stress in LES) or correct discretization errors, it acts as a forcing term within the numerical solver.\n*   **Numerical Instability:** A NN might predict physically plausible values that, when fed into a numerical scheme, induce numerical instability (blow-up). The solver's stability criteria (e.g., CFL condition) might be violated by the NN's output [cite: 28, 29].\n*   **Error Propagation:** In hybrid \"correction\" loops, the NN corrects the solver, and the solver feeds back into the NN. Small errors in the NN's prediction can be amplified by the solver's dynamics, leading to drift or divergence over time [cite: 2, 30].\n\n## 5. Turbulence Modeling and Closure Problems\n\nTurbulence modeling remains one of the \"grand challenges\" of classical physics. NNs are being used to learn closure models (e.g., Reynolds stresses in RANS) from high-fidelity Direct Numerical Simulation (DNS) data.\n\n### 5.1 The Data Availability Paradox\nTraining accurate turbulence models requires massive amounts of high-fidelity DNS data. However, generating this data is precisely the bottleneck the models are trying to circumvent.\n*   **Sparse Data:** In practical scenarios, full volumetric DNS data is rarely available. Models must often be trained on sparse experimental data or limited simulations, leading to poor reconstruction of the full phase space [cite: 28, 31].\n*   **Truth vs. Proxy:** Training on RANS data (which is already an approximation) limits the NN to the accuracy of the RANS model. Training on DNS data is ideal but computationally prohibitive for high Reynolds numbers [cite: 9, 32].\n\n### 5.2 Interpretability and Trust\nTurbulence models in engineering (e.g., $k-\\epsilon$) are derived from physical assumptions and are interpretable. NN-based closures are black boxes.\n*   **Lack of Physics:** A NN might learn to predict the correct Reynolds stress for the wrong reasons (e.g., correlating with a specific geometry feature rather than flow physics). This lack of interpretability makes engineers hesitant to deploy these models in safety-critical applications (e.g., aircraft design) [cite: 33, 34].\n*   **Explainable AI (XAI):** Techniques like SHAP (Shapley Additive Explanations) are being explored to interpret what flow features the NN is using, but this field is still in its infancy regarding fluid dynamics [cite: 34, 35].\n\n## 6. Scalability and Computational Efficiency\n\nWhile NNs are touted for their inference speed, the \"total cost of ownership\"\u2014including data generation, training, and memory usage\u2014presents a complex picture.\n\n### 6.1 The 3D Memory Bottleneck\nConvolutional Neural Networks (CNNs) scale poorly to 3D domains due to memory constraints.\n*   **Voxelization Costs:** Representing a 3D fluid volume as a dense voxel grid for a 3D CNN requires enormous GPU memory, often limiting resolution to coarse grids (e.g., $64^3$ or $128^3$) that are insufficient for resolving boundary layers or turbulence [cite: 36, 37].\n*   **Mesh-Graph Mismatch:** Graph Neural Networks (GNNs) can operate on unstructured CFD meshes, but they are computationally heavier than CNNs and struggle with very large graphs (millions of nodes) typical in industrial CFD [cite: 1, 30].\n\n### 6.2 Training vs. Inference Trade-off\n*   **Training Latency:** Training a PINN to solve a single instance of the Navier-Stokes equations can take *longer* than solving the equation with a traditional FDM/FVM solver [cite: 7, 38, 39]. For example, one study noted that a PINN took 32 hours to train for a problem a traditional solver finished in 20 seconds [cite: 7, 40].\n*   **One-Shot vs. General:** The advantage of NNs appears only when a trained model is used as a surrogate for *many* rapid queries (e.g., design optimization). If the model must be retrained for every new case (as with standard PINNs), it is computationally inefficient compared to classical methods [cite: 39, 41].\n\n## 7. Conclusion\n\nThe integration of neural networks with PDE solvers for fluid simulation is a field characterized by high potential but significant immaturity. The most pressing open challenges are **generalization** (ensuring models work beyond their training data), **optimization** (overcoming spectral bias and stiffness in PINNs), **hybridization** (interfacing differentiable NNs with non-differentiable legacy solvers), and **scalability** (handling 3D turbulence within memory limits).\n\nFuture research must move beyond \"toy problems\" (like 2D flow past a cylinder at low Re) and address the complexities of industrial fluid dynamics: high Reynolds numbers, complex 3D geometries, and chaotic transient behaviors. Success will likely require new architectures that enforce physical constraints more strictly than soft loss terms, as well as differentiable solver frameworks that allow seamless end-to-end learning.\n\n---\n\n## Detailed Analysis of Challenges\n\n### 2. Generalization and Extrapolation Limits\n\nThe \"Achilles' heel\" of deep learning in fluid dynamics is the lack of robust generalization. In traditional CFD, the Navier-Stokes equations are universally valid for continuum flows. A solver validated on a pipe flow can, in principle, simulate an airfoil if the mesh and boundary conditions are set correctly. Neural networks, however, approximate the solution manifold, not the equation itself (unless specifically designed as operator learners, which have their own limits).\n\n#### 2.1 The Reynolds Number Extrapolation Problem\nThe Reynolds number ($Re$) is the governing parameter for fluid flow stability and turbulence.\n*   **Manifold Disconnect:** A neural network trained on flows at $Re=100$ learns a smooth, laminar manifold. If queried at $Re=1000$, the physics bifurcates into vortex shedding or turbulence. The network, lacking an internal representation of this bifurcation mechanism, will often predict a \"stretched\" version of the laminar flow rather than the correct unsteady physics [cite: 6, 9].\n*   **Energy Cascade Failure:** In turbulence, energy transfers from large scales to small scales. NNs trained on low-$Re$ data (where small scales are dissipated by viscosity) fail to learn the mechanism of energy transfer required for high-$Re$ simulations. This results in predictions that lack the necessary fine-scale structure, effectively behaving like an overly dissipative numerical scheme [cite: 9].\n\n#### 2.2 Geometric Generalization\n*   **Fixed Discretization:** CNN-based approaches typically require inputs to be interpolated onto a regular Cartesian grid (voxelization). This introduces aliasing errors at curved boundaries (e.g., an aircraft wing) and fails to capture the boundary layer physics unless the grid is prohibitively fine [cite: 36, 37].\n*   **Mesh-Based Limitations:** GNNs [cite: 1, 30] operate on unstructured meshes, offering better geometric flexibility. However, they often overfit to the specific mesh topology used during training. If the mesh density or connectivity changes (e.g., adaptive mesh refinement), the GNN's performance degrades.\n*   **Latent Space Regularization:** Recent work proposes projecting PDE solutions into a latent space to generalize across geometries (e.g., \"PiDo\" or \"Geometry-preserving Universal Physics Transformer\"). However, these methods still struggle to extrapolate to geometries that are topologically distinct (e.g., training on circles and testing on airfoils) [cite: 10, 42].\n\n### 3. Optimization Pathologies: Stiffness and Spectral Bias\n\nThe training of PINNs is uniquely difficult because the \"labels\" are not fixed data points but residuals of differential operators.\n\n#### 3.1 Spectral Bias and the Frequency Principle\n*   **The Phenomenon:** Neural networks are biased toward learning low-frequency functions. In the context of the Navier-Stokes equations, the pressure and velocity fields in turbulent flows contain high-frequency spatial and temporal oscillations.\n*   **Consequence:** A standard PINN will quickly learn the mean flow (low frequency) but will stagnate when trying to resolve small eddies or sharp shock waves. The loss function may appear to converge, but the solution remains a \"blurred\" approximation [cite: 16, 18].\n*   **Proposed Fixes and Limitations:**\n    *   *Fourier Features:* Mapping inputs to a higher-dimensional Fourier space can mitigate this [cite: 16, 20]. However, tuning the frequency bandwidth of this mapping is problem-dependent and can lead to aliasing or high-frequency noise artifacts.\n    *   *Curriculum Learning:* Training on low frequencies first and progressively introducing higher frequencies is another strategy, but it complicates the training pipeline and doesn't guarantee convergence for chaotic systems [cite: 16].\n\n#### 3.2 Stiffness and Gradient Balancing\n*   **Stiff PDEs:** The Navier-Stokes equations are stiff, meaning the eigenvalues of the Jacobian span many orders of magnitude. This results in a loss landscape with \"canyons\"\u2014steep in some directions and flat in others.\n*   **Gradient Pathology:** During backpropagation, the gradients for the diffusion term ($\\nu \\nabla^2 u$) might be tiny compared to the convection term ($u \\cdot \\nabla u$) or the boundary condition loss. The optimizer will effectively ignore the smaller terms.\n*   **Weighting Dilemma:** Researchers manually assign weights ($\\lambda_{PDE}, \\lambda_{BC}, \\lambda_{IC}$) to these terms. If $\\lambda_{BC}$ is too high, the solution satisfies boundaries but violates physics. If $\\lambda_{PDE}$ is too high, boundaries are ignored. Adaptive weighting algorithms (e.g., using gradient statistics) exist but add computational cost and complexity [cite: 12, 15, 22].\n\n### 4. The Hybrid Interface: Coupling NNs with PDE Solvers\n\nHybrid solvers attempt to use NNs to accelerate specific parts of a CFD solver (e.g., the Poisson pressure solver) or to correct errors in coarse-grid simulations.\n\n#### 4.1 The Differentiability Bottleneck\n*   **Legacy Code:** The vast majority of validated CFD solvers (OpenFOAM, SU2) are not differentiable. To train a NN that interacts with them, one needs the gradient of the solver's output with respect to its input.\n*   **Zeroth-Order Optimization:** Some approaches use zeroth-order (finite difference) estimates of the gradient to train the NN [cite: 24, 27]. This treats the solver as a black box. However, this method is computationally expensive (requiring multiple solver evaluations per step) and suffers from high variance, making it unsuitable for training deep networks with millions of parameters [cite: 43].\n*   **Differentiable Solvers (JAX-Fluids, etc.):** The alternative is to rewrite CFD solvers in differentiable frameworks like JAX or PyTorch [cite: 25, 26]. While powerful, this restricts the method to these specific, newer solvers, preventing integration with the mature, feature-rich legacy codes used in industry.\n\n#### 4.2 Surrogate Modeling and Error Correction\n*   **Coarse-Grid Correction:** A popular hybrid approach is to run a cheap, coarse-grid simulation and use a NN to predict the \"correction\" to match a fine-grid result [cite: 30, 44].\n*   **Stability Issues:** The corrected solution must be fed back into the solver for the next time step. If the NN predicts a correction that introduces high-frequency noise or violates conservation laws (even slightly), the numerical solver can become unstable and blow up. Ensuring the *stability* of the coupled NN-Solver system is a major open theoretical challenge [cite: 29].\n\n### 5. Turbulence Modeling and Closure\n\nThe \"Closure Problem\" in turbulence (modeling the unclosed terms in averaged equations like RANS or LES) is a prime candidate for ML, but it is fraught with difficulties.\n\n#### 5.1 Generalizability of Learned Closures\n*   **Flow Dependence:** A NN trained to predict Reynolds stresses for a channel flow often fails when applied to a duct flow or a flow with separation. The \"universal\" turbulence model remains elusive.\n*   **Data-Driven RANS:** ML models for RANS closure often struggle because the mapping from mean flow features to Reynolds stress is not unique (non-injective). Different turbulent states can produce similar mean velocity profiles, confusing the network [cite: 28, 45].\n\n#### 5.2 Physics-Constrained Learning\n*   **Realizability:** Reynolds stresses must satisfy certain mathematical properties (e.g., positive semi-definiteness). Standard NNs do not guarantee this. Post-processing steps or specialized architectures (e.g., tensor basis neural networks) are required to enforce these constraints, limiting the flexibility of the model [cite: 9, 28].\n\n### 6. Scalability and Computational Efficiency\n\n#### 6.1 The Curse of Dimensionality in 3D\n*   **Memory Limits:** In 2D, a $256^2$ grid is manageable. In 3D, a $256^3$ grid contains 16 million points. Storing the activations for a deep 3D CNN on such a grid exceeds the VRAM of even high-end GPUs [cite: 36, 37].\n*   **Patch-Based Training:** To handle this, researchers use domain decomposition or patch-based training. However, this loses global context information, which is critical for elliptic problems like the pressure Poisson equation in incompressible flow [cite: 46].\n\n#### 6.2 The \"One-Shot\" Fallacy\n*   **Training Time:** Proponents often claim NNs are \"fast.\" This refers to *inference* time. However, training a PINN for a specific case can take hours or days [cite: 7, 40]. If the geometry changes, the PINN must be retrained.\n*   **Comparison to Classical Solvers:** For a single simulation, a classical solver is often faster and more accurate than training a PINN from scratch. NNs only become efficient if the training cost can be amortized over thousands of subsequent queries (e.g., in shape optimization or real-time control) [cite: 39, 41].\n\n### 7. Conclusion and Future Outlook\n\nThe intersection of Neural Networks and PDE solvers is one of the most vibrant areas of computational physics. However, the initial hype is settling into a phase of rigorous scrutiny. The field is moving away from simple \"black-box\" replacements toward sophisticated **hybrid architectures** that respect physical constraints and leverage the strengths of both paradigms.\n\n**Key Research Directions:**\n1.  **Operator Learning:** Moving from learning solutions to learning operators (DeepONet, FNO) to improve generalization [cite: 45, 47].\n2.  **Differentiable Physics:** The development of robust, differentiable CFD solvers (e.g., in JAX) to enable stable end-to-end training [cite: 25, 26].\n3.  **Hard Constraints:** Architectures that enforce boundary conditions and conservation laws by design (hard constraints) rather than via loss penalties (soft constraints) to eliminate optimization pathologies [cite: 12, 14].\n4.  **Interpretability:** Developing tools to visualize and understand the \"physics\" learned by NNs to build trust in safety-critical engineering domains [cite: 34, 35].\n\nThe ultimate goal is a \"differentiable wind tunnel\"\u2014a simulation environment where geometry, physics, and control parameters can be optimized via gradient descent, powered by neural networks that are as robust and trustworthy as the numerical solvers they augment.",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# Comprehensive Review of Open Challenges in Neural Network-Enhanced Fluid Simulation",
+      "header_level": 1,
+      "text": "# Comprehensive Review of Open Challenges in Neural Network-Enhanced Fluid Simulation\n\n",
+      "start": 0,
+      "end": 87
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "### Key Points",
+      "header_level": 3,
+      "text": "### Key Points\n*   **Generalization and Extrapolation:** Neural networks (NNs) frequently fail to generalize to flow regimes (e.g., higher Reynolds numbers), geometries, or boundary conditions outside their training distribution, limiting their utility as robust industrial solvers.\n*   **Spectral Bias and Multiscale Resolution:** Deep learning models exhibit a \"spectral bias,\" preferentially learning low-frequency patterns while struggling to capture high-frequency features essential for turbulence and sharp interfaces.\n*   **Optimization Pathology and Stiffness:** The loss landscapes of Physics-Informed Neural Networks (PINNs) are often ill-conditioned and stiff, particularly for the Navier-Stokes equations, leading to convergence failures or the need for complex hyperparameter tuning.\n*   **Hybrid Integration and Differentiability:** Coupling NNs with traditional PDE solvers creates challenges regarding differentiability; standard solvers do not support automatic differentiation, necessitating complex workarounds like adjoint methods or zeroth-order gradient estimation.\n*   **Scalability to 3D and Industrial Complexity:** While 2D toy problems are solvable, scaling NNs to 3D turbulent flows introduces severe memory bottlenecks and training latency that often exceed the costs of traditional numerical methods.\n\n",
+      "start": 87,
+      "end": 1420
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "### Executive Summary",
+      "header_level": 3,
+      "text": "### Executive Summary\nThe integration of neural networks with Partial Differential Equation (PDE) solvers for fluid dynamics represents a paradigm shift in scientific computing, promising to accelerate simulations by orders of magnitude and solve inverse problems previously deemed intractable. However, the transition from \"promising proofs-of-concept\" to robust industrial tools is currently obstructed by fundamental mathematical and computational challenges. Research indicates that while data-driven methods can act as rapid surrogates, they lack the inherent conservation guarantees of numerical methods, often violating mass or momentum balance when extrapolating beyond training data. Conversely, physics-driven approaches like PINNs, which embed PDE residuals into the loss function, suffer from severe optimization pathologies, often behaving like \"stiff\" solvers that fail to capture transient phenomena like vortex shedding without auxiliary data. Furthermore, the \"black-box\" nature of neural networks complicates their integration into legacy CFD (Computational Fluid Dynamics) workflows, raising critical issues regarding stability, interpretability, and the handling of complex 3D geometries. This report details these open challenges, synthesizing current literature to define the frontier of neural-fluid co-simulation.\n\n---\n\n",
+      "start": 1420,
+      "end": 2764
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 1. Introduction: The Convergence of Deep Learning and CFD",
+      "header_level": 2,
+      "text": "## 1. Introduction: The Convergence of Deep Learning and CFD\n\nComputational Fluid Dynamics (CFD) has traditionally relied on the numerical discretization of the Navier-Stokes equations using methods such as Finite Difference (FDM), Finite Volume (FVM), and Finite Element (FEM). While highly accurate, these methods are computationally expensive, scaling poorly with the resolution required to capture multiscale turbulent phenomena [cite: 1, 2]. The recent surge in Deep Learning (DL) has motivated the development of neural network-based solvers intended to augment or replace these traditional workflows.\n\nThese approaches generally fall into two categories: **Data-driven methods**, which learn mappings from inputs to flow fields using vast datasets of pre-computed simulations [cite: 2], and **Physics-driven methods** (primarily PINNs), which minimize PDE residuals directly without necessarily requiring labeled data [cite: 3, 4]. Despite reported speedups of $100\\times$ to $1000\\times$ in specific inference tasks [cite: 3, 5], significant barriers remain. The field is currently grappling with the realization that NNs are not magic bullets; they struggle with the chaotic nature of fluid dynamics, the stiffness of the governing equations, and the strict requirements for physical conservation [cite: 6, 7].\n\n",
+      "start": 2764,
+      "end": 4085
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "## 2. Generalization and Extrapolation Limits",
+      "header_level": 2,
+      "text": "## 2. Generalization and Extrapolation Limits\n\nOne of the most pervasive challenges in neural fluid simulation is the inability of models to generalize well to physical parameters, geometries, or boundary conditions that lie outside the training distribution. Unlike traditional solvers, which are derived from first principles and are universally applicable (within their discretization limits), neural networks are interpolators that degrade rapidly when asked to extrapolate.\n\n",
+      "start": 4085,
+      "end": 4565
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 2.1 The Reynolds Number Barrier",
+      "header_level": 3,
+      "text": "### 2.1 The Reynolds Number Barrier\nFluid flows are characterized by the Reynolds number ($Re$), which dictates the ratio of inertial to viscous forces. As $Re$ increases, flows become more chaotic and multiscale. Research consistently shows that models trained on low-$Re$ flows fail to predict high-$Re$ turbulence [cite: 8, 9].\n*   **Spectral Shift:** Higher $Re$ flows contain smaller energetic scales (Kolmogorov scales). A network trained on smooth, laminar flows learns a mapping dominated by low-frequency functions. When applied to high-$Re$ regimes, the network cannot spontaneously generate the required high-frequency spectrum, leading to \"over-smoothed\" solutions that physically resemble lower $Re$ flows [cite: 9, 10].\n*   **Training Instability:** Attempts to train PINNs directly on high-$Re$ equations often fail because the convective terms (non-linearities) dominate the diffusive terms, making the PDE residual loss function extremely rugged and difficult to minimize [cite: 11, 12].\n\n",
+      "start": 4565,
+      "end": 5571
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "### 2.2 Geometric and Boundary Condition Generalization",
+      "header_level": 3,
+      "text": "### 2.2 Geometric and Boundary Condition Generalization\nIn industrial CFD, a solver must handle diverse shapes, from airfoils to engine intakes. Neural networks, particularly Convolutional Neural Networks (CNNs), are typically tied to a fixed grid topology or specific geometric representation.\n*   **Retraining Requirements:** Standard PINNs often require retraining from scratch for every new geometry or boundary condition configuration, negating their inference speed advantage [cite: 7, 10]. While \"Operator Learning\" (e.g., DeepONet, Fourier Neural Operators) attempts to learn the solution operator itself, these models still struggle with complex, irregular geometries that differ significantly from the training set [cite: 13, 14].\n*   **Boundary Complexity:** Imposing complex boundary conditions (BCs) in NNs is non-trivial. While simple Dirichlet BCs can be hard-coded, complex industrial BCs (e.g., mixed Neumann/Dirichlet, inlets/outlets) are usually added as soft constraints in the loss function. This leads to a competition between the boundary loss and the PDE residual loss, often resulting in unphysical solutions near boundaries [cite: 14, 15].\n\n",
+      "start": 5571,
+      "end": 6738
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### 2.3 Temporal Extrapolation",
+      "header_level": 3,
+      "text": "### 2.3 Temporal Extrapolation\nData-driven models trained on short time sequences often diverge when integrated over long time horizons. Errors accumulate recursively, leading to \"drift\" where the simulation leaves the manifold of physically valid states [cite: 2, 10]. This is particularly problematic for chaotic systems where small errors grow exponentially.\n\n",
+      "start": 6738,
+      "end": 7101
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "## 3. Optimization Pathologies: Stiffness and Spectral Bias",
+      "header_level": 2,
+      "text": "## 3. Optimization Pathologies: Stiffness and Spectral Bias\n\nThe training of neural networks for fluid dynamics is fundamentally an optimization problem. When the loss function includes PDE residuals (as in PINNs), the optimization landscape becomes pathological, presenting unique challenges not found in standard computer vision or NLP tasks.\n\n",
+      "start": 7101,
+      "end": 7447
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "### 3.1 Spectral Bias (The \"F-Principle\")",
+      "header_level": 3,
+      "text": "### 3.1 Spectral Bias (The \"F-Principle\")\nNeural networks exhibit a phenomenon known as \"spectral bias,\" where they converge to low-frequency components of the target function much faster than high-frequency components [cite: 16, 17].\n*   **Impact on Turbulence:** Turbulent flows are defined by a cascade of energy across a wide range of frequencies. Spectral bias causes NNs to act as low-pass filters, accurately capturing the mean flow but failing to resolve the small-scale eddies and fluctuations that characterize turbulence [cite: 18, 19].\n*   **Failure Modes:** In vortex shedding simulations, this bias can cause the model to revert to a steady-state (laminar) solution even when the physical parameters dictate unsteady, chaotic shedding, simply because the steady solution is \"smoother\" and easier to learn [cite: 6, 7].\n*   **Mitigation Struggles:** Techniques like Fourier Features [cite: 16, 20] or multi-scale architectures [cite: 21] attempt to force the network to learn higher frequencies, but these often introduce high-frequency noise or instability during training.\n\n",
+      "start": 7447,
+      "end": 8536
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "### 3.2 Numerical Stiffness and Gradient Imbalance",
+      "header_level": 3,
+      "text": "### 3.2 Numerical Stiffness and Gradient Imbalance\nThe Navier-Stokes equations are often \"stiff,\" meaning they contain coupled terms acting on vastly different time and length scales (e.g., fast acoustic waves vs. slow advection, or thin boundary layers vs. bulk flow).\n*   **Gradient Pathologies:** In a PINN loss function, the gradients from different terms (e.g., the continuity equation vs. the momentum equation) can vary by orders of magnitude. This causes the optimizer to prioritize one term over another, leading to solutions that might satisfy mass conservation but violate momentum conservation, or vice versa [cite: 22, 23].\n*   **Stiff Regimes:** As the system becomes stiffer (e.g., high Reynolds number or multiphase flows with sharp interfaces), the condition number of the Hessian matrix in the optimization landscape degrades, making standard gradient descent methods (Adam, L-BFGS) slow or prone to getting stuck in local minima [cite: 12, 23].\n\n",
+      "start": 8536,
+      "end": 9501
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "### 3.3 Weighting and Hyperparameter Sensitivity",
+      "header_level": 3,
+      "text": "### 3.3 Weighting and Hyperparameter Sensitivity\nTo combat stiffness, researchers employ complex weighting schemes to balance the different loss terms (PDE residuals, initial conditions, boundary conditions). However, finding the optimal weights is a non-convex hyperparameter search problem. Dynamic weighting schemes (e.g., Neural Tangent Kernel analysis) add computational overhead and do not guarantee convergence for all flow regimes [cite: 12, 22].\n\n",
+      "start": 9501,
+      "end": 9957
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "## 4. The Hybrid Interface: Coupling NNs with PDE Solvers",
+      "header_level": 2,
+      "text": "## 4. The Hybrid Interface: Coupling NNs with PDE Solvers\n\nA promising direction is the creation of hybrid solvers that combine the differentiability and speed of NNs with the accuracy of traditional numerical methods. However, bridging these two distinct computational paradigms creates significant friction.\n\n",
+      "start": 9957,
+      "end": 10268
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "### 4.1 Differentiability of Solvers",
+      "header_level": 3,
+      "text": "### 4.1 Differentiability of Solvers\nEnd-to-end training of a hybrid model (e.g., a NN correcting a coarse-grid CFD solver) requires backpropagating gradients through the CFD solver.\n*   **The Black-Box Problem:** Most industrial CFD codes (e.g., OpenFOAM, ANSYS) are \"black boxes\" written in C++ or Fortran without automatic differentiation (AD) support. They cannot be easily integrated into a PyTorch/TensorFlow training loop [cite: 24, 25].\n*   **Adjoint Methods vs. AD:** While adjoint methods can provide gradients, they are complex to implement and computationally heavy. Rewriting solvers in differentiable frameworks (like JAX) is an active area of research [cite: 25, 26], but it requires abandoning decades of optimized legacy code.\n*   **Zeroth-Order Estimation:** Some researchers attempt to use zeroth-order (derivative-free) gradient estimators to train NNs coupled with black-box solvers. While this bypasses the AD requirement, these estimators are high-variance and scale poorly with the number of parameters, limiting the complexity of the NN that can be trained [cite: 24, 27].\n\n",
+      "start": 10268,
+      "end": 11367
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "### 4.2 Stability of Coupled Systems",
+      "header_level": 3,
+      "text": "### 4.2 Stability of Coupled Systems\nWhen a neural network is used to predict closure terms (e.g., subgrid-scale stress in LES) or correct discretization errors, it acts as a forcing term within the numerical solver.\n*   **Numerical Instability:** A NN might predict physically plausible values that, when fed into a numerical scheme, induce numerical instability (blow-up). The solver's stability criteria (e.g., CFL condition) might be violated by the NN's output [cite: 28, 29].\n*   **Error Propagation:** In hybrid \"correction\" loops, the NN corrects the solver, and the solver feeds back into the NN. Small errors in the NN's prediction can be amplified by the solver's dynamics, leading to drift or divergence over time [cite: 2, 30].\n\n",
+      "start": 11367,
+      "end": 12109
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "## 5. Turbulence Modeling and Closure Problems",
+      "header_level": 2,
+      "text": "## 5. Turbulence Modeling and Closure Problems\n\nTurbulence modeling remains one of the \"grand challenges\" of classical physics. NNs are being used to learn closure models (e.g., Reynolds stresses in RANS) from high-fidelity Direct Numerical Simulation (DNS) data.\n\n",
+      "start": 12109,
+      "end": 12374
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "### 5.1 The Data Availability Paradox",
+      "header_level": 3,
+      "text": "### 5.1 The Data Availability Paradox\nTraining accurate turbulence models requires massive amounts of high-fidelity DNS data. However, generating this data is precisely the bottleneck the models are trying to circumvent.\n*   **Sparse Data:** In practical scenarios, full volumetric DNS data is rarely available. Models must often be trained on sparse experimental data or limited simulations, leading to poor reconstruction of the full phase space [cite: 28, 31].\n*   **Truth vs. Proxy:** Training on RANS data (which is already an approximation) limits the NN to the accuracy of the RANS model. Training on DNS data is ideal but computationally prohibitive for high Reynolds numbers [cite: 9, 32].\n\n",
+      "start": 12374,
+      "end": 13074
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "### 5.2 Interpretability and Trust",
+      "header_level": 3,
+      "text": "### 5.2 Interpretability and Trust\nTurbulence models in engineering (e.g., $k-\\epsilon$) are derived from physical assumptions and are interpretable. NN-based closures are black boxes.\n*   **Lack of Physics:** A NN might learn to predict the correct Reynolds stress for the wrong reasons (e.g., correlating with a specific geometry feature rather than flow physics). This lack of interpretability makes engineers hesitant to deploy these models in safety-critical applications (e.g., aircraft design) [cite: 33, 34].\n*   **Explainable AI (XAI):** Techniques like SHAP (Shapley Additive Explanations) are being explored to interpret what flow features the NN is using, but this field is still in its infancy regarding fluid dynamics [cite: 34, 35].\n\n",
+      "start": 13074,
+      "end": 13823
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "## 6. Scalability and Computational Efficiency",
+      "header_level": 2,
+      "text": "## 6. Scalability and Computational Efficiency\n\nWhile NNs are touted for their inference speed, the \"total cost of ownership\"\u2014including data generation, training, and memory usage\u2014presents a complex picture.\n\n",
+      "start": 13823,
+      "end": 14032
+    },
+    {
+      "idx": 19,
+      "section_type": "text",
+      "header": "### 6.1 The 3D Memory Bottleneck",
+      "header_level": 3,
+      "text": "### 6.1 The 3D Memory Bottleneck\nConvolutional Neural Networks (CNNs) scale poorly to 3D domains due to memory constraints.\n*   **Voxelization Costs:** Representing a 3D fluid volume as a dense voxel grid for a 3D CNN requires enormous GPU memory, often limiting resolution to coarse grids (e.g., $64^3$ or $128^3$) that are insufficient for resolving boundary layers or turbulence [cite: 36, 37].\n*   **Mesh-Graph Mismatch:** Graph Neural Networks (GNNs) can operate on unstructured CFD meshes, but they are computationally heavier than CNNs and struggle with very large graphs (millions of nodes) typical in industrial CFD [cite: 1, 30].\n\n",
+      "start": 14032,
+      "end": 14673
+    },
+    {
+      "idx": 20,
+      "section_type": "text",
+      "header": "### 6.2 Training vs. Inference Trade-off",
+      "header_level": 3,
+      "text": "### 6.2 Training vs. Inference Trade-off\n*   **Training Latency:** Training a PINN to solve a single instance of the Navier-Stokes equations can take *longer* than solving the equation with a traditional FDM/FVM solver [cite: 7, 38, 39]. For example, one study noted that a PINN took 32 hours to train for a problem a traditional solver finished in 20 seconds [cite: 7, 40].\n*   **One-Shot vs. General:** The advantage of NNs appears only when a trained model is used as a surrogate for *many* rapid queries (e.g., design optimization). If the model must be retrained for every new case (as with standard PINNs), it is computationally inefficient compared to classical methods [cite: 39, 41].\n\n",
+      "start": 14673,
+      "end": 15367
+    },
+    {
+      "idx": 21,
+      "section_type": "text",
+      "header": "## 7. Conclusion",
+      "header_level": 2,
+      "text": "## 7. Conclusion\n\nThe integration of neural networks with PDE solvers for fluid simulation is a field characterized by high potential but significant immaturity. The most pressing open challenges are **generalization** (ensuring models work beyond their training data), **optimization** (overcoming spectral bias and stiffness in PINNs), **hybridization** (interfacing differentiable NNs with non-differentiable legacy solvers), and **scalability** (handling 3D turbulence within memory limits).\n\nFuture research must move beyond \"toy problems\" (like 2D flow past a cylinder at low Re) and address the complexities of industrial fluid dynamics: high Reynolds numbers, complex 3D geometries, and chaotic transient behaviors. Success will likely require new architectures that enforce physical constraints more strictly than soft loss terms, as well as differentiable solver frameworks that allow seamless end-to-end learning.\n\n---\n\n",
+      "start": 15367,
+      "end": 16298
+    },
+    {
+      "idx": 22,
+      "section_type": "text",
+      "header": "## Detailed Analysis of Challenges",
+      "header_level": 2,
+      "text": "## Detailed Analysis of Challenges\n\n",
+      "start": 16298,
+      "end": 16334
+    },
+    {
+      "idx": 23,
+      "section_type": "text",
+      "header": "### 2. Generalization and Extrapolation Limits",
+      "header_level": 3,
+      "text": "### 2. Generalization and Extrapolation Limits\n\nThe \"Achilles' heel\" of deep learning in fluid dynamics is the lack of robust generalization. In traditional CFD, the Navier-Stokes equations are universally valid for continuum flows. A solver validated on a pipe flow can, in principle, simulate an airfoil if the mesh and boundary conditions are set correctly. Neural networks, however, approximate the solution manifold, not the equation itself (unless specifically designed as operator learners, which have their own limits).\n\n",
+      "start": 16334,
+      "end": 16863
+    },
+    {
+      "idx": 24,
+      "section_type": "text",
+      "header": "#### 2.1 The Reynolds Number Extrapolation Problem",
+      "header_level": 4,
+      "text": "#### 2.1 The Reynolds Number Extrapolation Problem\nThe Reynolds number ($Re$) is the governing parameter for fluid flow stability and turbulence.\n*   **Manifold Disconnect:** A neural network trained on flows at $Re=100$ learns a smooth, laminar manifold. If queried at $Re=1000$, the physics bifurcates into vortex shedding or turbulence. The network, lacking an internal representation of this bifurcation mechanism, will often predict a \"stretched\" version of the laminar flow rather than the correct unsteady physics [cite: 6, 9].\n*   **Energy Cascade Failure:** In turbulence, energy transfers from large scales to small scales. NNs trained on low-$Re$ data (where small scales are dissipated by viscosity) fail to learn the mechanism of energy transfer required for high-$Re$ simulations. This results in predictions that lack the necessary fine-scale structure, effectively behaving like an overly dissipative numerical scheme [cite: 9].\n\n",
+      "start": 16863,
+      "end": 17809
+    },
+    {
+      "idx": 25,
+      "section_type": "text",
+      "header": "#### 2.2 Geometric Generalization",
+      "header_level": 4,
+      "text": "#### 2.2 Geometric Generalization\n*   **Fixed Discretization:** CNN-based approaches typically require inputs to be interpolated onto a regular Cartesian grid (voxelization). This introduces aliasing errors at curved boundaries (e.g., an aircraft wing) and fails to capture the boundary layer physics unless the grid is prohibitively fine [cite: 36, 37].\n*   **Mesh-Based Limitations:** GNNs [cite: 1, 30] operate on unstructured meshes, offering better geometric flexibility. However, they often overfit to the specific mesh topology used during training. If the mesh density or connectivity changes (e.g., adaptive mesh refinement), the GNN's performance degrades.\n*   **Latent Space Regularization:** Recent work proposes projecting PDE solutions into a latent space to generalize across geometries (e.g., \"PiDo\" or \"Geometry-preserving Universal Physics Transformer\"). However, these methods still struggle to extrapolate to geometries that are topologically distinct (e.g., training on circles and testing on airfoils) [cite: 10, 42].\n\n",
+      "start": 17809,
+      "end": 18850
+    },
+    {
+      "idx": 26,
+      "section_type": "text",
+      "header": "### 3. Optimization Pathologies: Stiffness and Spectral Bias",
+      "header_level": 3,
+      "text": "### 3. Optimization Pathologies: Stiffness and Spectral Bias\n\nThe training of PINNs is uniquely difficult because the \"labels\" are not fixed data points but residuals of differential operators.\n\n",
+      "start": 18850,
+      "end": 19045
+    },
+    {
+      "idx": 27,
+      "section_type": "text",
+      "header": "#### 3.1 Spectral Bias and the Frequency Principle",
+      "header_level": 4,
+      "text": "#### 3.1 Spectral Bias and the Frequency Principle\n*   **The Phenomenon:** Neural networks are biased toward learning low-frequency functions. In the context of the Navier-Stokes equations, the pressure and velocity fields in turbulent flows contain high-frequency spatial and temporal oscillations.\n*   **Consequence:** A standard PINN will quickly learn the mean flow (low frequency) but will stagnate when trying to resolve small eddies or sharp shock waves. The loss function may appear to converge, but the solution remains a \"blurred\" approximation [cite: 16, 18].\n*   **Proposed Fixes and Limitations:**\n    *   *Fourier Features:* Mapping inputs to a higher-dimensional Fourier space can mitigate this [cite: 16, 20]. However, tuning the frequency bandwidth of this mapping is problem-dependent and can lead to aliasing or high-frequency noise artifacts.\n    *   *Curriculum Learning:* Training on low frequencies first and progressively introducing higher frequencies is another strategy, but it complicates the training pipeline and doesn't guarantee convergence for chaotic systems [cite: 16].\n\n",
+      "start": 19045,
+      "end": 20151
+    },
+    {
+      "idx": 28,
+      "section_type": "text",
+      "header": "#### 3.2 Stiffness and Gradient Balancing",
+      "header_level": 4,
+      "text": "#### 3.2 Stiffness and Gradient Balancing\n*   **Stiff PDEs:** The Navier-Stokes equations are stiff, meaning the eigenvalues of the Jacobian span many orders of magnitude. This results in a loss landscape with \"canyons\"\u2014steep in some directions and flat in others.\n*   **Gradient Pathology:** During backpropagation, the gradients for the diffusion term ($\\nu \\nabla^2 u$) might be tiny compared to the convection term ($u \\cdot \\nabla u$) or the boundary condition loss. The optimizer will effectively ignore the smaller terms.\n*   **Weighting Dilemma:** Researchers manually assign weights ($\\lambda_{PDE}, \\lambda_{BC}, \\lambda_{IC}$) to these terms. If $\\lambda_{BC}$ is too high, the solution satisfies boundaries but violates physics. If $\\lambda_{PDE}$ is too high, boundaries are ignored. Adaptive weighting algorithms (e.g., using gradient statistics) exist but add computational cost and complexity [cite: 12, 15, 22].\n\n",
+      "start": 20151,
+      "end": 21081
+    },
+    {
+      "idx": 29,
+      "section_type": "text",
+      "header": "### 4. The Hybrid Interface: Coupling NNs with PDE Solvers",
+      "header_level": 3,
+      "text": "### 4. The Hybrid Interface: Coupling NNs with PDE Solvers\n\nHybrid solvers attempt to use NNs to accelerate specific parts of a CFD solver (e.g., the Poisson pressure solver) or to correct errors in coarse-grid simulations.\n\n",
+      "start": 21081,
+      "end": 21306
+    },
+    {
+      "idx": 30,
+      "section_type": "text",
+      "header": "#### 4.1 The Differentiability Bottleneck",
+      "header_level": 4,
+      "text": "#### 4.1 The Differentiability Bottleneck\n*   **Legacy Code:** The vast majority of validated CFD solvers (OpenFOAM, SU2) are not differentiable. To train a NN that interacts with them, one needs the gradient of the solver's output with respect to its input.\n*   **Zeroth-Order Optimization:** Some approaches use zeroth-order (finite difference) estimates of the gradient to train the NN [cite: 24, 27]. This treats the solver as a black box. However, this method is computationally expensive (requiring multiple solver evaluations per step) and suffers from high variance, making it unsuitable for training deep networks with millions of parameters [cite: 43].\n*   **Differentiable Solvers (JAX-Fluids, etc.):** The alternative is to rewrite CFD solvers in differentiable frameworks like JAX or PyTorch [cite: 25, 26]. While powerful, this restricts the method to these specific, newer solvers, preventing integration with the mature, feature-rich legacy codes used in industry.\n\n",
+      "start": 21306,
+      "end": 22288
+    },
+    {
+      "idx": 31,
+      "section_type": "text",
+      "header": "#### 4.2 Surrogate Modeling and Error Correction",
+      "header_level": 4,
+      "text": "#### 4.2 Surrogate Modeling and Error Correction\n*   **Coarse-Grid Correction:** A popular hybrid approach is to run a cheap, coarse-grid simulation and use a NN to predict the \"correction\" to match a fine-grid result [cite: 30, 44].\n*   **Stability Issues:** The corrected solution must be fed back into the solver for the next time step. If the NN predicts a correction that introduces high-frequency noise or violates conservation laws (even slightly), the numerical solver can become unstable and blow up. Ensuring the *stability* of the coupled NN-Solver system is a major open theoretical challenge [cite: 29].\n\n",
+      "start": 22288,
+      "end": 22906
+    },
+    {
+      "idx": 32,
+      "section_type": "text",
+      "header": "### 5. Turbulence Modeling and Closure",
+      "header_level": 3,
+      "text": "### 5. Turbulence Modeling and Closure\n\nThe \"Closure Problem\" in turbulence (modeling the unclosed terms in averaged equations like RANS or LES) is a prime candidate for ML, but it is fraught with difficulties.\n\n",
+      "start": 22906,
+      "end": 23118
+    },
+    {
+      "idx": 33,
+      "section_type": "text",
+      "header": "#### 5.1 Generalizability of Learned Closures",
+      "header_level": 4,
+      "text": "#### 5.1 Generalizability of Learned Closures\n*   **Flow Dependence:** A NN trained to predict Reynolds stresses for a channel flow often fails when applied to a duct flow or a flow with separation. The \"universal\" turbulence model remains elusive.\n*   **Data-Driven RANS:** ML models for RANS closure often struggle because the mapping from mean flow features to Reynolds stress is not unique (non-injective). Different turbulent states can produce similar mean velocity profiles, confusing the network [cite: 28, 45].\n\n",
+      "start": 23118,
+      "end": 23639
+    },
+    {
+      "idx": 34,
+      "section_type": "text",
+      "header": "#### 5.2 Physics-Constrained Learning",
+      "header_level": 4,
+      "text": "#### 5.2 Physics-Constrained Learning\n*   **Realizability:** Reynolds stresses must satisfy certain mathematical properties (e.g., positive semi-definiteness). Standard NNs do not guarantee this. Post-processing steps or specialized architectures (e.g., tensor basis neural networks) are required to enforce these constraints, limiting the flexibility of the model [cite: 9, 28].\n\n",
+      "start": 23639,
+      "end": 24020
+    },
+    {
+      "idx": 35,
+      "section_type": "text",
+      "header": "### 6. Scalability and Computational Efficiency",
+      "header_level": 3,
+      "text": "### 6. Scalability and Computational Efficiency\n\n",
+      "start": 24020,
+      "end": 24069
+    },
+    {
+      "idx": 36,
+      "section_type": "text",
+      "header": "#### 6.1 The Curse of Dimensionality in 3D",
+      "header_level": 4,
+      "text": "#### 6.1 The Curse of Dimensionality in 3D\n*   **Memory Limits:** In 2D, a $256^2$ grid is manageable. In 3D, a $256^3$ grid contains 16 million points. Storing the activations for a deep 3D CNN on such a grid exceeds the VRAM of even high-end GPUs [cite: 36, 37].\n*   **Patch-Based Training:** To handle this, researchers use domain decomposition or patch-based training. However, this loses global context information, which is critical for elliptic problems like the pressure Poisson equation in incompressible flow [cite: 46].\n\n",
+      "start": 24069,
+      "end": 24601
+    },
+    {
+      "idx": 37,
+      "section_type": "text",
+      "header": "#### 6.2 The \"One-Shot\" Fallacy",
+      "header_level": 4,
+      "text": "#### 6.2 The \"One-Shot\" Fallacy\n*   **Training Time:** Proponents often claim NNs are \"fast.\" This refers to *inference* time. However, training a PINN for a specific case can take hours or days [cite: 7, 40]. If the geometry changes, the PINN must be retrained.\n*   **Comparison to Classical Solvers:** For a single simulation, a classical solver is often faster and more accurate than training a PINN from scratch. NNs only become efficient if the training cost can be amortized over thousands of subsequent queries (e.g., in shape optimization or real-time control) [cite: 39, 41].\n\n",
+      "start": 24601,
+      "end": 25187
+    },
+    {
+      "idx": 38,
+      "section_type": "text",
+      "header": "### 7. Conclusion and Future Outlook",
+      "header_level": 3,
+      "text": "### 7. Conclusion and Future Outlook\n\nThe intersection of Neural Networks and PDE solvers is one of the most vibrant areas of computational physics. However, the initial hype is settling into a phase of rigorous scrutiny. The field is moving away from simple \"black-box\" replacements toward sophisticated **hybrid architectures** that respect physical constraints and leverage the strengths of both paradigms.\n\n**Key Research Directions:**\n1.  **Operator Learning:** Moving from learning solutions to learning operators (DeepONet, FNO) to improve generalization [cite: 45, 47].\n2.  **Differentiable Physics:** The development of robust, differentiable CFD solvers (e.g., in JAX) to enable stable end-to-end training [cite: 25, 26].\n3.  **Hard Constraints:** Architectures that enforce boundary conditions and conservation laws by design (hard constraints) rather than via loss penalties (soft constraints) to eliminate optimization pathologies [cite: 12, 14].\n4.  **Interpretability:** Developing tools to visualize and understand the \"physics\" learned by NNs to build trust in safety-critical engineering domains [cite: 34, 35].\n\nThe ultimate goal is a \"differentiable wind tunnel\"\u2014a simulation environment where geometry, physics, and control parameters can be optimized via gradient descent, powered by neural networks that are as robust and trustworthy as the numerical solvers they augment.",
+      "start": 25187,
+      "end": 26582
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# Comprehensive Review of Open Challenges in Neural Network-Enhanced Fluid Simulation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "### 3.2 Numerical Stiffness and Gradient Imbalance",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "The Navier-Stokes equations are often \"stiff,\" meaning they contain coupled terms acting on vastly different time and length scales (e.g., fast acoustic waves vs. slow advection, or thin boundary layers vs. bulk flow).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "*  **Gradient Pathologies:** In a PINN loss function, the gradients from different terms (e.g., the continuity equation vs. the momentum equation) can vary by orders of magnitude.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGNAl7Afw9LhhzJZCA6CbmD5oJeMb3WqsBmwpm6NgIDq6qjl70HTBMWdZXNBPcZOgijOK-8wix2fF60m19sfmNgpH2KzYcZ0BTfCmgVuIRk4boUph26CFfR"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "This causes the optimizer to prioritize one term over another, leading to solutions that might satisfy mass conservation but violate momentum conservation, or vice versa.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGNAl7Afw9LhhzJZCA6CbmD5oJeMb3WqsBmwpm6NgIDq6qjl70HTBMWdZXNBPcZOgijOK-8wix2fF60m19sfmNgpH2KzYcZ0BTfCmgVuIRk4boUph26CFfR"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_4",
+      "section_idx": 10,
+      "idx_in_section": 4,
+      "text": "*  **Stiff Regimes:** As the system becomes stiffer (e.g., high Reynolds number or multiphase flows with sharp interfaces), the condition number of the Hessian matrix in the optimization landscape degrades, making standard gradient descent methods (Adam, L-BFGS) slow or prone to getting stuck in local minima.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGNAl7Afw9LhhzJZCA6CbmD5oJeMb3WqsBmwpm6NgIDq6qjl70HTBMWdZXNBPcZOgijOK-8wix2fF60m19sfmNgpH2KzYcZ0BTfCmgVuIRk4boUph26CFfR"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "### 3.3 Weighting and Hyperparameter Sensitivity",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "To combat stiffness, researchers employ complex weighting schemes to balance the different loss terms (PDE residuals, initial conditions, boundary conditions).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "However, finding the optimal weights is a non-convex hyperparameter search problem.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "Dynamic weighting schemes (e.g., Neural Tangent Kernel analysis) add computational overhead and do not guarantee convergence for all flow regimes.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "## 4. The Hybrid Interface: Coupling NNs with PDE Solvers",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "A promising direction is the creation of hybrid solvers that combine the differentiability and speed of NNs with the accuracy of traditional numerical methods.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_2",
+      "section_idx": 12,
+      "idx_in_section": 2,
+      "text": "However, bridging these two distinct computational paradigms creates significant friction.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "### 4.1 Differentiability of Solvers",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "End-to-end training of a hybrid model (e.g., a NN correcting a coarse-grid CFD solver) requires backpropagating gradients through the CFD solver.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_2",
+      "section_idx": 13,
+      "idx_in_section": 2,
+      "text": "*  **The Black-Box Problem:** Most industrial CFD codes (e.g., OpenFOAM, ANSYS) are \"black boxes\" written in C++ or Fortran without automatic differentiation (AD) support.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI2gQ-srAvd4ha2B28_eqIlnTfb3yWHca0Owpe_4xcOpPTnmCsFzYmnsM0Z3-Gx05epINMaSznMXd94J4gw5b2M6WOzjeKFTBx1YBIlI8LNjqyHFxNR05S"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBFoY4Xu_lEruUoQUS2H7zmpOWYCBnJB7p7-e4vZ5Jpe-1Ps9Q61l0weRuutygbizgqFAeX21KwFI9F89yrm9eSw8V2G_L-CzUCIg-wXTaCHZRWNqQPcCc"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_3",
+      "section_idx": 13,
+      "idx_in_section": 3,
+      "text": "They cannot be easily integrated into a PyTorch/TensorFlow training loop.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI2gQ-srAvd4ha2B28_eqIlnTfb3yWHca0Owpe_4xcOpPTnmCsFzYmnsM0Z3-Gx05epINMaSznMXd94J4gw5b2M6WOzjeKFTBx1YBIlI8LNjqyHFxNR05S"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBFoY4Xu_lEruUoQUS2H7zmpOWYCBnJB7p7-e4vZ5Jpe-1Ps9Q61l0weRuutygbizgqFAeX21KwFI9F89yrm9eSw8V2G_L-CzUCIg-wXTaCHZRWNqQPcCc"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_4",
+      "section_idx": 13,
+      "idx_in_section": 4,
+      "text": "*  **Adjoint Methods vs. AD:** While adjoint methods can provide gradients, they are complex to implement and computationally heavy.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBFoY4Xu_lEruUoQUS2H7zmpOWYCBnJB7p7-e4vZ5Jpe-1Ps9Q61l0weRuutygbizgqFAeX21KwFI9F89yrm9eSw8V2G_L-CzUCIg-wXTaCHZRWNqQPcCc"
+        ],
+        [
+          "ercoftac.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8K6LMsRYV05LqfezACLVcqd-5Oz5tgrMcM6fEddxGif3Z9iARbbEEQZqr_hWspi9jYoKOTFDXMyzZUAekMug-6hjTNMnc4Q3-PSDAssgt4gC6-8xl9SlSfIKtpAtyyvaOxzSX0TkDmsh5i0X__eidcAwNhGdav99QYwZy5-zRoHFWiIO_4ZrZWYcBzs3G"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_5",
+      "section_idx": 13,
+      "idx_in_section": 5,
+      "text": "Rewriting solvers in differentiable frameworks (like JAX) is an active area of research , but it requires abandoning decades of optimized legacy code.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBFoY4Xu_lEruUoQUS2H7zmpOWYCBnJB7p7-e4vZ5Jpe-1Ps9Q61l0weRuutygbizgqFAeX21KwFI9F89yrm9eSw8V2G_L-CzUCIg-wXTaCHZRWNqQPcCc"
+        ],
+        [
+          "ercoftac.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8K6LMsRYV05LqfezACLVcqd-5Oz5tgrMcM6fEddxGif3Z9iARbbEEQZqr_hWspi9jYoKOTFDXMyzZUAekMug-6hjTNMnc4Q3-PSDAssgt4gC6-8xl9SlSfIKtpAtyyvaOxzSX0TkDmsh5i0X__eidcAwNhGdav99QYwZy5-zRoHFWiIO_4ZrZWYcBzs3G"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_6",
+      "section_idx": 13,
+      "idx_in_section": 6,
+      "text": "*  **Zeroth-Order Estimation:** Some researchers attempt to use zeroth-order (derivative-free) gradient estimators to train NNs coupled with black-box solvers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI2gQ-srAvd4ha2B28_eqIlnTfb3yWHca0Owpe_4xcOpPTnmCsFzYmnsM0Z3-Gx05epINMaSznMXd94J4gw5b2M6WOzjeKFTBx1YBIlI8LNjqyHFxNR05S"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHkOtR1KCdIEyAD-esoS1vod01Vm36ffm5h2STX50By1wnrHXrB0DPNTiKNQgOWlUfee94fSDulBvk6Zll8_f_JuKSLEN4iXKo-oVnvIQdef0HM8W4cQwF6Ey2w3_kxxt3pYFugQuGyeqKl0m_pbrjoqQXWdTU3LoFlRJqHcFo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_7",
+      "section_idx": 13,
+      "idx_in_section": 7,
+      "text": "While this bypasses the AD requirement, these estimators are high-variance and scale poorly with the number of parameters, limiting the complexity of the NN that can be trained.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI2gQ-srAvd4ha2B28_eqIlnTfb3yWHca0Owpe_4xcOpPTnmCsFzYmnsM0Z3-Gx05epINMaSznMXd94J4gw5b2M6WOzjeKFTBx1YBIlI8LNjqyHFxNR05S"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHkOtR1KCdIEyAD-esoS1vod01Vm36ffm5h2STX50By1wnrHXrB0DPNTiKNQgOWlUfee94fSDulBvk6Zll8_f_JuKSLEN4iXKo-oVnvIQdef0HM8W4cQwF6Ey2w3_kxxt3pYFugQuGyeqKl0m_pbrjoqQXWdTU3LoFlRJqHcFo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "### 4.2 Stability of Coupled Systems",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "When a neural network is used to predict closure terms (e.g., subgrid-scale stress in LES) or correct discretization errors, it acts as a forcing term within the numerical solver.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_2",
+      "section_idx": 14,
+      "idx_in_section": 2,
+      "text": "*  **Numerical Instability:** A NN might predict physically plausible values that, when fed into a numerical scheme, induce numerical instability (blow-up).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ],
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEn6ITkvjslNqesbcXffu-z197TgXmUGaLlVPcavQbPqLHYLDt6BCL4pmtMonN4tO1z4jCHKopBp0HKZZOpvdMvBc5PMkSuqmTJBh0V1t9gvAAQ0-FJ9wu7BPgXeVNFGb0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_3",
+      "section_idx": 14,
+      "idx_in_section": 3,
+      "text": "The solver's stability criteria (e.g., CFL condition) might be violated by the NN's output.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ],
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEn6ITkvjslNqesbcXffu-z197TgXmUGaLlVPcavQbPqLHYLDt6BCL4pmtMonN4tO1z4jCHKopBp0HKZZOpvdMvBc5PMkSuqmTJBh0V1t9gvAAQ0-FJ9wu7BPgXeVNFGb0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_4",
+      "section_idx": 14,
+      "idx_in_section": 4,
+      "text": "*  **Error Propagation:** In hybrid \"correction\" loops, the NN corrects the solver, and the solver feeds back into the NN.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "royalsocietypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2_TSHX8duVEWTc99Tvcm-j_Ww63IwwUDv2c4xhz7HNuIveOJihDuCIzUa85V-w_byuk4DOZUQmAFflBIs0iE0A8HTiRVF4P6VgTmtt0YrFwN-7rOADEjJ7GpsfgPirdHCUzLFwtTYdsesbWIRwtO8HQ8="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMtmgItsIuD3zXRLQkHL2pTPn8BED8HR3FgYdbiemcdLnDwAPVCsG11S-UyYKHN3BxCoArKs5sJjOwMZ1vFQ8R4STuLVT9gcnYJoCXXNc4ta1tbM_iOgctJIYi8hkYM4gWrENvA5rrEOf061X32NdcEupP07mqkTVjjSbWOSrd00rlPg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_5",
+      "section_idx": 14,
+      "idx_in_section": 5,
+      "text": "Small errors in the NN's prediction can be amplified by the solver's dynamics, leading to drift or divergence over time.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "royalsocietypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2_TSHX8duVEWTc99Tvcm-j_Ww63IwwUDv2c4xhz7HNuIveOJihDuCIzUa85V-w_byuk4DOZUQmAFflBIs0iE0A8HTiRVF4P6VgTmtt0YrFwN-7rOADEjJ7GpsfgPirdHCUzLFwtTYdsesbWIRwtO8HQ8="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMtmgItsIuD3zXRLQkHL2pTPn8BED8HR3FgYdbiemcdLnDwAPVCsG11S-UyYKHN3BxCoArKs5sJjOwMZ1vFQ8R4STuLVT9gcnYJoCXXNc4ta1tbM_iOgctJIYi8hkYM4gWrENvA5rrEOf061X32NdcEupP07mqkTVjjSbWOSrd00rlPg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "## 5. Turbulence Modeling and Closure Problems",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "Turbulence modeling remains one of the \"grand challenges\" of classical physics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_2",
+      "section_idx": 15,
+      "idx_in_section": 2,
+      "text": "NNs are being used to learn closure models (e.g., Reynolds stresses in RANS) from high-fidelity Direct Numerical Simulation (DNS) data.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "### 5.1 The Data Availability Paradox",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "Training accurate turbulence models requires massive amounts of high-fidelity DNS data.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "However, generating this data is precisely the bottleneck the models are trying to circumvent.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_3",
+      "section_idx": 16,
+      "idx_in_section": 3,
+      "text": "*  **Sparse Data:** In practical scenarios, full volumetric DNS data is rarely available.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFATEyxp8JlkEYXN-1i1Q0AmeJSogN6C-GtI5zj6eDowXPM7_W3CIx2BX8rUUsfzFnGpTAXkajiQFSjEj3KTPtNluE1vaEviP_q_IWGJWBPMVuCr2xwUQSqwZKmJJBMQbcWUlDmzDv96OOnBVjMqDVvWtErYuZhlOfGEFefl5iAT24dLIrv1t27kwGTAM8vJCAn5LvURvLMNCoYMijCYGM5lbZJD5vegRBx9KwibnKSKuD2lGuCHukaAFZddQKCKJ-YXLhXGVfdrGcJFQVShV13XNkUw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_4",
+      "section_idx": 16,
+      "idx_in_section": 4,
+      "text": "Models must often be trained on sparse experimental data or limited simulations, leading to poor reconstruction of the full phase space.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFATEyxp8JlkEYXN-1i1Q0AmeJSogN6C-GtI5zj6eDowXPM7_W3CIx2BX8rUUsfzFnGpTAXkajiQFSjEj3KTPtNluE1vaEviP_q_IWGJWBPMVuCr2xwUQSqwZKmJJBMQbcWUlDmzDv96OOnBVjMqDVvWtErYuZhlOfGEFefl5iAT24dLIrv1t27kwGTAM8vJCAn5LvURvLMNCoYMijCYGM5lbZJD5vegRBx9KwibnKSKuD2lGuCHukaAFZddQKCKJ-YXLhXGVfdrGcJFQVShV13XNkUw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_5",
+      "section_idx": 16,
+      "idx_in_section": 5,
+      "text": "*  **Truth vs. Proxy:** Training on RANS data (which is already an approximation) limits the NN to the accuracy of the RANS model.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHhANVF_sT3kpUVLTbX0CDOy0uRWzxp1f3ydGEXjYn19FP455oPnawGFWS8mC2mStJv3IqFvgRTChLUrEg_D8jgG7fSUPWyhvXY40zzxv3FVNmQC-p2"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_6",
+      "section_idx": 16,
+      "idx_in_section": 6,
+      "text": "Training on DNS data is ideal but computationally prohibitive for high Reynolds numbers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHhANVF_sT3kpUVLTbX0CDOy0uRWzxp1f3ydGEXjYn19FP455oPnawGFWS8mC2mStJv3IqFvgRTChLUrEg_D8jgG7fSUPWyhvXY40zzxv3FVNmQC-p2"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "### 5.2 Interpretability and Trust",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "Turbulence models in engineering (e.g., $k-\\epsilon$) are derived from physical assumptions and are interpretable.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "NN-based closures are black boxes.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_3",
+      "section_idx": 17,
+      "idx_in_section": 3,
+      "text": "*  **Lack of Physics:** A NN might learn to predict the correct Reynolds stress for the wrong reasons (e.g., correlating with a specific geometry feature rather than flow physics).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cambridge.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHCFnafw4mV2X744nD1wtOIJ5cMSJdoskt3sx6GK8PdVIfnR-bSP1yGkmkz6ndww-pA8mhtGr566a2mF-nTYcUjGhSv-Woyaluca-WIjsL39U5NPkuJCg0DyNWZsO-b7uzMHJ3UQ5UUXNsqHRrtBVWN9uObL45UeDLk_WtQMwt0DPFvVghOp6Y9MJYuRqMHPCoJI6XdVZxLObswLpaSSWa6vCTycL2L3xd2hkG_Mw8AjjKzE9WbmmU2OhzlCVBoWvvGYZZXgkaL-9Rbo843DhULQyz2Xz6OmvICDiZsWhHbvOnKZ02wyWnPAPqx0wMwIquchuB-OcoehGd6VZgqOlmVmhtzNWbxW3_1Y-5lIp4="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYu_Fx0D9ATxfbsZoGbC09EE5DVfMDAHR11AGhdTsssLzKf69S5WZRb8SO-grGTmJWNvDGJrsjVLE8-yfqyp7McCkg-DOcT2zIKEkC6Sf7SjcW6Qqg"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_4",
+      "section_idx": 17,
+      "idx_in_section": 4,
+      "text": "This lack of interpretability makes engineers hesitant to deploy these models in safety-critical applications (e.g., aircraft design).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFC5SLal83p_hwnYS5sJtGYqzG_XhCMytubI3VusJq5I9nHWkBQbwGmJO53aym5qLtfQ8Hyb3FQf8eJ4aMnVW-oJCq3iqO4EpaSHVN4l41CQMA7RuDLGcYNXGZKq_0C9aFjjTgJ_XmGk-Hc6Yjowo_jZ6dhyu4MLgvOHgauOtQWxYYOEEn3ddv4HQFonFhFqgdKOMceunBhxY9LJ3xYpXUFTRzBg7JkONJov3Vegoyjcg2S"
+        ],
+        [
+          "cambridge.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHCFnafw4mV2X744nD1wtOIJ5cMSJdoskt3sx6GK8PdVIfnR-bSP1yGkmkz6ndww-pA8mhtGr566a2mF-nTYcUjGhSv-Woyaluca-WIjsL39U5NPkuJCg0DyNWZsO-b7uzMHJ3UQ5UUXNsqHRrtBVWN9uObL45UeDLk_WtQMwt0DPFvVghOp6Y9MJYuRqMHPCoJI6XdVZxLObswLpaSSWa6vCTycL2L3xd2hkG_Mw8AjjKzE9WbmmU2OhzlCVBoWvvGYZZXgkaL-9Rbo843DhULQyz2Xz6OmvICDiZsWhHbvOnKZ02wyWnPAPqx0wMwIquchuB-OcoehGd6VZgqOlmVmhtzNWbxW3_1Y-5lIp4="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_5",
+      "section_idx": 17,
+      "idx_in_section": 5,
+      "text": "*  **Explainable AI (XAI):** Techniques like SHAP (Shapley Additive Explanations) are being explored to interpret what flow features the NN is using, but this field is still in its infancy regarding fluid dynamics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cambridge.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHCFnafw4mV2X744nD1wtOIJ5cMSJdoskt3sx6GK8PdVIfnR-bSP1yGkmkz6ndww-pA8mhtGr566a2mF-nTYcUjGhSv-Woyaluca-WIjsL39U5NPkuJCg0DyNWZsO-b7uzMHJ3UQ5UUXNsqHRrtBVWN9uObL45UeDLk_WtQMwt0DPFvVghOp6Y9MJYuRqMHPCoJI6XdVZxLObswLpaSSWa6vCTycL2L3xd2hkG_Mw8AjjKzE9WbmmU2OhzlCVBoWvvGYZZXgkaL-9Rbo843DhULQyz2Xz6OmvICDiZsWhHbvOnKZ02wyWnPAPqx0wMwIquchuB-OcoehGd6VZgqOlmVmhtzNWbxW3_1Y-5lIp4="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYu_Fx0D9ATxfbsZoGbC09EE5DVfMDAHR11AGhdTsssLzKf69S5WZRb8SO-grGTmJWNvDGJrsjVLE8-yfqyp7McCkg-DOcT2zIKEkC6Sf7SjcW6Qqg"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "## 6. Scalability and Computational Efficiency",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "While NNs are touted for their inference speed, the \"total cost of ownership\"\u2014including data generation, training, and memory usage\u2014presents a complex picture.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_0",
+      "section_idx": 19,
+      "idx_in_section": 0,
+      "text": "### 6.1 The 3D Memory Bottleneck",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_1",
+      "section_idx": 19,
+      "idx_in_section": 1,
+      "text": "Convolutional Neural Networks (CNNs) scale poorly to 3D domains due to memory constraints.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_2",
+      "section_idx": 19,
+      "idx_in_section": 2,
+      "text": "*  **Voxelization Costs:** Representing a 3D fluid volume as a dense voxel grid for a 3D CNN requires enormous GPU memory, often limiting resolution to coarse grids (e.g., $64^3$ or $128^3$) that are insufficient for resolving boundary layers or turbulence.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEk8xAwAQdCtJIZ3-JPwhGs4g2fq5saQpZfH9GgWVTCiSZsktA8XU_fbC9uO_21iUkwVKtJZPq_QePSz7QCgBtkW8-1xSYm4QEBLNH_5fXNiea8GJvr"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7K02tekyDFC-oMOO1QapM-__wBGAgjhSs8Db01e98gDwqOrt8cRrQJcswAeuzNRfoxTj_4xiqdgihHTuSQ1OdUElMnjEA7NgbipLHNyWBTFqEnbJfUX3TLCaghOJZnsPz-pNkaVnDVaOklr7zshUj4ZQfJWNGO73T2BgksQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_3",
+      "section_idx": 19,
+      "idx_in_section": 3,
+      "text": "*  **Mesh-Graph Mismatch:** Graph Neural Networks (GNNs) can operate on unstructured CFD meshes, but they are computationally heavier than CNNs and struggle with very large graphs (millions of nodes) typical in industrial CFD.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQER4b1EKf8QDowkcJ0GbiJcn50I-KlW1hqajabHkJUAvQr3-GaW0BipbAPreEehEQnpvX69uMgxWGmGQb-LNCAgp6QxoJ0JRq3CPnN5QiHwp1JGw8kbQs0D"
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMtmgItsIuD3zXRLQkHL2pTPn8BED8HR3FgYdbiemcdLnDwAPVCsG11S-UyYKHN3BxCoArKs5sJjOwMZ1vFQ8R4STuLVT9gcnYJoCXXNc4ta1tbM_iOgctJIYi8hkYM4gWrENvA5rrEOf061X32NdcEupP07mqkTVjjSbWOSrd00rlPg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "### Key Points",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "*  **Generalization and Extrapolation:** Neural networks (NNs) frequently fail to generalize to flow regimes (e.g., higher Reynolds numbers), geometries, or boundary conditions outside their training distribution, limiting their utility as robust industrial solvers.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "*  **Spectral Bias and Multiscale Resolution:** Deep learning models exhibit a \"spectral bias,\" preferentially learning low-frequency patterns while struggling to capture high-frequency features essential for turbulence and sharp interfaces.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "*  **Optimization Pathology and Stiffness:** The loss landscapes of Physics-Informed Neural Networks (PINNs) are often ill-conditioned and stiff, particularly for the Navier-Stokes equations, leading to convergence failures or the need for complex hyperparameter tuning.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "*  **Hybrid Integration and Differentiability:** Coupling NNs with traditional PDE solvers creates challenges regarding differentiability; standard solvers do not support automatic differentiation, necessitating complex workarounds like adjoint methods or zeroth-order gradient estimation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "*  **Scalability to 3D and Industrial Complexity:** While 2D toy problems are solvable, scaling NNs to 3D turbulent flows introduces severe memory bottlenecks and training latency that often exceed the costs of traditional numerical methods.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_0",
+      "section_idx": 20,
+      "idx_in_section": 0,
+      "text": "### 6.2 Training vs. Inference Trade-off",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_1",
+      "section_idx": 20,
+      "idx_in_section": 1,
+      "text": "*  **Training Latency:** Training a PINN to solve a single instance of the Navier-Stokes equations can take *longer* than solving the equation with a traditional FDM/FVM solver.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "scipy.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEt7ZSIYnuISx1f4hixG0BzAYWdXAu5JwsZEmLMPvHtvXbjfhc2GQl8HD0C_Hdw0Vm7T8jpVw2F2WCNwfwVYVMrnZJvMJosIe_9UZmQcY9bNlzhX0M_QqmyfNbfMonLGFWuD-TOCW-YvPnJCd32E1s="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGHGV3p9PE0lhXVAz1De5CLpLwbyScoOBry6B2USrSDLiAdnhSR_PEk10sca7QAExa_D0LWxXFpAfEXVmoLm8iVK8QJ1onsyAjsHmgKLb5W9v761rb2"
+        ],
+        [
+          "kscfe.or.kr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFTzASwKPkGDjYWQwzx4D3qqR06c1OkNG6jhJ7MP15L7WnbhamZlAJKhD40y7JE-8aYipByalnk7vRMn3ScXtC0B2_9-n7ReZlQ6wYV-MJaprvi70TvLPOx-x6sXydRcWKrSQymhlm"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_2",
+      "section_idx": 20,
+      "idx_in_section": 2,
+      "text": "For example, one study noted that a PINN took 32 hours to train for a problem a traditional solver finished in 20 seconds.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "scipy.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEt7ZSIYnuISx1f4hixG0BzAYWdXAu5JwsZEmLMPvHtvXbjfhc2GQl8HD0C_Hdw0Vm7T8jpVw2F2WCNwfwVYVMrnZJvMJosIe_9UZmQcY9bNlzhX0M_QqmyfNbfMonLGFWuD-TOCW-YvPnJCd32E1s="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEvPFd6BYMCL_h6syW0SgUN9Xz6cH7BxYU5Jo_faJAzwQaFSbAPOvZuT2MIwWkcRmHxSegtgTe61__OqgfvO-n07yu9k2cYHNU1E2fsq8dvkLiWHPqy"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_3",
+      "section_idx": 20,
+      "idx_in_section": 3,
+      "text": "*  **One-Shot vs. General:** The advantage of NNs appears only when a trained model is used as a surrogate for *many* rapid queries (e.g., design optimization).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "kscfe.or.kr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFTzASwKPkGDjYWQwzx4D3qqR06c1OkNG6jhJ7MP15L7WnbhamZlAJKhD40y7JE-8aYipByalnk7vRMn3ScXtC0B2_9-n7ReZlQ6wYV-MJaprvi70TvLPOx-x6sXydRcWKrSQymhlm"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFbGKb1H1mK_unK_QItfg86nDlyaEK0w_hLKx3BEi2YWuFUhwrflNvCOaLsYkTcP4peKrUO04seZMmZvV5tBfKly2FeW1boRlCZsx5OyR7dA-UTbXlHBWu5aLIWFyPPbFq2lYh9qPikGB-p0YuTVLPL_gp2EBgCGSsCIsDUFG5pFEvZDachqLH8txGBk4cGBZ7PksD2_Vk-ua7OhUJtu7g4icxFBts8s6aCRENi06vCfjTqk0a-fExW"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_4",
+      "section_idx": 20,
+      "idx_in_section": 4,
+      "text": "If the model must be retrained for every new case (as with standard PINNs), it is computationally inefficient compared to classical methods.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "kscfe.or.kr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFTzASwKPkGDjYWQwzx4D3qqR06c1OkNG6jhJ7MP15L7WnbhamZlAJKhD40y7JE-8aYipByalnk7vRMn3ScXtC0B2_9-n7ReZlQ6wYV-MJaprvi70TvLPOx-x6sXydRcWKrSQymhlm"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFbGKb1H1mK_unK_QItfg86nDlyaEK0w_hLKx3BEi2YWuFUhwrflNvCOaLsYkTcP4peKrUO04seZMmZvV5tBfKly2FeW1boRlCZsx5OyR7dA-UTbXlHBWu5aLIWFyPPbFq2lYh9qPikGB-p0YuTVLPL_gp2EBgCGSsCIsDUFG5pFEvZDachqLH8txGBk4cGBZ7PksD2_Vk-ua7OhUJtu7g4icxFBts8s6aCRENi06vCfjTqk0a-fExW"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_0",
+      "section_idx": 21,
+      "idx_in_section": 0,
+      "text": "## 7. Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_1",
+      "section_idx": 21,
+      "idx_in_section": 1,
+      "text": "The integration of neural networks with PDE solvers for fluid simulation is a field characterized by high potential but significant immaturity.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_2",
+      "section_idx": 21,
+      "idx_in_section": 2,
+      "text": "The most pressing open challenges are **generalization** (ensuring models work beyond their training data), **optimization** (overcoming spectral bias and stiffness in PINNs), **hybridization** (interfacing differentiable NNs with non-differentiable legacy solvers), and **scalability** (handling 3D turbulence within memory limits).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_3",
+      "section_idx": 21,
+      "idx_in_section": 3,
+      "text": "Future research must move beyond \"toy problems\" (like 2D flow past a cylinder at low Re) and address the complexities of industrial fluid dynamics: high Reynolds numbers, complex 3D geometries, and chaotic transient behaviors.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_4",
+      "section_idx": 21,
+      "idx_in_section": 4,
+      "text": "Success will likely require new architectures that enforce physical constraints more strictly than soft loss terms, as well as differentiable solver frameworks that allow seamless end-to-end learning.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_0",
+      "section_idx": 22,
+      "idx_in_section": 0,
+      "text": "## Detailed Analysis of Challenges",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_0",
+      "section_idx": 23,
+      "idx_in_section": 0,
+      "text": "### 2. Generalization and Extrapolation Limits",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_1",
+      "section_idx": 23,
+      "idx_in_section": 1,
+      "text": "The \"Achilles' heel\" of deep learning in fluid dynamics is the lack of robust generalization.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_2",
+      "section_idx": 23,
+      "idx_in_section": 2,
+      "text": "In traditional CFD, the Navier-Stokes equations are universally valid for continuum flows.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_3",
+      "section_idx": 23,
+      "idx_in_section": 3,
+      "text": "A solver validated on a pipe flow can, in principle, simulate an airfoil if the mesh and boundary conditions are set correctly.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_4",
+      "section_idx": 23,
+      "idx_in_section": 4,
+      "text": "Neural networks, however, approximate the solution manifold, not the equation itself (unless specifically designed as operator learners, which have their own limits).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_0",
+      "section_idx": 24,
+      "idx_in_section": 0,
+      "text": "#### 2.1 The Reynolds Number Extrapolation Problem",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_1",
+      "section_idx": 24,
+      "idx_in_section": 1,
+      "text": "The Reynolds number ($Re$) is the governing parameter for fluid flow stability and turbulence.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_2",
+      "section_idx": 24,
+      "idx_in_section": 2,
+      "text": "*  **Manifold Disconnect:** A neural network trained on flows at $Re=100$ learns a smooth, laminar manifold.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxZho2DSB0nycTOEemBmfjLyOjyB_y8rk7-wngQ1s9ZTMhBF4_8GWXdfGqnwssdLJgKXo5MtFTKml26JDTExp4Dq0JvKH-egmVJ5QCGKN1v-SniXae8WsdQ8GmYFlumvbl9Q1HM7OpDHlvdnRL57ailtsAeXtczXjY1lVzJsbt4_dYEiuyP7NarO76trE6Ah7WuqaUoi2N7hzlDLsosgCqV9u3daXFWP14Xtq-NttVrpg3zQMX-A=="
+        ],
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_3",
+      "section_idx": 24,
+      "idx_in_section": 3,
+      "text": "If queried at $Re=1000$, the physics bifurcates into vortex shedding or turbulence.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxZho2DSB0nycTOEemBmfjLyOjyB_y8rk7-wngQ1s9ZTMhBF4_8GWXdfGqnwssdLJgKXo5MtFTKml26JDTExp4Dq0JvKH-egmVJ5QCGKN1v-SniXae8WsdQ8GmYFlumvbl9Q1HM7OpDHlvdnRL57ailtsAeXtczXjY1lVzJsbt4_dYEiuyP7NarO76trE6Ah7WuqaUoi2N7hzlDLsosgCqV9u3daXFWP14Xtq-NttVrpg3zQMX-A=="
+        ],
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_4",
+      "section_idx": 24,
+      "idx_in_section": 4,
+      "text": "The network, lacking an internal representation of this bifurcation mechanism, will often predict a \"stretched\" version of the laminar flow rather than the correct unsteady physics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxZho2DSB0nycTOEemBmfjLyOjyB_y8rk7-wngQ1s9ZTMhBF4_8GWXdfGqnwssdLJgKXo5MtFTKml26JDTExp4Dq0JvKH-egmVJ5QCGKN1v-SniXae8WsdQ8GmYFlumvbl9Q1HM7OpDHlvdnRL57ailtsAeXtczXjY1lVzJsbt4_dYEiuyP7NarO76trE6Ah7WuqaUoi2N7hzlDLsosgCqV9u3daXFWP14Xtq-NttVrpg3zQMX-A=="
+        ],
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_5",
+      "section_idx": 24,
+      "idx_in_section": 5,
+      "text": "*  **Energy Cascade Failure:** In turbulence, energy transfers from large scales to small scales.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_6",
+      "section_idx": 24,
+      "idx_in_section": 6,
+      "text": "NNs trained on low-$Re$ data (where small scales are dissipated by viscosity) fail to learn the mechanism of energy transfer required for high-$Re$ simulations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_7",
+      "section_idx": 24,
+      "idx_in_section": 7,
+      "text": "This results in predictions that lack the necessary fine-scale structure, effectively behaving like an overly dissipative numerical scheme.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_0",
+      "section_idx": 25,
+      "idx_in_section": 0,
+      "text": "#### 2.2 Geometric Generalization",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_1",
+      "section_idx": 25,
+      "idx_in_section": 1,
+      "text": "*  **Fixed Discretization:** CNN-based approaches typically require inputs to be interpolated onto a regular Cartesian grid (voxelization).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEk8xAwAQdCtJIZ3-JPwhGs4g2fq5saQpZfH9GgWVTCiSZsktA8XU_fbC9uO_21iUkwVKtJZPq_QePSz7QCgBtkW8-1xSYm4QEBLNH_5fXNiea8GJvr"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7K02tekyDFC-oMOO1QapM-__wBGAgjhSs8Db01e98gDwqOrt8cRrQJcswAeuzNRfoxTj_4xiqdgihHTuSQ1OdUElMnjEA7NgbipLHNyWBTFqEnbJfUX3TLCaghOJZnsPz-pNkaVnDVaOklr7zshUj4ZQfJWNGO73T2BgksQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_2",
+      "section_idx": 25,
+      "idx_in_section": 2,
+      "text": "This introduces aliasing errors at curved boundaries (e.g., an aircraft wing) and fails to capture the boundary layer physics unless the grid is prohibitively fine.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEk8xAwAQdCtJIZ3-JPwhGs4g2fq5saQpZfH9GgWVTCiSZsktA8XU_fbC9uO_21iUkwVKtJZPq_QePSz7QCgBtkW8-1xSYm4QEBLNH_5fXNiea8GJvr"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7K02tekyDFC-oMOO1QapM-__wBGAgjhSs8Db01e98gDwqOrt8cRrQJcswAeuzNRfoxTj_4xiqdgihHTuSQ1OdUElMnjEA7NgbipLHNyWBTFqEnbJfUX3TLCaghOJZnsPz-pNkaVnDVaOklr7zshUj4ZQfJWNGO73T2BgksQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_3",
+      "section_idx": 25,
+      "idx_in_section": 3,
+      "text": "*  **Mesh-Based Limitations:** GNNs operate on unstructured meshes, offering better geometric flexibility.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQER4b1EKf8QDowkcJ0GbiJcn50I-KlW1hqajabHkJUAvQr3-GaW0BipbAPreEehEQnpvX69uMgxWGmGQb-LNCAgp6QxoJ0JRq3CPnN5QiHwp1JGw8kbQs0D"
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMtmgItsIuD3zXRLQkHL2pTPn8BED8HR3FgYdbiemcdLnDwAPVCsG11S-UyYKHN3BxCoArKs5sJjOwMZ1vFQ8R4STuLVT9gcnYJoCXXNc4ta1tbM_iOgctJIYi8hkYM4gWrENvA5rrEOf061X32NdcEupP07mqkTVjjSbWOSrd00rlPg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_4",
+      "section_idx": 25,
+      "idx_in_section": 4,
+      "text": "However, they often overfit to the specific mesh topology used during training.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_5",
+      "section_idx": 25,
+      "idx_in_section": 5,
+      "text": "If the mesh density or connectivity changes (e.g., adaptive mesh refinement), the GNN's performance degrades.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_6",
+      "section_idx": 25,
+      "idx_in_section": 6,
+      "text": "*  **Latent Space Regularization:** Recent work proposes projecting PDE solutions into a latent space to generalize across geometries (e.g., \"PiDo\" or \"Geometry-preserving Universal Physics Transformer\").",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPMTm8pduZfMSn7IG29596ak36qksz1yLpqYOv-kwNQYJQSGYj1LUp9bbolxNhNS6bfuoLMVORzFTLfgaZELla9vnDsBbIRlK8IfwD4smAlGBEpDOCKRjo"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHyFksWYvPITQ-ZkwKvofmZ9k_wApJ3rN6lnuKEp9GjQhSWM9oo0paFBv4DcI1WGFI8WACFdp10PD2_zI2OiUbLISwcM0vCaVHTxFmpdtGbqihlioNRq1Rb"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_7",
+      "section_idx": 25,
+      "idx_in_section": 7,
+      "text": "However, these methods still struggle to extrapolate to geometries that are topologically distinct (e.g., training on circles and testing on airfoils).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPMTm8pduZfMSn7IG29596ak36qksz1yLpqYOv-kwNQYJQSGYj1LUp9bbolxNhNS6bfuoLMVORzFTLfgaZELla9vnDsBbIRlK8IfwD4smAlGBEpDOCKRjo"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHyFksWYvPITQ-ZkwKvofmZ9k_wApJ3rN6lnuKEp9GjQhSWM9oo0paFBv4DcI1WGFI8WACFdp10PD2_zI2OiUbLISwcM0vCaVHTxFmpdtGbqihlioNRq1Rb"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_0",
+      "section_idx": 26,
+      "idx_in_section": 0,
+      "text": "### 3. Optimization Pathologies: Stiffness and Spectral Bias",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_1",
+      "section_idx": 26,
+      "idx_in_section": 1,
+      "text": "The training of PINNs is uniquely difficult because the \"labels\" are not fixed data points but residuals of differential operators.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_0",
+      "section_idx": 27,
+      "idx_in_section": 0,
+      "text": "#### 3.1 Spectral Bias and the Frequency Principle",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_1",
+      "section_idx": 27,
+      "idx_in_section": 1,
+      "text": "*  **The Phenomenon:** Neural networks are biased toward learning low-frequency functions.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_2",
+      "section_idx": 27,
+      "idx_in_section": 2,
+      "text": "In the context of the Navier-Stokes equations, the pressure and velocity fields in turbulent flows contain high-frequency spatial and temporal oscillations.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_3",
+      "section_idx": 27,
+      "idx_in_section": 3,
+      "text": "*  **Consequence:** A standard PINN will quickly learn the mean flow (low frequency) but will stagnate when trying to resolve small eddies or sharp shock waves.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETaLDd3qOy4Cf2uPY1eCYkAm879XcXWDlcmgbOWQ5bX3vm3znHep5UggloYQIInBfTVbFQY8jIa2B3h1VTRbtkhOYxMAd8_WEDL4hhnTNFmXJnBuuJlenzJfrWAvyjpFWQq81p3NZixmWfv-Ktdm4N63bVi5Q36frvfOWKRYlHZzJnxMvEZFEcb4L-LxhjlbdaI3R1YakH70ghYGJyH45isk1l0x0JpyubRs7bUayxt3LeP647vwegPcmsScBC2f82SOi9V49-T9BH"
+        ],
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnVTTAuIeG1Tku4CdTjFSDLWvN106-Do5iWSsWoefOsu3AjlvlMI4ewPWbssrGoqRsha9gP0H-AJCAC_3YSnUqgmEwrPF9FZ9-wZFoTpV9wJDxayhLTjizhN1vXqfa728="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_4",
+      "section_idx": 27,
+      "idx_in_section": 4,
+      "text": "The loss function may appear to converge, but the solution remains a \"blurred\" approximation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETaLDd3qOy4Cf2uPY1eCYkAm879XcXWDlcmgbOWQ5bX3vm3znHep5UggloYQIInBfTVbFQY8jIa2B3h1VTRbtkhOYxMAd8_WEDL4hhnTNFmXJnBuuJlenzJfrWAvyjpFWQq81p3NZixmWfv-Ktdm4N63bVi5Q36frvfOWKRYlHZzJnxMvEZFEcb4L-LxhjlbdaI3R1YakH70ghYGJyH45isk1l0x0JpyubRs7bUayxt3LeP647vwegPcmsScBC2f82SOi9V49-T9BH"
+        ],
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnVTTAuIeG1Tku4CdTjFSDLWvN106-Do5iWSsWoefOsu3AjlvlMI4ewPWbssrGoqRsha9gP0H-AJCAC_3YSnUqgmEwrPF9FZ9-wZFoTpV9wJDxayhLTjizhN1vXqfa728="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_5",
+      "section_idx": 27,
+      "idx_in_section": 5,
+      "text": "*  **Proposed Fixes and Limitations:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_6",
+      "section_idx": 27,
+      "idx_in_section": 6,
+      "text": "*  *Fourier Features:* Mapping inputs to a higher-dimensional Fourier space can mitigate this.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETaLDd3qOy4Cf2uPY1eCYkAm879XcXWDlcmgbOWQ5bX3vm3znHep5UggloYQIInBfTVbFQY8jIa2B3h1VTRbtkhOYxMAd8_WEDL4hhnTNFmXJnBuuJlenzJfrWAvyjpFWQq81p3NZixmWfv-Ktdm4N63bVi5Q36frvfOWKRYlHZzJnxMvEZFEcb4L-LxhjlbdaI3R1YakH70ghYGJyH45isk1l0x0JpyubRs7bUayxt3LeP647vwegPcmsScBC2f82SOi9V49-T9BH"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHnydoqNnBMIiKcfqdz7hjFnjyODVw8_Jn46V59OxAgb2X2RvviyUmHW5YA00CRO3qwQUqWcoqJ1atONfOyEzb_zscVGWC3bH1YE7WKAzkmuOpzRbeySg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_7",
+      "section_idx": 27,
+      "idx_in_section": 7,
+      "text": "However, tuning the frequency bandwidth of this mapping is problem-dependent and can lead to aliasing or high-frequency noise artifacts.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETaLDd3qOy4Cf2uPY1eCYkAm879XcXWDlcmgbOWQ5bX3vm3znHep5UggloYQIInBfTVbFQY8jIa2B3h1VTRbtkhOYxMAd8_WEDL4hhnTNFmXJnBuuJlenzJfrWAvyjpFWQq81p3NZixmWfv-Ktdm4N63bVi5Q36frvfOWKRYlHZzJnxMvEZFEcb4L-LxhjlbdaI3R1YakH70ghYGJyH45isk1l0x0JpyubRs7bUayxt3LeP647vwegPcmsScBC2f82SOi9V49-T9BH"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_8",
+      "section_idx": 27,
+      "idx_in_section": 8,
+      "text": "*  *Curriculum Learning:* Training on low frequencies first and progressively introducing higher frequencies is another strategy, but it complicates the training pipeline and doesn't guarantee convergence for chaotic systems.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETaLDd3qOy4Cf2uPY1eCYkAm879XcXWDlcmgbOWQ5bX3vm3znHep5UggloYQIInBfTVbFQY8jIa2B3h1VTRbtkhOYxMAd8_WEDL4hhnTNFmXJnBuuJlenzJfrWAvyjpFWQq81p3NZixmWfv-Ktdm4N63bVi5Q36frvfOWKRYlHZzJnxMvEZFEcb4L-LxhjlbdaI3R1YakH70ghYGJyH45isk1l0x0JpyubRs7bUayxt3LeP647vwegPcmsScBC2f82SOi9V49-T9BH"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "28_0",
+      "section_idx": 28,
+      "idx_in_section": 0,
+      "text": "#### 3.2 Stiffness and Gradient Balancing",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_1",
+      "section_idx": 28,
+      "idx_in_section": 1,
+      "text": "*  **Stiff PDEs:** The Navier-Stokes equations are stiff, meaning the eigenvalues of the Jacobian span many orders of magnitude.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_2",
+      "section_idx": 28,
+      "idx_in_section": 2,
+      "text": "This results in a loss landscape with \"canyons\"\u2014steep in some directions and flat in others.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_3",
+      "section_idx": 28,
+      "idx_in_section": 3,
+      "text": "*  **Gradient Pathology:** During backpropagation, the gradients for the diffusion term ($\\nu \\nabla^2 u$) might be tiny compared to the convection term ($u \\cdot \\nabla u$) or the boundary condition loss.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_4",
+      "section_idx": 28,
+      "idx_in_section": 4,
+      "text": "The optimizer will effectively ignore the smaller terms.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_5",
+      "section_idx": 28,
+      "idx_in_section": 5,
+      "text": "*  **Weighting Dilemma:** Researchers manually assign weights ($\\lambda_{PDE}, \\lambda_{BC}, \\lambda_{IC}$) to these terms.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfSoRBBija2Wv-WRg4YoC66NhUufg4HSFp-jUdD5mIaZJHwcyDQoLVZV_r6cWhsZpr5zYaOw0_QncykUTuS3TIh1nWjb8GlZ7f8Zvl6adJMszOb7krG5AVO3Xbmm8fbekFSFM1qt4vxC2m-frm_3URB9y0v1P2h6dcqFWTvkmp3CtbtAAo0PszSP2xNkoOgQisHmH5wXAw7u7j9BRq1XTPZzFbGAbLhosxQfsudMFoine5DhyS3eKxbzCm0OQQtUOAmdWc6zDAZW5K6lR7d5UZ"
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_6",
+      "section_idx": 28,
+      "idx_in_section": 6,
+      "text": "If $\\lambda_{BC}$ is too high, the solution satisfies boundaries but violates physics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfSoRBBija2Wv-WRg4YoC66NhUufg4HSFp-jUdD5mIaZJHwcyDQoLVZV_r6cWhsZpr5zYaOw0_QncykUTuS3TIh1nWjb8GlZ7f8Zvl6adJMszOb7krG5AVO3Xbmm8fbekFSFM1qt4vxC2m-frm_3URB9y0v1P2h6dcqFWTvkmp3CtbtAAo0PszSP2xNkoOgQisHmH5wXAw7u7j9BRq1XTPZzFbGAbLhosxQfsudMFoine5DhyS3eKxbzCm0OQQtUOAmdWc6zDAZW5K6lR7d5UZ"
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_7",
+      "section_idx": 28,
+      "idx_in_section": 7,
+      "text": "If $\\lambda_{PDE}$ is too high, boundaries are ignored.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfSoRBBija2Wv-WRg4YoC66NhUufg4HSFp-jUdD5mIaZJHwcyDQoLVZV_r6cWhsZpr5zYaOw0_QncykUTuS3TIh1nWjb8GlZ7f8Zvl6adJMszOb7krG5AVO3Xbmm8fbekFSFM1qt4vxC2m-frm_3URB9y0v1P2h6dcqFWTvkmp3CtbtAAo0PszSP2xNkoOgQisHmH5wXAw7u7j9BRq1XTPZzFbGAbLhosxQfsudMFoine5DhyS3eKxbzCm0OQQtUOAmdWc6zDAZW5K6lR7d5UZ"
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_8",
+      "section_idx": 28,
+      "idx_in_section": 8,
+      "text": "Adaptive weighting algorithms (e.g., using gradient statistics) exist but add computational cost and complexity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfSoRBBija2Wv-WRg4YoC66NhUufg4HSFp-jUdD5mIaZJHwcyDQoLVZV_r6cWhsZpr5zYaOw0_QncykUTuS3TIh1nWjb8GlZ7f8Zvl6adJMszOb7krG5AVO3Xbmm8fbekFSFM1qt4vxC2m-frm_3URB9y0v1P2h6dcqFWTvkmp3CtbtAAo0PszSP2xNkoOgQisHmH5wXAw7u7j9BRq1XTPZzFbGAbLhosxQfsudMFoine5DhyS3eKxbzCm0OQQtUOAmdWc6zDAZW5K6lR7d5UZ"
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4AMsSpkmGW1kbPaqZeOMNLbXpQ01_54UQ0Y8Yy-IfuF-brglSdnMaYq8ISrbTCdaftbEu6-KJIzNw_teyiSTKHKPfkBvxilKsqifdUvpnKvYq-wTSs2BNGtgun2rampjlOhtYABk3ninxMcqOnD8EEYHH9oubid8q4nImDutzlzh2TkWqFXco1gywsI4pzUaUldqJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "29_0",
+      "section_idx": 29,
+      "idx_in_section": 0,
+      "text": "### 4. The Hybrid Interface: Coupling NNs with PDE Solvers",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_1",
+      "section_idx": 29,
+      "idx_in_section": 1,
+      "text": "Hybrid solvers attempt to use NNs to accelerate specific parts of a CFD solver (e.g., the Poisson pressure solver) or to correct errors in coarse-grid simulations.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "### Executive Summary",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "The integration of neural networks with Partial Differential Equation (PDE) solvers for fluid dynamics represents a paradigm shift in scientific computing, promising to accelerate simulations by orders of magnitude and solve inverse problems previously deemed intractable.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "However, the transition from \"promising proofs-of-concept\" to robust industrial tools is currently obstructed by fundamental mathematical and computational challenges.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "Research indicates that while data-driven methods can act as rapid surrogates, they lack the inherent conservation guarantees of numerical methods, often violating mass or momentum balance when extrapolating beyond training data.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "Conversely, physics-driven approaches like PINNs, which embed PDE residuals into the loss function, suffer from severe optimization pathologies, often behaving like \"stiff\" solvers that fail to capture transient phenomena like vortex shedding without auxiliary data.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "Furthermore, the \"black-box\" nature of neural networks complicates their integration into legacy CFD (Computational Fluid Dynamics) workflows, raising critical issues regarding stability, interpretability, and the handling of complex 3D geometries.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "This report details these open challenges, synthesizing current literature to define the frontier of neural-fluid co-simulation.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "30_0",
+      "section_idx": 30,
+      "idx_in_section": 0,
+      "text": "#### 4.1 The Differentiability Bottleneck",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "30_1",
+      "section_idx": 30,
+      "idx_in_section": 1,
+      "text": "*  **Legacy Code:** The vast majority of validated CFD solvers (OpenFOAM, SU2) are not differentiable.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "30_2",
+      "section_idx": 30,
+      "idx_in_section": 2,
+      "text": "To train a NN that interacts with them, one needs the gradient of the solver's output with respect to its input.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "30_3",
+      "section_idx": 30,
+      "idx_in_section": 3,
+      "text": "*  **Zeroth-Order Optimization:** Some approaches use zeroth-order (finite difference) estimates of the gradient to train the NN.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI2gQ-srAvd4ha2B28_eqIlnTfb3yWHca0Owpe_4xcOpPTnmCsFzYmnsM0Z3-Gx05epINMaSznMXd94J4gw5b2M6WOzjeKFTBx1YBIlI8LNjqyHFxNR05S"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHkOtR1KCdIEyAD-esoS1vod01Vm36ffm5h2STX50By1wnrHXrB0DPNTiKNQgOWlUfee94fSDulBvk6Zll8_f_JuKSLEN4iXKo-oVnvIQdef0HM8W4cQwF6Ey2w3_kxxt3pYFugQuGyeqKl0m_pbrjoqQXWdTU3LoFlRJqHcFo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "30_4",
+      "section_idx": 30,
+      "idx_in_section": 4,
+      "text": "This treats the solver as a black box.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF29KiV7V0o4oTNJTFet99oy_sFMpFm6UGt1SO9o6slDz4g21_CXUgbqZQtwRKc_ck_JKi9tRH99dZPs0FmgYqofvR97Y0A9eY_Af_YOOxWacPpTO88"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "30_5",
+      "section_idx": 30,
+      "idx_in_section": 5,
+      "text": "However, this method is computationally expensive (requiring multiple solver evaluations per step) and suffers from high variance, making it unsuitable for training deep networks with millions of parameters.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF29KiV7V0o4oTNJTFet99oy_sFMpFm6UGt1SO9o6slDz4g21_CXUgbqZQtwRKc_ck_JKi9tRH99dZPs0FmgYqofvR97Y0A9eY_Af_YOOxWacPpTO88"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "30_6",
+      "section_idx": 30,
+      "idx_in_section": 6,
+      "text": "*  **Differentiable Solvers (JAX-Fluids, etc.):** The alternative is to rewrite CFD solvers in differentiable frameworks like JAX or PyTorch.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBFoY4Xu_lEruUoQUS2H7zmpOWYCBnJB7p7-e4vZ5Jpe-1Ps9Q61l0weRuutygbizgqFAeX21KwFI9F89yrm9eSw8V2G_L-CzUCIg-wXTaCHZRWNqQPcCc"
+        ],
+        [
+          "ercoftac.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8K6LMsRYV05LqfezACLVcqd-5Oz5tgrMcM6fEddxGif3Z9iARbbEEQZqr_hWspi9jYoKOTFDXMyzZUAekMug-6hjTNMnc4Q3-PSDAssgt4gC6-8xl9SlSfIKtpAtyyvaOxzSX0TkDmsh5i0X__eidcAwNhGdav99QYwZy5-zRoHFWiIO_4ZrZWYcBzs3G"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "30_7",
+      "section_idx": 30,
+      "idx_in_section": 7,
+      "text": "While powerful, this restricts the method to these specific, newer solvers, preventing integration with the mature, feature-rich legacy codes used in industry.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "31_0",
+      "section_idx": 31,
+      "idx_in_section": 0,
+      "text": "#### 4.2 Surrogate Modeling and Error Correction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "31_1",
+      "section_idx": 31,
+      "idx_in_section": 1,
+      "text": "*  **Coarse-Grid Correction:** A popular hybrid approach is to run a cheap, coarse-grid simulation and use a NN to predict the \"correction\" to match a fine-grid result.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMtmgItsIuD3zXRLQkHL2pTPn8BED8HR3FgYdbiemcdLnDwAPVCsG11S-UyYKHN3BxCoArKs5sJjOwMZ1vFQ8R4STuLVT9gcnYJoCXXNc4ta1tbM_iOgctJIYi8hkYM4gWrENvA5rrEOf061X32NdcEupP07mqkTVjjSbWOSrd00rlPg=="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH_aZanSaa5J9gLtyF-HAGQ137d2wFLjlMgpetHbT36JZi84C7IYGsRfeO-AvCIV4ir6_bxTPPX7VZZdoWFaqbTShSwKbGfNKvbnDg_6TnrPK9laJFVDIY94Vpm4MgAliyrHJhmVai3PR4MhycW58HBUkotg07eLpPDFcSVvko11pH9oe0f-k76Op3IUcQFc6kYCA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "31_2",
+      "section_idx": 31,
+      "idx_in_section": 2,
+      "text": "*  **Stability Issues:** The corrected solution must be fed back into the solver for the next time step.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEn6ITkvjslNqesbcXffu-z197TgXmUGaLlVPcavQbPqLHYLDt6BCL4pmtMonN4tO1z4jCHKopBp0HKZZOpvdMvBc5PMkSuqmTJBh0V1t9gvAAQ0-FJ9wu7BPgXeVNFGb0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "31_3",
+      "section_idx": 31,
+      "idx_in_section": 3,
+      "text": "If the NN predicts a correction that introduces high-frequency noise or violates conservation laws (even slightly), the numerical solver can become unstable and blow up.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEn6ITkvjslNqesbcXffu-z197TgXmUGaLlVPcavQbPqLHYLDt6BCL4pmtMonN4tO1z4jCHKopBp0HKZZOpvdMvBc5PMkSuqmTJBh0V1t9gvAAQ0-FJ9wu7BPgXeVNFGb0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "31_4",
+      "section_idx": 31,
+      "idx_in_section": 4,
+      "text": "Ensuring the *stability* of the coupled NN-Solver system is a major open theoretical challenge.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEn6ITkvjslNqesbcXffu-z197TgXmUGaLlVPcavQbPqLHYLDt6BCL4pmtMonN4tO1z4jCHKopBp0HKZZOpvdMvBc5PMkSuqmTJBh0V1t9gvAAQ0-FJ9wu7BPgXeVNFGb0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "32_0",
+      "section_idx": 32,
+      "idx_in_section": 0,
+      "text": "### 5. Turbulence Modeling and Closure",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "32_1",
+      "section_idx": 32,
+      "idx_in_section": 1,
+      "text": "The \"Closure Problem\" in turbulence (modeling the unclosed terms in averaged equations like RANS or LES) is a prime candidate for ML, but it is fraught with difficulties.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "33_0",
+      "section_idx": 33,
+      "idx_in_section": 0,
+      "text": "#### 5.1 Generalizability of Learned Closures",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "33_1",
+      "section_idx": 33,
+      "idx_in_section": 1,
+      "text": "*  **Flow Dependence:** A NN trained to predict Reynolds stresses for a channel flow often fails when applied to a duct flow or a flow with separation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "33_2",
+      "section_idx": 33,
+      "idx_in_section": 2,
+      "text": "The \"universal\" turbulence model remains elusive.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "33_3",
+      "section_idx": 33,
+      "idx_in_section": 3,
+      "text": "*  **Data-Driven RANS:** ML models for RANS closure often struggle because the mapping from mean flow features to Reynolds stress is not unique (non-injective).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1Dlk5AfK-ouGHzrLvZMgjNLem4YQbxJnXFiIA3aT1n_p7pYXhKts_SexxQ3fGBTaVJrflzl81G0LTPCGHY6nLFOvf9armqytls4zXK81i6ZmIhYaoUPuo"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "33_4",
+      "section_idx": 33,
+      "idx_in_section": 4,
+      "text": "Different turbulent states can produce similar mean velocity profiles, confusing the network.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1Dlk5AfK-ouGHzrLvZMgjNLem4YQbxJnXFiIA3aT1n_p7pYXhKts_SexxQ3fGBTaVJrflzl81G0LTPCGHY6nLFOvf9armqytls4zXK81i6ZmIhYaoUPuo"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "34_0",
+      "section_idx": 34,
+      "idx_in_section": 0,
+      "text": "#### 5.2 Physics-Constrained Learning",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "34_1",
+      "section_idx": 34,
+      "idx_in_section": 1,
+      "text": "*  **Realizability:** Reynolds stresses must satisfy certain mathematical properties (e.g., positive semi-definiteness).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "34_2",
+      "section_idx": 34,
+      "idx_in_section": 2,
+      "text": "Standard NNs do not guarantee this.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "34_3",
+      "section_idx": 34,
+      "idx_in_section": 3,
+      "text": "Post-processing steps or specialized architectures (e.g., tensor basis neural networks) are required to enforce these constraints, limiting the flexibility of the model.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ],
+        [
+          "aip.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEa6tvmBxEVfH4gJ5qj8p6jVex1Q7-Go5V3cVjpXlo6MpzPVTQ2qIXEE8m2iijjhIn-J5E6o4qQ1-BQAFyPXHxNW0oALF5dat6R4tTc-nmZ7AYzpqXGjKxLcG1XJMd4zJNzYD31s2rYR7d26YQonbD0vx8nW2HWCyMgsVJpjrsGP5n0_cluv_CDuQDmtD4SKXkMNyRwlDwT2wo8nA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "35_0",
+      "section_idx": 35,
+      "idx_in_section": 0,
+      "text": "### 6. Scalability and Computational Efficiency",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "36_0",
+      "section_idx": 36,
+      "idx_in_section": 0,
+      "text": "#### 6.1 The Curse of Dimensionality in 3D",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "36_1",
+      "section_idx": 36,
+      "idx_in_section": 1,
+      "text": "*  **Memory Limits:** In 2D, a $256^2$ grid is manageable.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEk8xAwAQdCtJIZ3-JPwhGs4g2fq5saQpZfH9GgWVTCiSZsktA8XU_fbC9uO_21iUkwVKtJZPq_QePSz7QCgBtkW8-1xSYm4QEBLNH_5fXNiea8GJvr"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7K02tekyDFC-oMOO1QapM-__wBGAgjhSs8Db01e98gDwqOrt8cRrQJcswAeuzNRfoxTj_4xiqdgihHTuSQ1OdUElMnjEA7NgbipLHNyWBTFqEnbJfUX3TLCaghOJZnsPz-pNkaVnDVaOklr7zshUj4ZQfJWNGO73T2BgksQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "36_2",
+      "section_idx": 36,
+      "idx_in_section": 2,
+      "text": "In 3D, a $256^3$ grid contains 16 million points.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEk8xAwAQdCtJIZ3-JPwhGs4g2fq5saQpZfH9GgWVTCiSZsktA8XU_fbC9uO_21iUkwVKtJZPq_QePSz7QCgBtkW8-1xSYm4QEBLNH_5fXNiea8GJvr"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7K02tekyDFC-oMOO1QapM-__wBGAgjhSs8Db01e98gDwqOrt8cRrQJcswAeuzNRfoxTj_4xiqdgihHTuSQ1OdUElMnjEA7NgbipLHNyWBTFqEnbJfUX3TLCaghOJZnsPz-pNkaVnDVaOklr7zshUj4ZQfJWNGO73T2BgksQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "36_3",
+      "section_idx": 36,
+      "idx_in_section": 3,
+      "text": "Storing the activations for a deep 3D CNN on such a grid exceeds the VRAM of even high-end GPUs.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEk8xAwAQdCtJIZ3-JPwhGs4g2fq5saQpZfH9GgWVTCiSZsktA8XU_fbC9uO_21iUkwVKtJZPq_QePSz7QCgBtkW8-1xSYm4QEBLNH_5fXNiea8GJvr"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7K02tekyDFC-oMOO1QapM-__wBGAgjhSs8Db01e98gDwqOrt8cRrQJcswAeuzNRfoxTj_4xiqdgihHTuSQ1OdUElMnjEA7NgbipLHNyWBTFqEnbJfUX3TLCaghOJZnsPz-pNkaVnDVaOklr7zshUj4ZQfJWNGO73T2BgksQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "36_4",
+      "section_idx": 36,
+      "idx_in_section": 4,
+      "text": "*  **Patch-Based Training:** To handle this, researchers use domain decomposition or patch-based training.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC1WrVvxfu_eLRViGTByvhjmnL3D9iO4iYW6ptT02CB3NgsdBYqmCN-bH5vTi2SnY6k430yieVB3_6hcDelAtLtDAOE_8xr9cThHTPh6hdVGXegJDvQx8pybnHTTnt9JJCatnqK64TcQeB2frslxNOg57FV6Rq8QYOlyrQvwBXotGwKQfV71Z0112bZnMLxY7mryVd3A5YnB88iIQ7nkM4Z71UoQWN34DwY2uKrsQ18IM7qqcM888SDfTSA_TewIAULOYEG__g045zzxwpHYk="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "36_5",
+      "section_idx": 36,
+      "idx_in_section": 5,
+      "text": "However, this loses global context information, which is critical for elliptic problems like the pressure Poisson equation in incompressible flow.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC1WrVvxfu_eLRViGTByvhjmnL3D9iO4iYW6ptT02CB3NgsdBYqmCN-bH5vTi2SnY6k430yieVB3_6hcDelAtLtDAOE_8xr9cThHTPh6hdVGXegJDvQx8pybnHTTnt9JJCatnqK64TcQeB2frslxNOg57FV6Rq8QYOlyrQvwBXotGwKQfV71Z0112bZnMLxY7mryVd3A5YnB88iIQ7nkM4Z71UoQWN34DwY2uKrsQ18IM7qqcM888SDfTSA_TewIAULOYEG__g045zzxwpHYk="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "37_0",
+      "section_idx": 37,
+      "idx_in_section": 0,
+      "text": "#### 6.2 The \"One-Shot\" Fallacy",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "37_1",
+      "section_idx": 37,
+      "idx_in_section": 1,
+      "text": "*  **Training Time:** Proponents often claim NNs are \"fast.\"",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "37_2",
+      "section_idx": 37,
+      "idx_in_section": 2,
+      "text": "This refers to *inference* time.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "37_3",
+      "section_idx": 37,
+      "idx_in_section": 3,
+      "text": "However, training a PINN for a specific case can take hours or days.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "scipy.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEt7ZSIYnuISx1f4hixG0BzAYWdXAu5JwsZEmLMPvHtvXbjfhc2GQl8HD0C_Hdw0Vm7T8jpVw2F2WCNwfwVYVMrnZJvMJosIe_9UZmQcY9bNlzhX0M_QqmyfNbfMonLGFWuD-TOCW-YvPnJCd32E1s="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEvPFd6BYMCL_h6syW0SgUN9Xz6cH7BxYU5Jo_faJAzwQaFSbAPOvZuT2MIwWkcRmHxSegtgTe61__OqgfvO-n07yu9k2cYHNU1E2fsq8dvkLiWHPqy"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "37_4",
+      "section_idx": 37,
+      "idx_in_section": 4,
+      "text": "If the geometry changes, the PINN must be retrained.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "37_5",
+      "section_idx": 37,
+      "idx_in_section": 5,
+      "text": "*  **Comparison to Classical Solvers:** For a single simulation, a classical solver is often faster and more accurate than training a PINN from scratch.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "kscfe.or.kr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFTzASwKPkGDjYWQwzx4D3qqR06c1OkNG6jhJ7MP15L7WnbhamZlAJKhD40y7JE-8aYipByalnk7vRMn3ScXtC0B2_9-n7ReZlQ6wYV-MJaprvi70TvLPOx-x6sXydRcWKrSQymhlm"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFbGKb1H1mK_unK_QItfg86nDlyaEK0w_hLKx3BEi2YWuFUhwrflNvCOaLsYkTcP4peKrUO04seZMmZvV5tBfKly2FeW1boRlCZsx5OyR7dA-UTbXlHBWu5aLIWFyPPbFq2lYh9qPikGB-p0YuTVLPL_gp2EBgCGSsCIsDUFG5pFEvZDachqLH8txGBk4cGBZ7PksD2_Vk-ua7OhUJtu7g4icxFBts8s6aCRENi06vCfjTqk0a-fExW"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "37_6",
+      "section_idx": 37,
+      "idx_in_section": 6,
+      "text": "NNs only become efficient if the training cost can be amortized over thousands of subsequent queries (e.g., in shape optimization or real-time control).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "kscfe.or.kr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFTzASwKPkGDjYWQwzx4D3qqR06c1OkNG6jhJ7MP15L7WnbhamZlAJKhD40y7JE-8aYipByalnk7vRMn3ScXtC0B2_9-n7ReZlQ6wYV-MJaprvi70TvLPOx-x6sXydRcWKrSQymhlm"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFbGKb1H1mK_unK_QItfg86nDlyaEK0w_hLKx3BEi2YWuFUhwrflNvCOaLsYkTcP4peKrUO04seZMmZvV5tBfKly2FeW1boRlCZsx5OyR7dA-UTbXlHBWu5aLIWFyPPbFq2lYh9qPikGB-p0YuTVLPL_gp2EBgCGSsCIsDUFG5pFEvZDachqLH8txGBk4cGBZ7PksD2_Vk-ua7OhUJtu7g4icxFBts8s6aCRENi06vCfjTqk0a-fExW"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "38_0",
+      "section_idx": 38,
+      "idx_in_section": 0,
+      "text": "### 7. Conclusion and Future Outlook",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "38_1",
+      "section_idx": 38,
+      "idx_in_section": 1,
+      "text": "The intersection of Neural Networks and PDE solvers is one of the most vibrant areas of computational physics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "38_2",
+      "section_idx": 38,
+      "idx_in_section": 2,
+      "text": "However, the initial hype is settling into a phase of rigorous scrutiny.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "38_3",
+      "section_idx": 38,
+      "idx_in_section": 3,
+      "text": "The field is moving away from simple \"black-box\" replacements toward sophisticated **hybrid architectures** that respect physical constraints and leverage the strengths of both paradigms.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "38_4",
+      "section_idx": 38,
+      "idx_in_section": 4,
+      "text": "**Key Research Directions:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "38_5",
+      "section_idx": 38,
+      "idx_in_section": 5,
+      "text": "1. **Operator Learning:** Moving from learning solutions to learning operators (DeepONet, FNO) to improve generalization.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1Dlk5AfK-ouGHzrLvZMgjNLem4YQbxJnXFiIA3aT1n_p7pYXhKts_SexxQ3fGBTaVJrflzl81G0LTPCGHY6nLFOvf9armqytls4zXK81i6ZmIhYaoUPuo"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1Wk4qq3TDER6trN365vAkdIg1Cve5xZKm_Z4xyvdUh7XNOsew-6F3WuGnaE2o7ilRJjjZb0zBQPTHulbt1T-HYswor1uND8Xxht2lCBK5h_sOvfYi"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "38_6",
+      "section_idx": 38,
+      "idx_in_section": 6,
+      "text": "2. **Differentiable Physics:** The development of robust, differentiable CFD solvers (e.g., in JAX) to enable stable end-to-end training.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBFoY4Xu_lEruUoQUS2H7zmpOWYCBnJB7p7-e4vZ5Jpe-1Ps9Q61l0weRuutygbizgqFAeX21KwFI9F89yrm9eSw8V2G_L-CzUCIg-wXTaCHZRWNqQPcCc"
+        ],
+        [
+          "ercoftac.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8K6LMsRYV05LqfezACLVcqd-5Oz5tgrMcM6fEddxGif3Z9iARbbEEQZqr_hWspi9jYoKOTFDXMyzZUAekMug-6hjTNMnc4Q3-PSDAssgt4gC6-8xl9SlSfIKtpAtyyvaOxzSX0TkDmsh5i0X__eidcAwNhGdav99QYwZy5-zRoHFWiIO_4ZrZWYcBzs3G"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "38_7",
+      "section_idx": 38,
+      "idx_in_section": 7,
+      "text": "3. **Hard Constraints:** Architectures that enforce boundary conditions and conservation laws by design (hard constraints) rather than via loss penalties (soft constraints) to eliminate optimization pathologies.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExwPv9kWLgEv0UBQvEluBu9hwWW-dKzwM_54DE9sV3rJXF5PX8mHhACWgrUZwvN9zIRS_bNY8x0Zd2nEIIRBnN-be-uRPtD4EvLIt169v0RLgxj8fmUfDp"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "38_8",
+      "section_idx": 38,
+      "idx_in_section": 8,
+      "text": "4. **Interpretability:** Developing tools to visualize and understand the \"physics\" learned by NNs to build trust in safety-critical engineering domains.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cambridge.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHCFnafw4mV2X744nD1wtOIJ5cMSJdoskt3sx6GK8PdVIfnR-bSP1yGkmkz6ndww-pA8mhtGr566a2mF-nTYcUjGhSv-Woyaluca-WIjsL39U5NPkuJCg0DyNWZsO-b7uzMHJ3UQ5UUXNsqHRrtBVWN9uObL45UeDLk_WtQMwt0DPFvVghOp6Y9MJYuRqMHPCoJI6XdVZxLObswLpaSSWa6vCTycL2L3xd2hkG_Mw8AjjKzE9WbmmU2OhzlCVBoWvvGYZZXgkaL-9Rbo843DhULQyz2Xz6OmvICDiZsWhHbvOnKZ02wyWnPAPqx0wMwIquchuB-OcoehGd6VZgqOlmVmhtzNWbxW3_1Y-5lIp4="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYu_Fx0D9ATxfbsZoGbC09EE5DVfMDAHR11AGhdTsssLzKf69S5WZRb8SO-grGTmJWNvDGJrsjVLE8-yfqyp7McCkg-DOcT2zIKEkC6Sf7SjcW6Qqg"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "38_9",
+      "section_idx": 38,
+      "idx_in_section": 9,
+      "text": "The ultimate goal is a \"differentiable wind tunnel\"\u2014a simulation environment where geometry, physics, and control parameters can be optimized via gradient descent, powered by neural networks that are as robust and trustworthy as the numerical solvers they augment.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 1. Introduction: The Convergence of Deep Learning and CFD",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "Computational Fluid Dynamics (CFD) has traditionally relied on the numerical discretization of the Navier-Stokes equations using methods such as Finite Difference (FDM), Finite Volume (FVM), and Finite Element (FEM).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "While highly accurate, these methods are computationally expensive, scaling poorly with the resolution required to capture multiscale turbulent phenomena.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQER4b1EKf8QDowkcJ0GbiJcn50I-KlW1hqajabHkJUAvQr3-GaW0BipbAPreEehEQnpvX69uMgxWGmGQb-LNCAgp6QxoJ0JRq3CPnN5QiHwp1JGw8kbQs0D"
+        ],
+        [
+          "royalsocietypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2_TSHX8duVEWTc99Tvcm-j_Ww63IwwUDv2c4xhz7HNuIveOJihDuCIzUa85V-w_byuk4DOZUQmAFflBIs0iE0A8HTiRVF4P6VgTmtt0YrFwN-7rOADEjJ7GpsfgPirdHCUzLFwtTYdsesbWIRwtO8HQ8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_3",
+      "section_idx": 3,
+      "idx_in_section": 3,
+      "text": "The recent surge in Deep Learning (DL) has motivated the development of neural network-based solvers intended to augment or replace these traditional workflows.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_4",
+      "section_idx": 3,
+      "idx_in_section": 4,
+      "text": "These approaches generally fall into two categories: **Data-driven methods**, which learn mappings from inputs to flow fields using vast datasets of pre-computed simulations , and **Physics-driven methods** (primarily PINNs), which minimize PDE residuals directly without necessarily requiring labeled data.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "royalsocietypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2_TSHX8duVEWTc99Tvcm-j_Ww63IwwUDv2c4xhz7HNuIveOJihDuCIzUa85V-w_byuk4DOZUQmAFflBIs0iE0A8HTiRVF4P6VgTmtt0YrFwN-7rOADEjJ7GpsfgPirdHCUzLFwtTYdsesbWIRwtO8HQ8="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG3pwbmiO26GT2bywEmB049rkVftSRroAHRiXqD9HMNvIuMkh73pfxl7bw09ZprHx_DGfOxSXI083bx0EjqfxQ7jOu9SPGWrlZTH2SLpGJxKVH8Y0-T7_VZFnl41wQ5DFjV1JA1OXYktbKoSLqa0faGK1vsfTBX6A9kegSjNhZNmoX1x6S6f2crZV2l1F7mcliL-0unti4eBCtmRSBwU9b_w7unXAXQwrcDzLuas7bPwg70T0LrE8717buHJLbzGz1W_eDec-zD-g=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE0QYoPwGvUu3DLWoKl6ablfOHfAamS9OK_E1DanpCqJsWKalP1bRfOmQbt6Waxl5DPBQjFbF6mCsTznEIWj1KZorPXBLHfgGQdUgR0oXWIJwlyRVCzPRe7gZ4CfVMxjHOkxP6wCpWRmGtHwxxFLe-wlmD4iaCezYiI84eP1xCXoBtH4QCabInBYnM2IXXmgCkYp-YpZKnr1Ek-EpMGwtTG701828B0qg36m2jo9SYhtWXe7MF5IYzEa54="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_5",
+      "section_idx": 3,
+      "idx_in_section": 5,
+      "text": "Despite reported speedups of $100\\times$ to $1000\\times$ in specific inference tasks , significant barriers remain.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG3pwbmiO26GT2bywEmB049rkVftSRroAHRiXqD9HMNvIuMkh73pfxl7bw09ZprHx_DGfOxSXI083bx0EjqfxQ7jOu9SPGWrlZTH2SLpGJxKVH8Y0-T7_VZFnl41wQ5DFjV1JA1OXYktbKoSLqa0faGK1vsfTBX6A9kegSjNhZNmoX1x6S6f2crZV2l1F7mcliL-0unti4eBCtmRSBwU9b_w7unXAXQwrcDzLuas7bPwg70T0LrE8717buHJLbzGz1W_eDec-zD-g=="
+        ],
+        [
+          "scienceblog.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGkGpAxjZYWdBL3XX8biCn6BptBUXuHPoHmfWLLg5mTHzRoWR75zoT2Wz5oOwMQFD-Vuicb7DVPsVuhr4LHRyBl4Uu3KeTC46AojT24hL486TctCO1RG4RxtAUMg5e40ZFcQck12f5x6V9Wx1cbJaB6f-DCMlvj6N8P9WI4dI6wXr_PNEYSZPlQdB4tVohomoTS3IE28BEpdUDaAHBlyfOVbw_Pi9-GkMDI-v534n4="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_6",
+      "section_idx": 3,
+      "idx_in_section": 6,
+      "text": "The field is currently grappling with the realization that NNs are not magic bullets; they struggle with the chaotic nature of fluid dynamics, the stiffness of the governing equations, and the strict requirements for physical conservation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxZho2DSB0nycTOEemBmfjLyOjyB_y8rk7-wngQ1s9ZTMhBF4_8GWXdfGqnwssdLJgKXo5MtFTKml26JDTExp4Dq0JvKH-egmVJ5QCGKN1v-SniXae8WsdQ8GmYFlumvbl9Q1HM7OpDHlvdnRL57ailtsAeXtczXjY1lVzJsbt4_dYEiuyP7NarO76trE6Ah7WuqaUoi2N7hzlDLsosgCqV9u3daXFWP14Xtq-NttVrpg3zQMX-A=="
+        ],
+        [
+          "scipy.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEt7ZSIYnuISx1f4hixG0BzAYWdXAu5JwsZEmLMPvHtvXbjfhc2GQl8HD0C_Hdw0Vm7T8jpVw2F2WCNwfwVYVMrnZJvMJosIe_9UZmQcY9bNlzhX0M_QqmyfNbfMonLGFWuD-TOCW-YvPnJCd32E1s="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "## 2. Generalization and Extrapolation Limits",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "One of the most pervasive challenges in neural fluid simulation is the inability of models to generalize well to physical parameters, geometries, or boundary conditions that lie outside the training distribution.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "Unlike traditional solvers, which are derived from first principles and are universally applicable (within their discretization limits), neural networks are interpolators that degrade rapidly when asked to extrapolate.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 2.1 The Reynolds Number Barrier",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJE8VfeFYNN1cTJFzk-viAltArcYLR0k1Kev0mr4KuZB0cu5UTeUPaTbWFsZeQUbE_Ysa2vDmN7SMXUTi9O-pf-3Cvjf_oLrJMqSGQNtYbUZSHDoyKfx2krUYrh8lLcUYL5FGP5g=="
+        ],
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "Fluid flows are characterized by the Reynolds number ($Re$), which dictates the ratio of inertial to viscous forces.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJE8VfeFYNN1cTJFzk-viAltArcYLR0k1Kev0mr4KuZB0cu5UTeUPaTbWFsZeQUbE_Ysa2vDmN7SMXUTi9O-pf-3Cvjf_oLrJMqSGQNtYbUZSHDoyKfx2krUYrh8lLcUYL5FGP5g=="
+        ],
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "As $Re$ increases, flows become more chaotic and multiscale.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJE8VfeFYNN1cTJFzk-viAltArcYLR0k1Kev0mr4KuZB0cu5UTeUPaTbWFsZeQUbE_Ysa2vDmN7SMXUTi9O-pf-3Cvjf_oLrJMqSGQNtYbUZSHDoyKfx2krUYrh8lLcUYL5FGP5g=="
+        ],
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "Research consistently shows that models trained on low-$Re$ flows fail to predict high-$Re$ turbulence.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJE8VfeFYNN1cTJFzk-viAltArcYLR0k1Kev0mr4KuZB0cu5UTeUPaTbWFsZeQUbE_Ysa2vDmN7SMXUTi9O-pf-3Cvjf_oLrJMqSGQNtYbUZSHDoyKfx2krUYrh8lLcUYL5FGP5g=="
+        ],
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "*  **Spectral Shift:** Higher $Re$ flows contain smaller energetic scales (Kolmogorov scales).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sabanciuniv.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEL4ejRkxGhjAHamCG6--aml0NhK5A7uuHgf_4AE4ixpgXCuttQ5EvN_jwKAsP6yv77bCACoMVwFSmagyi60Xdm91Ddaut4G9eATWNSLDm-0ebge_tKIQnAXnDmhZgxCaY1JY8SiPQNOhdh"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "A network trained on smooth, laminar flows learns a mapping dominated by low-frequency functions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sabanciuniv.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEL4ejRkxGhjAHamCG6--aml0NhK5A7uuHgf_4AE4ixpgXCuttQ5EvN_jwKAsP6yv77bCACoMVwFSmagyi60Xdm91Ddaut4G9eATWNSLDm-0ebge_tKIQnAXnDmhZgxCaY1JY8SiPQNOhdh"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_6",
+      "section_idx": 5,
+      "idx_in_section": 6,
+      "text": "When applied to high-$Re$ regimes, the network cannot spontaneously generate the required high-frequency spectrum, leading to \"over-smoothed\" solutions that physically resemble lower $Re$ flows.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "pnas.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHG1QOVEaBGqkhA9pshCtfYKWQ37V_AfgXqMX-FEShgj1lAUkJ6jEL36TEDGGyuepw1jzUn5eh9OcWFKw5ov0xqtFLkIrLHXzhWGYSiMYi1lRJoJ4KhnyskIRPB04BSf2kCBVhGwA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPMTm8pduZfMSn7IG29596ak36qksz1yLpqYOv-kwNQYJQSGYj1LUp9bbolxNhNS6bfuoLMVORzFTLfgaZELla9vnDsBbIRlK8IfwD4smAlGBEpDOCKRjo"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_7",
+      "section_idx": 5,
+      "idx_in_section": 7,
+      "text": "*  **Training Instability:** Attempts to train PINNs directly on high-$Re$ equations often fail because the convective terms (non-linearities) dominate the diffusive terms, making the PDE residual loss function extremely rugged and difficult to minimize.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sabanciuniv.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEL4ejRkxGhjAHamCG6--aml0NhK5A7uuHgf_4AE4ixpgXCuttQ5EvN_jwKAsP6yv77bCACoMVwFSmagyi60Xdm91Ddaut4G9eATWNSLDm-0ebge_tKIQnAXnDmhZgxCaY1JY8SiPQNOhdh"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHj7yQ-0kbgDvLhP7Z7helTV-gJZUN9dQEBz6S_Q49eDOYiAgJujKH4AkcByRc-_b93JIoSBYZ1WGN_xERvs2OOTFc9OM_rpGg744vVunM8XNPr7qJpoIkT"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "### 2.2 Geometric and Boundary Condition Generalization",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "In industrial CFD, a solver must handle diverse shapes, from airfoils to engine intakes.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "Neural networks, particularly Convolutional Neural Networks (CNNs), are typically tied to a fixed grid topology or specific geometric representation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "*  **Retraining Requirements:** Standard PINNs often require retraining from scratch for every new geometry or boundary condition configuration, negating their inference speed advantage.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "scipy.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEt7ZSIYnuISx1f4hixG0BzAYWdXAu5JwsZEmLMPvHtvXbjfhc2GQl8HD0C_Hdw0Vm7T8jpVw2F2WCNwfwVYVMrnZJvMJosIe_9UZmQcY9bNlzhX0M_QqmyfNbfMonLGFWuD-TOCW-YvPnJCd32E1s="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPMTm8pduZfMSn7IG29596ak36qksz1yLpqYOv-kwNQYJQSGYj1LUp9bbolxNhNS6bfuoLMVORzFTLfgaZELla9vnDsBbIRlK8IfwD4smAlGBEpDOCKRjo"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "While \"Operator Learning\" (e.g., DeepONet, Fourier Neural Operators) attempts to learn the solution operator itself, these models still struggle with complex, irregular geometries that differ significantly from the training set.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7VzwF2Z7YSk20Tf2NpyOmP3aSKRmRy9P7bTUTbCywUaztFeu7hvKcYQ8o0g856RDRKYNVSB1QWWmkXtJMFTGUPcXqueSh1iLXrvrZ21HI07HVWPw5wZhY"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExwPv9kWLgEv0UBQvEluBu9hwWW-dKzwM_54DE9sV3rJXF5PX8mHhACWgrUZwvN9zIRS_bNY8x0Zd2nEIIRBnN-be-uRPtD4EvLIt169v0RLgxj8fmUfDp"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "text": "*  **Boundary Complexity:** Imposing complex boundary conditions (BCs) in NNs is non-trivial.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExwPv9kWLgEv0UBQvEluBu9hwWW-dKzwM_54DE9sV3rJXF5PX8mHhACWgrUZwvN9zIRS_bNY8x0Zd2nEIIRBnN-be-uRPtD4EvLIt169v0RLgxj8fmUfDp"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfSoRBBija2Wv-WRg4YoC66NhUufg4HSFp-jUdD5mIaZJHwcyDQoLVZV_r6cWhsZpr5zYaOw0_QncykUTuS3TIh1nWjb8GlZ7f8Zvl6adJMszOb7krG5AVO3Xbmm8fbekFSFM1qt4vxC2m-frm_3URB9y0v1P2h6dcqFWTvkmp3CtbtAAo0PszSP2xNkoOgQisHmH5wXAw7u7j9BRq1XTPZzFbGAbLhosxQfsudMFoine5DhyS3eKxbzCm0OQQtUOAmdWc6zDAZW5K6lR7d5UZ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_6",
+      "section_idx": 6,
+      "idx_in_section": 6,
+      "text": "While simple Dirichlet BCs can be hard-coded, complex industrial BCs (e.g., mixed Neumann/Dirichlet, inlets/outlets) are usually added as soft constraints in the loss function.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExwPv9kWLgEv0UBQvEluBu9hwWW-dKzwM_54DE9sV3rJXF5PX8mHhACWgrUZwvN9zIRS_bNY8x0Zd2nEIIRBnN-be-uRPtD4EvLIt169v0RLgxj8fmUfDp"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfSoRBBija2Wv-WRg4YoC66NhUufg4HSFp-jUdD5mIaZJHwcyDQoLVZV_r6cWhsZpr5zYaOw0_QncykUTuS3TIh1nWjb8GlZ7f8Zvl6adJMszOb7krG5AVO3Xbmm8fbekFSFM1qt4vxC2m-frm_3URB9y0v1P2h6dcqFWTvkmp3CtbtAAo0PszSP2xNkoOgQisHmH5wXAw7u7j9BRq1XTPZzFbGAbLhosxQfsudMFoine5DhyS3eKxbzCm0OQQtUOAmdWc6zDAZW5K6lR7d5UZ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_7",
+      "section_idx": 6,
+      "idx_in_section": 7,
+      "text": "This leads to a competition between the boundary loss and the PDE residual loss, often resulting in unphysical solutions near boundaries.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExwPv9kWLgEv0UBQvEluBu9hwWW-dKzwM_54DE9sV3rJXF5PX8mHhACWgrUZwvN9zIRS_bNY8x0Zd2nEIIRBnN-be-uRPtD4EvLIt169v0RLgxj8fmUfDp"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfSoRBBija2Wv-WRg4YoC66NhUufg4HSFp-jUdD5mIaZJHwcyDQoLVZV_r6cWhsZpr5zYaOw0_QncykUTuS3TIh1nWjb8GlZ7f8Zvl6adJMszOb7krG5AVO3Xbmm8fbekFSFM1qt4vxC2m-frm_3URB9y0v1P2h6dcqFWTvkmp3CtbtAAo0PszSP2xNkoOgQisHmH5wXAw7u7j9BRq1XTPZzFbGAbLhosxQfsudMFoine5DhyS3eKxbzCm0OQQtUOAmdWc6zDAZW5K6lR7d5UZ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### 2.3 Temporal Extrapolation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "Data-driven models trained on short time sequences often diverge when integrated over long time horizons.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "Errors accumulate recursively, leading to \"drift\" where the simulation leaves the manifold of physically valid states.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "royalsocietypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2_TSHX8duVEWTc99Tvcm-j_Ww63IwwUDv2c4xhz7HNuIveOJihDuCIzUa85V-w_byuk4DOZUQmAFflBIs0iE0A8HTiRVF4P6VgTmtt0YrFwN-7rOADEjJ7GpsfgPirdHCUzLFwtTYdsesbWIRwtO8HQ8="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPMTm8pduZfMSn7IG29596ak36qksz1yLpqYOv-kwNQYJQSGYj1LUp9bbolxNhNS6bfuoLMVORzFTLfgaZELla9vnDsBbIRlK8IfwD4smAlGBEpDOCKRjo"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "This is particularly problematic for chaotic systems where small errors grow exponentially.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "## 3. Optimization Pathologies: Stiffness and Spectral Bias",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "The training of neural networks for fluid dynamics is fundamentally an optimization problem.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "When the loss function includes PDE residuals (as in PINNs), the optimization landscape becomes pathological, presenting unique challenges not found in standard computer vision or NLP tasks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "### 3.1 Spectral Bias (The \"F-Principle\")",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETaLDd3qOy4Cf2uPY1eCYkAm879XcXWDlcmgbOWQ5bX3vm3znHep5UggloYQIInBfTVbFQY8jIa2B3h1VTRbtkhOYxMAd8_WEDL4hhnTNFmXJnBuuJlenzJfrWAvyjpFWQq81p3NZixmWfv-Ktdm4N63bVi5Q36frvfOWKRYlHZzJnxMvEZFEcb4L-LxhjlbdaI3R1YakH70ghYGJyH45isk1l0x0JpyubRs7bUayxt3LeP647vwegPcmsScBC2f82SOi9V49-T9BH"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHDDA0izCis75IXSaYPc8gAZCwHeCDCVcHDsJ5IAlrKENffVKQnMaJsz8Gu4dh6jpfnuYTVdXMjD5KaxJCchHrToGuUofAhhPmTNCULtxHldbk="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "Neural networks exhibit a phenomenon known as \"spectral bias,\" where they converge to low-frequency components of the target function much faster than high-frequency components.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETaLDd3qOy4Cf2uPY1eCYkAm879XcXWDlcmgbOWQ5bX3vm3znHep5UggloYQIInBfTVbFQY8jIa2B3h1VTRbtkhOYxMAd8_WEDL4hhnTNFmXJnBuuJlenzJfrWAvyjpFWQq81p3NZixmWfv-Ktdm4N63bVi5Q36frvfOWKRYlHZzJnxMvEZFEcb4L-LxhjlbdaI3R1YakH70ghYGJyH45isk1l0x0JpyubRs7bUayxt3LeP647vwegPcmsScBC2f82SOi9V49-T9BH"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHDDA0izCis75IXSaYPc8gAZCwHeCDCVcHDsJ5IAlrKENffVKQnMaJsz8Gu4dh6jpfnuYTVdXMjD5KaxJCchHrToGuUofAhhPmTNCULtxHldbk="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "*  **Impact on Turbulence:** Turbulent flows are defined by a cascade of energy across a wide range of frequencies.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnVTTAuIeG1Tku4CdTjFSDLWvN106-Do5iWSsWoefOsu3AjlvlMI4ewPWbssrGoqRsha9gP0H-AJCAC_3YSnUqgmEwrPF9FZ9-wZFoTpV9wJDxayhLTjizhN1vXqfa728="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEKUUNLynVTNaz0y1ux4GFgDuM8ZGXgmKKL6XZpTTufKDT6DL88kOPlzQawfswLwErEVY6trGjyXTdt15FhEsCkCvTETnB2E7YEjog0r9Ht1guc0TCpFHwS"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "Spectral bias causes NNs to act as low-pass filters, accurately capturing the mean flow but failing to resolve the small-scale eddies and fluctuations that characterize turbulence.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnVTTAuIeG1Tku4CdTjFSDLWvN106-Do5iWSsWoefOsu3AjlvlMI4ewPWbssrGoqRsha9gP0H-AJCAC_3YSnUqgmEwrPF9FZ9-wZFoTpV9wJDxayhLTjizhN1vXqfa728="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEKUUNLynVTNaz0y1ux4GFgDuM8ZGXgmKKL6XZpTTufKDT6DL88kOPlzQawfswLwErEVY6trGjyXTdt15FhEsCkCvTETnB2E7YEjog0r9Ht1guc0TCpFHwS"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_4",
+      "section_idx": 9,
+      "idx_in_section": 4,
+      "text": "*  **Failure Modes:** In vortex shedding simulations, this bias can cause the model to revert to a steady-state (laminar) solution even when the physical parameters dictate unsteady, chaotic shedding, simply because the steady solution is \"smoother\" and easier to learn.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxZho2DSB0nycTOEemBmfjLyOjyB_y8rk7-wngQ1s9ZTMhBF4_8GWXdfGqnwssdLJgKXo5MtFTKml26JDTExp4Dq0JvKH-egmVJ5QCGKN1v-SniXae8WsdQ8GmYFlumvbl9Q1HM7OpDHlvdnRL57ailtsAeXtczXjY1lVzJsbt4_dYEiuyP7NarO76trE6Ah7WuqaUoi2N7hzlDLsosgCqV9u3daXFWP14Xtq-NttVrpg3zQMX-A=="
+        ],
+        [
+          "scipy.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEt7ZSIYnuISx1f4hixG0BzAYWdXAu5JwsZEmLMPvHtvXbjfhc2GQl8HD0C_Hdw0Vm7T8jpVw2F2WCNwfwVYVMrnZJvMJosIe_9UZmQcY9bNlzhX0M_QqmyfNbfMonLGFWuD-TOCW-YvPnJCd32E1s="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_5",
+      "section_idx": 9,
+      "idx_in_section": 5,
+      "text": "*  **Mitigation Struggles:** Techniques like Fourier Features or multi-scale architectures attempt to force the network to learn higher frequencies, but these often introduce high-frequency noise or instability during training.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETaLDd3qOy4Cf2uPY1eCYkAm879XcXWDlcmgbOWQ5bX3vm3znHep5UggloYQIInBfTVbFQY8jIa2B3h1VTRbtkhOYxMAd8_WEDL4hhnTNFmXJnBuuJlenzJfrWAvyjpFWQq81p3NZixmWfv-Ktdm4N63bVi5Q36frvfOWKRYlHZzJnxMvEZFEcb4L-LxhjlbdaI3R1YakH70ghYGJyH45isk1l0x0JpyubRs7bUayxt3LeP647vwegPcmsScBC2f82SOi9V49-T9BH"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHnydoqNnBMIiKcfqdz7hjFnjyODVw8_Jn46V59OxAgb2X2RvviyUmHW5YA00CRO3qwQUqWcoqJ1atONfOyEzb_zscVGWC3bH1YE7WKAzkmuOpzRbeySg=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjPS6E6JXPlm62umkFhaVPcjHbJBUQC55-ZWQwMaa41hW1fUgDJe2hsu45ZKffIUVJkZ4ng8h0puGDqVFE1BFe0F67tXJ_YANtJfmgQqeToRYVAYSl3IzLHRE0UcsE47ZUPmUzUg9FnphdFLXD06h7yXMmWiOOKcAtr0dt_xXpL5S-22rea4oBF9gYWJiEYRid7YbmlrD7e2TowhWvAnpuyp67r74="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

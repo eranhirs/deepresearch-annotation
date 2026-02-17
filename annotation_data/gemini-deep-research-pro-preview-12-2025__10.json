@@ -1,0 +1,2363 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "10",
+  "question": "Please provide a detailed answer to the following question:\n\nHow have open-source publishing platforms impacted the global distribution of academic publishing?",
+  "answer": "# The Democratization of Knowledge: The Impact of Open-Source Platforms on the Global Distribution of Academic Publishing\n\n### Key Points\n*   **Decentralization of Publishing Power:** Open-source software (OSS), particularly Open Journal Systems (OJS), has shifted control from a few commercial conglomerates in the Global North to thousands of independent institutions worldwide, enabling a \"bibliodiversity\" that counters the homogenization of academic discourse [cite: 1, 2, 3].\n*   **Empowerment of the Global South:** Regions such as Latin America and Southeast Asia have utilized OSS to build robust, non-commercial publishing ecosystems. Indonesia currently leads the world in OJS usage, and Latin America has established a \"Diamond Open Access\" infrastructure (Redalyc/AmeliCA) that operates independently of Article Processing Charges (APCs) [cite: 4, 5, 6, 7].\n*   **Cost Reduction and Sustainability:** By removing licensing fees and enabling \"scholar-led\" publishing, platforms like Janeway and OJS allow institutions to publish at a fraction of the cost of commercial publishers, making the Diamond OA model financially viable [cite: 8, 9, 10].\n*   **Technical Standardization and Visibility:** OSS platforms provide built-in interoperability (OAI-PMH, DOAJ plugins, Google Scholar indexing), allowing small, peripheral journals to achieve global visibility and technical standards previously reserved for well-funded commercial titles [cite: 11, 12, 13].\n\n### Overview\nThe global distribution of academic publishing has historically been characterized by a center-periphery dynamic, where knowledge production and dissemination were dominated by a small oligopoly of commercial publishers based in the Global North (primarily Europe and North America). This structure created significant barriers for scholars in the Global South, both in terms of accessing knowledge (paywalls) and participating in its production (exclusion from high-impact indices). The advent and proliferation of open-source publishing platforms\u2014most notably the Public Knowledge Project\u2019s Open Journal Systems (OJS), but also newer entrants like Janeway, PubPub, and AmeliCA\u2019s infrastructure\u2014have fundamentally disrupted this model.\n\nThese platforms have provided the technical infrastructure necessary for universities, libraries, and scholarly societies to become publishers themselves. By lowering the technical and financial barriers to entry, OSS has facilitated a massive expansion in the number of journals published outside the traditional centers of academic power. This report details how these platforms have reshaped the geography of academic publishing, fostered new economic models, and challenged the prestige economy of the traditional scientific record.\n\n---\n\n## 1. The Technological Infrastructure of Open Publishing\n\nThe impact of open-source platforms on global distribution is rooted in their technical architecture. Unlike proprietary systems that lock users into specific workflows and vendor dependencies, open-source platforms offer modularity, local control, and community-driven development.\n\n### 1.1 Open Journal Systems (OJS) as the Global Standard\nDeveloped by the Public Knowledge Project (PKP) in 2001, OJS is the most widely adopted open-source publishing platform in the world. As of 2023, it is used by over 44,000 active journals in 148 countries, publishing in over 60 languages [cite: 3, 14].\n\n*   **Workflow Management:** OJS manages the entire editorial workflow, from submission and peer review to copyediting and production. This end-to-end capability allows institutions with limited staff to manage complex publishing operations professionally [cite: 3, 15].\n*   **Plugin Architecture:** The platform's modular design allows journals to integrate with the wider scholarly ecosystem. Plugins for Google Scholar indexing, DOAJ export, Crossref DOI registration, and LOCKSS preservation ensure that journals running on OJS meet international technical standards for discoverability and preservation [cite: 11, 15, 16].\n*   **Localization:** OJS is multilingual by design, supporting local languages which is critical for the Global South. This feature allows research to be published in languages relevant to local communities rather than exclusively in English, thereby preserving local knowledge systems [cite: 3, 17].\n\n### 1.2 Janeway and the Next Generation of Platforms\nWhile OJS dominates the landscape, newer platforms like Janeway have emerged to address specific needs in the scholar-led publishing community. Developed by the Centre for Technology and Publishing at Birkbeck, University of London, Janeway is designed to support the Open Library of Humanities (OLH) [cite: 9, 18].\n\n*   **Technical Design:** Built on Python and the Django framework, Janeway offers a lightweight, modern interface that emphasizes \"scholar-led\" control. It is designed to remove the profit margins of infrastructure providers, demonstrating that Diamond Open Access is scalable [cite: 9, 18].\n*   **Adoption:** It has been adopted by major institutional publishers such as the California Digital Library, University of Michigan, and UCL Press, indicating a shift where libraries are reclaiming the publishing role from commercial entities [cite: 9, 19].\n\n### 1.3 PubPub and Collaborative Publishing\nPubPub, developed by the Knowledge Futures Group, represents a shift toward \"collaborative\" and \"living\" documents. Unlike traditional PDF-centric workflows, PubPub focuses on web-native publishing that allows for versioning, annotation, and community interaction [cite: 20, 21].\n\n*   **Community Publishing:** PubPub is used for \"grassroots journals\" and interactive monographs, allowing research communities to curate material according to specific fields of interest without the gatekeeping of traditional publishers [cite: 21, 22].\n*   **Flexibility:** It supports a wide variety of formats, from traditional journals to \"experiential\" publications, providing a home for interdisciplinary work that may not fit the rigid structures of legacy platforms [cite: 20].\n\n---\n\n## 2. Geographical Redistribution of Knowledge Production\n\nThe most profound impact of open-source platforms has been the geographical shift in where journals are hosted and published. By providing free, high-quality infrastructure, these platforms have enabled the \"Global South\" to build independent publishing capacities.\n\n### 2.1 The \"OJS Phenomenon\" in Indonesia\nIndonesia presents the most striking example of OSS adoption. The country has the highest number of OJS installations in the world, with nearly 20,000 active journals [cite: 4, 6].\n\n*   **Policy Drivers:** The Indonesian government mandates that graduate students and faculty publish their research. To meet this demand without relying on expensive foreign journals, universities established thousands of their own journals using OJS [cite: 7].\n*   **Scale:** As of 2022, Indonesia accounted for approximately 19,977 active OJS journals, far surpassing the United States (1,494) and Brazil (3,732) [cite: 6].\n*   **Characteristics:** A 2024 study of Indonesian university journals found that 96.7% offer free public access (Diamond OA). While they are highly visible in Google Scholar (95.7%), they remain underrepresented in Western indices like Scopus and Web of Science, highlighting a disconnect between local output and \"global\" prestige metrics [cite: 7].\n\n### 2.2 Latin America: The Diamond Open Access Model\nLatin America has a long tradition of non-commercial, academic-led publishing. Open-source infrastructure has been crucial in formalizing and interconnecting this ecosystem, often referred to as the \"Diamond\" model (free to read, free to publish).\n\n*   **Redalyc and AmeliCA:** Redalyc (based in Mexico) and AmeliCA are cooperative infrastructures that provide hosting, indexing, and visibility for journals that adhere to non-commercial principles. They utilize open-source technologies to create a \"born open\" ecosystem [cite: 5, 23].\n*   **Infrastructure as Resistance:** These initiatives explicitly position themselves as alternatives to the commercial \"pay-to-publish\" (APC) models favored in Europe (e.g., Plan S). By using shared open infrastructure, they maintain academic control over the means of production [cite: 23, 24].\n*   **Brazil:** Brazil is the second-largest user of OJS globally, with over 3,700 active journals [cite: 4, 6]. The nationalization of platforms like SciELO (which often integrates with OJS workflows) demonstrates how state investment in open infrastructure can secure open access as a strategic national asset [cite: 25].\n\n### 2.3 The \"Journals Online\" (JOLs) Projects\nThe International Network for the Availability of Scientific Publications (INASP) launched the Journals Online (JOLs) project to increase the visibility of journals in the Global South using OJS [cite: 26].\n\n*   **Nepal (NepJOL):** Managed by Tribhuvan University, NepJOL hosts over 400 journals. It provides a platform for local research that might otherwise be invisible, although challenges regarding peer review quality and consistency remain [cite: 27, 28].\n*   **Vietnam (VJOL):** Hosted by the National Agency for Science and Technology Information, VJOL hosts 185 journals, facilitating the digital transformation of Vietnamese academic publishing [cite: 29].\n*   **Sri Lanka (SLJOL):** Established to overcome the low visibility of Sri Lankan research, SLJOL uses OJS to provide a platform for state universities, enabling them to publish open access despite limited funding [cite: 26, 30].\n*   **Africa (AJOL):** African Journals Online (AJOL) is the world's largest online collection of African-published scholarly journals. Hosting over 650 journals from 31 countries, AJOL uses OJS to provide a unified portal for African research, countering the historical marginalization of the continent's scholarly output [cite: 2, 31, 32].\n\n### Table 1: Top Countries by Active OJS Journals (2022 Data)\n*Data derived from PKP Beacon project and OJS usage statistics [cite: 6].*\n\n| Rank | Country | Active Journals | Primary Region |\n| :--- | :--- | :--- | :--- |\n| 1 | Indonesia | 19,977 | Southeast Asia |\n| 2 | Brazil | 3,732 | Latin America |\n| 3 | United States | 1,494 | North America |\n| 4 | Spain | 1,309 | Europe |\n| 5 | India | 1,259 | South Asia |\n| 6 | Thailand | 1,003 | Southeast Asia |\n| 7 | Ukraine | 926 | Eastern Europe |\n| 8 | Colombia | 832 | Latin America |\n| 9 | Argentina | 726 | Latin America |\n| 10 | Pakistan | 687 | South Asia |\n\n---\n\n## 3. Economic Impact: Disrupting the Commercial Model\n\nOpen-source platforms have introduced a fundamentally different economic logic to academic publishing. By removing the need for expensive proprietary software and leveraging library/institutional infrastructure, they make the \"Diamond Open Access\" model financially sustainable.\n\n### 3.1 The Cost of Publishing: Commercial vs. Scholar-Led\nTraditional commercial publishing relies on high Article Processing Charges (APCs) or subscription fees.\n*   **Commercial APCs:** The global average APC is approximately $1,626 USD, with high-impact journals charging over $5,000 [cite: 33, 34]. This creates a barrier for authors in the Global South who cannot afford to pay to publish [cite: 35].\n*   **Open Source Efficiency:** In contrast, platforms like the Open Library of Humanities (using Janeway) operate on a library partnership subsidy model. Their base cost is approximately $500 per article, covering technology, staff, and preservation, without charging authors [cite: 10, 36].\n*   **Library Publishing:** A study of library publishers found that small university presses using open-source tools could produce monographs and journals at significantly lower costs than commercial entities by leveraging existing institutional resources [cite: 8].\n\n### 3.2 Sustainability of Diamond Open Access\nDiamond Open Access (free to read, free to publish) relies heavily on OSS to minimize operating costs.\n*   **Volunteer Labor + OSS:** Many journals in the Global South operate on a volunteer basis, using OJS to automate administrative tasks that would otherwise require paid staff. This \"sweat equity\" combined with free software allows thousands of journals to exist without revenue streams [cite: 37, 38].\n*   **Infrastructure as a Public Good:** Initiatives like Redalyc and AmeliCA argue that science should be a global public good. By providing open infrastructure (servers, software, training) funded by public institutions, they prevent the commercial capture of academic knowledge [cite: 5].\n\n---\n\n## 4. Visibility, Indexing, and the Center-Periphery Dynamic\n\nWhile OSS solves the *production* problem (how to publish), it also addresses the *distribution* problem (how to be found). However, a gap remains between technical visibility and prestige.\n\n### 4.1 Technical Visibility via Interoperability\nOJS and similar platforms come equipped with plugins that automatically generate machine-readable metadata.\n*   **Google Scholar:** The Google Scholar Indexing Plugin in OJS ensures that articles are crawled and indexed. This is crucial for Global South journals, as Google Scholar is often the primary discovery tool for non-Western research [cite: 12, 13, 39].\n*   **DOAJ and Crossref:** Plugins allow for the automatic deposit of metadata to the Directory of Open Access Journals (DOAJ) and Crossref (for DOIs). This integration is vital for legitimacy; a journal with a DOI and a DOAJ listing is perceived as part of the formal scholarly record [cite: 11, 16].\n\n### 4.2 The Prestige Gap: Scopus and Web of Science\nDespite the technical capabilities of OSS, a \"prestige gap\" persists.\n*   **Exclusion:** Many journals using OJS in Indonesia and Latin America are indexed in Google Scholar but excluded from Scopus and Web of Science (WoS). For example, only one of the 558 Indonesian journals analyzed in a 2024 study was indexed in Scopus [cite: 7].\n*   **Systemic Bias:** Academic reward systems (tenure, promotion) often prioritize publication in Scopus/WoS-indexed journals. This forces researchers in the Global South to publish in Global North journals (often paying APCs) rather than in their own local, OJS-hosted journals, reinforcing the center-periphery dynamic [cite: 1, 40].\n*   **Plan S and the Global South:** European initiatives like Plan S, which push for Gold OA (APCs), threaten to marginalize the non-commercial ecosystem of the Global South. If the world flips to a \"pay-to-publish\" model, researchers in developing nations may be unable to afford publication, even if the software they use is free [cite: 35].\n\n---\n\n## 5. Case Studies of Platform Implementation\n\n### 5.1 Open Research Europe (ORE)\nLaunched by the European Commission, ORE is a publishing platform for Horizon 2020 and Horizon Europe beneficiaries.\n*   **Infrastructure:** It utilizes an open publishing model (post-publication peer review) and is moving toward an open-source infrastructure to ensure it remains a public good [cite: 41, 42].\n*   **Goal:** To provide a high-quality, free-to-publish venue that complies with open access mandates, reducing the reliance on commercial publishers [cite: 43, 44].\n\n### 5.2 African Journals Online (AJOL)\nAJOL demonstrates how OSS can aggregate fragmented national outputs into a continental force.\n*   **Standardization:** AJOL assesses journals based on publishing practices (JPPS framework). By enforcing standards for inclusion, AJOL raises the quality of African publishing [cite: 31, 45].\n*   **Access:** It provides a single search interface for over 650 journals. While some are subscription-based, the platform actively encourages and supports the transition to Open Access [cite: 32, 46].\n\n### 5.3 AmeliCA and Redalyc\nThese platforms represent a political and technical project to defend the non-commercial nature of science.\n*   **XML Markup:** They provide tools for XML JATS markup, a technical standard usually reserved for large commercial publishers. This allows small journals to produce high-quality, interoperable digital formats (HTML, PDF, ePub) without technical expertise [cite: 47].\n*   **Global Expansion:** Originally focused on Latin America, AmeliCA is expanding its \"non-commercial\" model to the Global South (Africa and Asia), promoting a \"South-South\" collaboration in scholarly communication [cite: 5, 48].\n\n---\n\n## 6. Challenges and Future Directions\n\nDespite the successes, the open-source publishing ecosystem faces significant challenges.\n\n### 6.1 Technical Debt and Sustainability\n*   **Maintenance:** While the software is free, hosting and maintenance are not. Many small journals struggle with technical updates (e.g., upgrading OJS versions), leading to security vulnerabilities or broken plugins [cite: 13, 19].\n*   **Fragmentation:** The ease of setting up a journal has led to a proliferation of titles, some of which may lack rigorous peer review or long-term preservation strategies (inactive journals) [cite: 6, 28].\n\n### 6.2 The \"Predatory\" Stigma\nThe low barrier to entry has allowed \"predatory\" journals to utilize OJS, sometimes casting doubt on legitimate scholar-led journals. However, research indicates that the vast majority of OJS journals are legitimate academic efforts, often operating with minimal resources [cite: 49].\n\n### 6.3 Integration into the Global Record\nThe challenge remains to integrate these distributed platforms into a \"single global and trustworthy scholarly record\" [cite: 1]. While Open Access has reduced distribution barriers, the academic reward system must evolve to value these venues equally with commercial legacy journals [cite: 1, 40].\n\n---\n\n## Conclusion\n\nOpen-source publishing platforms have fundamentally democratized the global distribution of academic publishing. By providing professional-grade infrastructure at little to no cost, platforms like OJS, Janeway, and AmeliCA have enabled the Global South to build autonomous, resilient publishing ecosystems. This has resulted in a massive decentralization of knowledge production, with Indonesia, Brazil, and other nations emerging as publishing powerhouses.\n\nHowever, a tension remains between *distribution* and *recognition*. While OSS has solved the technical challenge of disseminating knowledge globally, the academic prestige economy continues to favor commercial, Global North incumbents. The future of global academic publishing depends not just on the continued adoption of open-source software, but on the alignment of research assessment policies with the values of bibliodiversity and equitable access that these platforms represent.\n\n#",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# The Democratization of Knowledge: The Impact of Open-Source Platforms on the Global Distribution of Academic Publishing",
+      "header_level": 1,
+      "text": "# The Democratization of Knowledge: The Impact of Open-Source Platforms on the Global Distribution of Academic Publishing\n\n",
+      "start": 0,
+      "end": 123
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "### Key Points",
+      "header_level": 3,
+      "text": "### Key Points\n*   **Decentralization of Publishing Power:** Open-source software (OSS), particularly Open Journal Systems (OJS), has shifted control from a few commercial conglomerates in the Global North to thousands of independent institutions worldwide, enabling a \"bibliodiversity\" that counters the homogenization of academic discourse [cite: 1, 2, 3].\n*   **Empowerment of the Global South:** Regions such as Latin America and Southeast Asia have utilized OSS to build robust, non-commercial publishing ecosystems. Indonesia currently leads the world in OJS usage, and Latin America has established a \"Diamond Open Access\" infrastructure (Redalyc/AmeliCA) that operates independently of Article Processing Charges (APCs) [cite: 4, 5, 6, 7].\n*   **Cost Reduction and Sustainability:** By removing licensing fees and enabling \"scholar-led\" publishing, platforms like Janeway and OJS allow institutions to publish at a fraction of the cost of commercial publishers, making the Diamond OA model financially viable [cite: 8, 9, 10].\n*   **Technical Standardization and Visibility:** OSS platforms provide built-in interoperability (OAI-PMH, DOAJ plugins, Google Scholar indexing), allowing small, peripheral journals to achieve global visibility and technical standards previously reserved for well-funded commercial titles [cite: 11, 12, 13].\n\n",
+      "start": 123,
+      "end": 1470
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "### Overview",
+      "header_level": 3,
+      "text": "### Overview\nThe global distribution of academic publishing has historically been characterized by a center-periphery dynamic, where knowledge production and dissemination were dominated by a small oligopoly of commercial publishers based in the Global North (primarily Europe and North America). This structure created significant barriers for scholars in the Global South, both in terms of accessing knowledge (paywalls) and participating in its production (exclusion from high-impact indices). The advent and proliferation of open-source publishing platforms\u2014most notably the Public Knowledge Project\u2019s Open Journal Systems (OJS), but also newer entrants like Janeway, PubPub, and AmeliCA\u2019s infrastructure\u2014have fundamentally disrupted this model.\n\nThese platforms have provided the technical infrastructure necessary for universities, libraries, and scholarly societies to become publishers themselves. By lowering the technical and financial barriers to entry, OSS has facilitated a massive expansion in the number of journals published outside the traditional centers of academic power. This report details how these platforms have reshaped the geography of academic publishing, fostered new economic models, and challenged the prestige economy of the traditional scientific record.\n\n---\n\n",
+      "start": 1470,
+      "end": 2764
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 1. The Technological Infrastructure of Open Publishing",
+      "header_level": 2,
+      "text": "## 1. The Technological Infrastructure of Open Publishing\n\nThe impact of open-source platforms on global distribution is rooted in their technical architecture. Unlike proprietary systems that lock users into specific workflows and vendor dependencies, open-source platforms offer modularity, local control, and community-driven development.\n\n",
+      "start": 2764,
+      "end": 3107
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 1.1 Open Journal Systems (OJS) as the Global Standard",
+      "header_level": 3,
+      "text": "### 1.1 Open Journal Systems (OJS) as the Global Standard\nDeveloped by the Public Knowledge Project (PKP) in 2001, OJS is the most widely adopted open-source publishing platform in the world. As of 2023, it is used by over 44,000 active journals in 148 countries, publishing in over 60 languages [cite: 3, 14].\n\n*   **Workflow Management:** OJS manages the entire editorial workflow, from submission and peer review to copyediting and production. This end-to-end capability allows institutions with limited staff to manage complex publishing operations professionally [cite: 3, 15].\n*   **Plugin Architecture:** The platform's modular design allows journals to integrate with the wider scholarly ecosystem. Plugins for Google Scholar indexing, DOAJ export, Crossref DOI registration, and LOCKSS preservation ensure that journals running on OJS meet international technical standards for discoverability and preservation [cite: 11, 15, 16].\n*   **Localization:** OJS is multilingual by design, supporting local languages which is critical for the Global South. This feature allows research to be published in languages relevant to local communities rather than exclusively in English, thereby preserving local knowledge systems [cite: 3, 17].\n\n",
+      "start": 3107,
+      "end": 4350
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 1.2 Janeway and the Next Generation of Platforms",
+      "header_level": 3,
+      "text": "### 1.2 Janeway and the Next Generation of Platforms\nWhile OJS dominates the landscape, newer platforms like Janeway have emerged to address specific needs in the scholar-led publishing community. Developed by the Centre for Technology and Publishing at Birkbeck, University of London, Janeway is designed to support the Open Library of Humanities (OLH) [cite: 9, 18].\n\n*   **Technical Design:** Built on Python and the Django framework, Janeway offers a lightweight, modern interface that emphasizes \"scholar-led\" control. It is designed to remove the profit margins of infrastructure providers, demonstrating that Diamond Open Access is scalable [cite: 9, 18].\n*   **Adoption:** It has been adopted by major institutional publishers such as the California Digital Library, University of Michigan, and UCL Press, indicating a shift where libraries are reclaiming the publishing role from commercial entities [cite: 9, 19].\n\n",
+      "start": 4350,
+      "end": 5275
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "### 1.3 PubPub and Collaborative Publishing",
+      "header_level": 3,
+      "text": "### 1.3 PubPub and Collaborative Publishing\nPubPub, developed by the Knowledge Futures Group, represents a shift toward \"collaborative\" and \"living\" documents. Unlike traditional PDF-centric workflows, PubPub focuses on web-native publishing that allows for versioning, annotation, and community interaction [cite: 20, 21].\n\n*   **Community Publishing:** PubPub is used for \"grassroots journals\" and interactive monographs, allowing research communities to curate material according to specific fields of interest without the gatekeeping of traditional publishers [cite: 21, 22].\n*   **Flexibility:** It supports a wide variety of formats, from traditional journals to \"experiential\" publications, providing a home for interdisciplinary work that may not fit the rigid structures of legacy platforms [cite: 20].\n\n---\n\n",
+      "start": 5275,
+      "end": 6093
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "## 2. Geographical Redistribution of Knowledge Production",
+      "header_level": 2,
+      "text": "## 2. Geographical Redistribution of Knowledge Production\n\nThe most profound impact of open-source platforms has been the geographical shift in where journals are hosted and published. By providing free, high-quality infrastructure, these platforms have enabled the \"Global South\" to build independent publishing capacities.\n\n",
+      "start": 6093,
+      "end": 6419
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "### 2.1 The \"OJS Phenomenon\" in Indonesia",
+      "header_level": 3,
+      "text": "### 2.1 The \"OJS Phenomenon\" in Indonesia\nIndonesia presents the most striking example of OSS adoption. The country has the highest number of OJS installations in the world, with nearly 20,000 active journals [cite: 4, 6].\n\n*   **Policy Drivers:** The Indonesian government mandates that graduate students and faculty publish their research. To meet this demand without relying on expensive foreign journals, universities established thousands of their own journals using OJS [cite: 7].\n*   **Scale:** As of 2022, Indonesia accounted for approximately 19,977 active OJS journals, far surpassing the United States (1,494) and Brazil (3,732) [cite: 6].\n*   **Characteristics:** A 2024 study of Indonesian university journals found that 96.7% offer free public access (Diamond OA). While they are highly visible in Google Scholar (95.7%), they remain underrepresented in Western indices like Scopus and Web of Science, highlighting a disconnect between local output and \"global\" prestige metrics [cite: 7].\n\n",
+      "start": 6419,
+      "end": 7424
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "### 2.2 Latin America: The Diamond Open Access Model",
+      "header_level": 3,
+      "text": "### 2.2 Latin America: The Diamond Open Access Model\nLatin America has a long tradition of non-commercial, academic-led publishing. Open-source infrastructure has been crucial in formalizing and interconnecting this ecosystem, often referred to as the \"Diamond\" model (free to read, free to publish).\n\n*   **Redalyc and AmeliCA:** Redalyc (based in Mexico) and AmeliCA are cooperative infrastructures that provide hosting, indexing, and visibility for journals that adhere to non-commercial principles. They utilize open-source technologies to create a \"born open\" ecosystem [cite: 5, 23].\n*   **Infrastructure as Resistance:** These initiatives explicitly position themselves as alternatives to the commercial \"pay-to-publish\" (APC) models favored in Europe (e.g., Plan S). By using shared open infrastructure, they maintain academic control over the means of production [cite: 23, 24].\n*   **Brazil:** Brazil is the second-largest user of OJS globally, with over 3,700 active journals [cite: 4, 6]. The nationalization of platforms like SciELO (which often integrates with OJS workflows) demonstrates how state investment in open infrastructure can secure open access as a strategic national asset [cite: 25].\n\n",
+      "start": 7424,
+      "end": 8637
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "### 2.3 The \"Journals Online\" (JOLs) Projects",
+      "header_level": 3,
+      "text": "### 2.3 The \"Journals Online\" (JOLs) Projects\nThe International Network for the Availability of Scientific Publications (INASP) launched the Journals Online (JOLs) project to increase the visibility of journals in the Global South using OJS [cite: 26].\n\n*   **Nepal (NepJOL):** Managed by Tribhuvan University, NepJOL hosts over 400 journals. It provides a platform for local research that might otherwise be invisible, although challenges regarding peer review quality and consistency remain [cite: 27, 28].\n*   **Vietnam (VJOL):** Hosted by the National Agency for Science and Technology Information, VJOL hosts 185 journals, facilitating the digital transformation of Vietnamese academic publishing [cite: 29].\n*   **Sri Lanka (SLJOL):** Established to overcome the low visibility of Sri Lankan research, SLJOL uses OJS to provide a platform for state universities, enabling them to publish open access despite limited funding [cite: 26, 30].\n*   **Africa (AJOL):** African Journals Online (AJOL) is the world's largest online collection of African-published scholarly journals. Hosting over 650 journals from 31 countries, AJOL uses OJS to provide a unified portal for African research, countering the historical marginalization of the continent's scholarly output [cite: 2, 31, 32].\n\n",
+      "start": 8637,
+      "end": 9926
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "### Table 1: Top Countries by Active OJS Journals (2022 Data)",
+      "header_level": 3,
+      "text": "### Table 1: Top Countries by Active OJS Journals (2022 Data)\n*Data derived from PKP Beacon project and OJS usage statistics [cite: 6].*\n\n",
+      "start": 9926,
+      "end": 10064
+    },
+    {
+      "idx": 12,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Rank | Country | Active Journals | Primary Region |\n| :--- | :--- | :--- | :--- |\n| 1 | Indonesia | 19,977 | Southeast Asia |\n| 2 | Brazil | 3,732 | Latin America |\n| 3 | United States | 1,494 | North America |\n| 4 | Spain | 1,309 | Europe |\n| 5 | India | 1,259 | South Asia |\n| 6 | Thailand | 1,003 | Southeast Asia |\n| 7 | Ukraine | 926 | Eastern Europe |\n| 8 | Colombia | 832 | Latin America |\n| 9 | Argentina | 726 | Latin America |\n| 10 | Pakistan | 687 | South Asia |",
+      "start": 10064,
+      "end": 10540
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "\n---\n\n",
+      "start": 10540,
+      "end": 10546
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "## 3. Economic Impact: Disrupting the Commercial Model",
+      "header_level": 2,
+      "text": "## 3. Economic Impact: Disrupting the Commercial Model\n\nOpen-source platforms have introduced a fundamentally different economic logic to academic publishing. By removing the need for expensive proprietary software and leveraging library/institutional infrastructure, they make the \"Diamond Open Access\" model financially sustainable.\n\n",
+      "start": 10546,
+      "end": 10882
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "### 3.1 The Cost of Publishing: Commercial vs. Scholar-Led",
+      "header_level": 3,
+      "text": "### 3.1 The Cost of Publishing: Commercial vs. Scholar-Led\nTraditional commercial publishing relies on high Article Processing Charges (APCs) or subscription fees.\n*   **Commercial APCs:** The global average APC is approximately $1,626 USD, with high-impact journals charging over $5,000 [cite: 33, 34]. This creates a barrier for authors in the Global South who cannot afford to pay to publish [cite: 35].\n*   **Open Source Efficiency:** In contrast, platforms like the Open Library of Humanities (using Janeway) operate on a library partnership subsidy model. Their base cost is approximately $500 per article, covering technology, staff, and preservation, without charging authors [cite: 10, 36].\n*   **Library Publishing:** A study of library publishers found that small university presses using open-source tools could produce monographs and journals at significantly lower costs than commercial entities by leveraging existing institutional resources [cite: 8].\n\n",
+      "start": 10882,
+      "end": 11851
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "### 3.2 Sustainability of Diamond Open Access",
+      "header_level": 3,
+      "text": "### 3.2 Sustainability of Diamond Open Access\nDiamond Open Access (free to read, free to publish) relies heavily on OSS to minimize operating costs.\n*   **Volunteer Labor + OSS:** Many journals in the Global South operate on a volunteer basis, using OJS to automate administrative tasks that would otherwise require paid staff. This \"sweat equity\" combined with free software allows thousands of journals to exist without revenue streams [cite: 37, 38].\n*   **Infrastructure as a Public Good:** Initiatives like Redalyc and AmeliCA argue that science should be a global public good. By providing open infrastructure (servers, software, training) funded by public institutions, they prevent the commercial capture of academic knowledge [cite: 5].\n\n---\n\n",
+      "start": 11851,
+      "end": 12603
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "## 4. Visibility, Indexing, and the Center-Periphery Dynamic",
+      "header_level": 2,
+      "text": "## 4. Visibility, Indexing, and the Center-Periphery Dynamic\n\nWhile OSS solves the *production* problem (how to publish), it also addresses the *distribution* problem (how to be found). However, a gap remains between technical visibility and prestige.\n\n",
+      "start": 12603,
+      "end": 12856
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "### 4.1 Technical Visibility via Interoperability",
+      "header_level": 3,
+      "text": "### 4.1 Technical Visibility via Interoperability\nOJS and similar platforms come equipped with plugins that automatically generate machine-readable metadata.\n*   **Google Scholar:** The Google Scholar Indexing Plugin in OJS ensures that articles are crawled and indexed. This is crucial for Global South journals, as Google Scholar is often the primary discovery tool for non-Western research [cite: 12, 13, 39].\n*   **DOAJ and Crossref:** Plugins allow for the automatic deposit of metadata to the Directory of Open Access Journals (DOAJ) and Crossref (for DOIs). This integration is vital for legitimacy; a journal with a DOI and a DOAJ listing is perceived as part of the formal scholarly record [cite: 11, 16].\n\n",
+      "start": 12856,
+      "end": 13572
+    },
+    {
+      "idx": 19,
+      "section_type": "text",
+      "header": "### 4.2 The Prestige Gap: Scopus and Web of Science",
+      "header_level": 3,
+      "text": "### 4.2 The Prestige Gap: Scopus and Web of Science\nDespite the technical capabilities of OSS, a \"prestige gap\" persists.\n*   **Exclusion:** Many journals using OJS in Indonesia and Latin America are indexed in Google Scholar but excluded from Scopus and Web of Science (WoS). For example, only one of the 558 Indonesian journals analyzed in a 2024 study was indexed in Scopus [cite: 7].\n*   **Systemic Bias:** Academic reward systems (tenure, promotion) often prioritize publication in Scopus/WoS-indexed journals. This forces researchers in the Global South to publish in Global North journals (often paying APCs) rather than in their own local, OJS-hosted journals, reinforcing the center-periphery dynamic [cite: 1, 40].\n*   **Plan S and the Global South:** European initiatives like Plan S, which push for Gold OA (APCs), threaten to marginalize the non-commercial ecosystem of the Global South. If the world flips to a \"pay-to-publish\" model, researchers in developing nations may be unable to afford publication, even if the software they use is free [cite: 35].\n\n---\n\n",
+      "start": 13572,
+      "end": 14648
+    },
+    {
+      "idx": 20,
+      "section_type": "text",
+      "header": "## 5. Case Studies of Platform Implementation",
+      "header_level": 2,
+      "text": "## 5. Case Studies of Platform Implementation\n\n",
+      "start": 14648,
+      "end": 14695
+    },
+    {
+      "idx": 21,
+      "section_type": "text",
+      "header": "### 5.1 Open Research Europe (ORE)",
+      "header_level": 3,
+      "text": "### 5.1 Open Research Europe (ORE)\nLaunched by the European Commission, ORE is a publishing platform for Horizon 2020 and Horizon Europe beneficiaries.\n*   **Infrastructure:** It utilizes an open publishing model (post-publication peer review) and is moving toward an open-source infrastructure to ensure it remains a public good [cite: 41, 42].\n*   **Goal:** To provide a high-quality, free-to-publish venue that complies with open access mandates, reducing the reliance on commercial publishers [cite: 43, 44].\n\n",
+      "start": 14695,
+      "end": 15209
+    },
+    {
+      "idx": 22,
+      "section_type": "text",
+      "header": "### 5.2 African Journals Online (AJOL)",
+      "header_level": 3,
+      "text": "### 5.2 African Journals Online (AJOL)\nAJOL demonstrates how OSS can aggregate fragmented national outputs into a continental force.\n*   **Standardization:** AJOL assesses journals based on publishing practices (JPPS framework). By enforcing standards for inclusion, AJOL raises the quality of African publishing [cite: 31, 45].\n*   **Access:** It provides a single search interface for over 650 journals. While some are subscription-based, the platform actively encourages and supports the transition to Open Access [cite: 32, 46].\n\n",
+      "start": 15209,
+      "end": 15743
+    },
+    {
+      "idx": 23,
+      "section_type": "text",
+      "header": "### 5.3 AmeliCA and Redalyc",
+      "header_level": 3,
+      "text": "### 5.3 AmeliCA and Redalyc\nThese platforms represent a political and technical project to defend the non-commercial nature of science.\n*   **XML Markup:** They provide tools for XML JATS markup, a technical standard usually reserved for large commercial publishers. This allows small journals to produce high-quality, interoperable digital formats (HTML, PDF, ePub) without technical expertise [cite: 47].\n*   **Global Expansion:** Originally focused on Latin America, AmeliCA is expanding its \"non-commercial\" model to the Global South (Africa and Asia), promoting a \"South-South\" collaboration in scholarly communication [cite: 5, 48].\n\n---\n\n",
+      "start": 15743,
+      "end": 16388
+    },
+    {
+      "idx": 24,
+      "section_type": "text",
+      "header": "## 6. Challenges and Future Directions",
+      "header_level": 2,
+      "text": "## 6. Challenges and Future Directions\n\nDespite the successes, the open-source publishing ecosystem faces significant challenges.\n\n",
+      "start": 16388,
+      "end": 16519
+    },
+    {
+      "idx": 25,
+      "section_type": "text",
+      "header": "### 6.1 Technical Debt and Sustainability",
+      "header_level": 3,
+      "text": "### 6.1 Technical Debt and Sustainability\n*   **Maintenance:** While the software is free, hosting and maintenance are not. Many small journals struggle with technical updates (e.g., upgrading OJS versions), leading to security vulnerabilities or broken plugins [cite: 13, 19].\n*   **Fragmentation:** The ease of setting up a journal has led to a proliferation of titles, some of which may lack rigorous peer review or long-term preservation strategies (inactive journals) [cite: 6, 28].\n\n",
+      "start": 16519,
+      "end": 17008
+    },
+    {
+      "idx": 26,
+      "section_type": "text",
+      "header": "### 6.2 The \"Predatory\" Stigma",
+      "header_level": 3,
+      "text": "### 6.2 The \"Predatory\" Stigma\nThe low barrier to entry has allowed \"predatory\" journals to utilize OJS, sometimes casting doubt on legitimate scholar-led journals. However, research indicates that the vast majority of OJS journals are legitimate academic efforts, often operating with minimal resources [cite: 49].\n\n",
+      "start": 17008,
+      "end": 17325
+    },
+    {
+      "idx": 27,
+      "section_type": "text",
+      "header": "### 6.3 Integration into the Global Record",
+      "header_level": 3,
+      "text": "### 6.3 Integration into the Global Record\nThe challenge remains to integrate these distributed platforms into a \"single global and trustworthy scholarly record\" [cite: 1]. While Open Access has reduced distribution barriers, the academic reward system must evolve to value these venues equally with commercial legacy journals [cite: 1, 40].\n\n---\n\n",
+      "start": 17325,
+      "end": 17673
+    },
+    {
+      "idx": 28,
+      "section_type": "text",
+      "header": "## Conclusion",
+      "header_level": 2,
+      "text": "## Conclusion\n\nOpen-source publishing platforms have fundamentally democratized the global distribution of academic publishing. By providing professional-grade infrastructure at little to no cost, platforms like OJS, Janeway, and AmeliCA have enabled the Global South to build autonomous, resilient publishing ecosystems. This has resulted in a massive decentralization of knowledge production, with Indonesia, Brazil, and other nations emerging as publishing powerhouses.\n\nHowever, a tension remains between *distribution* and *recognition*. While OSS has solved the technical challenge of disseminating knowledge globally, the academic prestige economy continues to favor commercial, Global North incumbents. The future of global academic publishing depends not just on the continued adoption of open-source software, but on the alignment of research assessment policies with the values of bibliodiversity and equitable access that these platforms represent.\n\n#",
+      "start": 17673,
+      "end": 18636
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# The Democratization of Knowledge: The Impact of Open-Source Platforms on the Global Distribution of Academic Publishing",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "### 2.3 The \"Journals Online\" (JOLs) Projects",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "inasp.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHMDdygOmTNP1SF17xsly1-n41evynHmmgRYn030kJz_3eBruGA4sAEX8TRZh3GRBZVmxFyoKeXhamkreYfRJJXc2Z6iPaQL6ZcTM-k0lORLcSo4y6jzEYlWTDhykdrbBXyk6_xVp-dLKklCC8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "The International Network for the Availability of Scientific Publications (INASP) launched the Journals Online (JOLs) project to increase the visibility of journals in the Global South using OJS.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "inasp.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHMDdygOmTNP1SF17xsly1-n41evynHmmgRYn030kJz_3eBruGA4sAEX8TRZh3GRBZVmxFyoKeXhamkreYfRJJXc2Z6iPaQL6ZcTM-k0lORLcSo4y6jzEYlWTDhykdrbBXyk6_xVp-dLKklCC8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "*  **Nepal (NepJOL):** Managed by Tribhuvan University, NepJOL hosts over 400 journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nepjol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2HUdVSmMU7VgZoi__Q_frKD7LWqfI0Uqlpd7I7JMTN2oSB5aQBlgt9ptEVT3VcVmTXsLDEsTGruUPP8xIjg6Lg0XF27qfshtXFSOORHU="
+        ],
+        [
+          "martinchautari.org.np",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxYo9dF_TXjqx87rdZAPG9wEdyjGF2tAIxx-k_t39JcAlIIUYcxlOB8znXhUkguYOrlQOETeTEw6Mm5jSHhUp1yIKm2XPP1bUzvvGFQEDnfiUMQJQg-kyIazPIrnGqUfvRSD0280cEBPhyYfx3gSi_F5FGpw3poG4Iv_Kv"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "It provides a platform for local research that might otherwise be invisible, although challenges regarding peer review quality and consistency remain.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nepjol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2HUdVSmMU7VgZoi__Q_frKD7LWqfI0Uqlpd7I7JMTN2oSB5aQBlgt9ptEVT3VcVmTXsLDEsTGruUPP8xIjg6Lg0XF27qfshtXFSOORHU="
+        ],
+        [
+          "martinchautari.org.np",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxYo9dF_TXjqx87rdZAPG9wEdyjGF2tAIxx-k_t39JcAlIIUYcxlOB8znXhUkguYOrlQOETeTEw6Mm5jSHhUp1yIKm2XPP1bUzvvGFQEDnfiUMQJQg-kyIazPIrnGqUfvRSD0280cEBPhyYfx3gSi_F5FGpw3poG4Iv_Kv"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_4",
+      "section_idx": 10,
+      "idx_in_section": 4,
+      "text": "*  **Vietnam (VJOL):** Hosted by the National Agency for Science and Technology Information, VJOL hosts 185 journals, facilitating the digital transformation of Vietnamese academic publishing.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "vjol.info.vn",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFGFjM3heA4vpCeJh3LYFdbF-lWTS04d5kYK4NWnX4F4ZpJDx5bOylpjaxr90XZRnIdzEchHZeg5aE1WjLCmZPzSoWNNHbvkP6AUc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_5",
+      "section_idx": 10,
+      "idx_in_section": 5,
+      "text": "*  **Sri Lanka (SLJOL):** Established to overcome the low visibility of Sri Lankan research, SLJOL uses OJS to provide a platform for state universities, enabling them to publish open access despite limited funding.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "inasp.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHMDdygOmTNP1SF17xsly1-n41evynHmmgRYn030kJz_3eBruGA4sAEX8TRZh3GRBZVmxFyoKeXhamkreYfRJJXc2Z6iPaQL6ZcTM-k0lORLcSo4y6jzEYlWTDhykdrbBXyk6_xVp-dLKklCC8="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1u_fIUBH3l_fZptJpfSDhgKpVhnAdSLI8It7C2zBiNjku2op35_DO1Z8iecwCTe3ZphwCHuVRxST2f46mTWrgTG_ZrVYNUPERmwRJNkF3dRx8sDtdypp4pHAMmf-bYbEl7LhIji42rO3ukPAJ0dNuJVBRJnFmr7d-Ojdib_DFhRi1taWaKfVdbIi39LumggFXQ1s5o4yd3IA1uOJ8rley_tCsuLW6PGYzDABuIptn-Qq1jBsf9EorqIZK8m82l9N620sQQdv5rilttm6XWMo4kA_SiR0sluteiYd9hg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_6",
+      "section_idx": 10,
+      "idx_in_section": 6,
+      "text": "*  **Africa (AJOL):** African Journals Online (AJOL) is the world's largest online collection of African-published scholarly journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ojsplus.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFU8d8cEsAzlTICCwpB8VH-7xO-0vVDl9xxoienA63DnO53WFgh0Aboum4_M4_EmRFUUHpeX96SN1-IP6mJKW49dCB0KvJpOICtwbfwr4STFQupeMg2WcnDcjpyAO949LHJUrfLFPBDpyWIpMfWPkVQ_5L2eAJ0vPcGC1xSNsJEDNllwL9jsGo-w1iiTM8c3krecBC8CCzFuagTdsP9ypClVOUwT5_Qym3i2_1hMuE05lSKVuMLeLYi"
+        ],
+        [
+          "ajol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7pnIB9QCQ76oMw1t5zUuVdveOu-EH72MTp6gCJ6H-dLVk41R_l27Noh_CclaLgP_06rOy3iVF9nEujf7sx6ZyUjicpnthZaRgUwn_WJaZL57X79VZn4sjvMI="
+        ],
+        [
+          "ajol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEcfpUgE3lhrzuKCxRvsH9PkxO4EW6diOymPYnPIzKYarimR7l996JwJu0MY7jedVrKNJlk87dV9O6oLBVASXl3BcSVKk13kj7DX0UG6hHW-5mwpNNNofo2dEswg5j1Huh3vzPwHjxBpIbWgTRz2Marn3bWtCcNYaPs-wN26g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_7",
+      "section_idx": 10,
+      "idx_in_section": 7,
+      "text": "Hosting over 650 journals from 31 countries, AJOL uses OJS to provide a unified portal for African research, countering the historical marginalization of the continent's scholarly output.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ojsplus.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFU8d8cEsAzlTICCwpB8VH-7xO-0vVDl9xxoienA63DnO53WFgh0Aboum4_M4_EmRFUUHpeX96SN1-IP6mJKW49dCB0KvJpOICtwbfwr4STFQupeMg2WcnDcjpyAO949LHJUrfLFPBDpyWIpMfWPkVQ_5L2eAJ0vPcGC1xSNsJEDNllwL9jsGo-w1iiTM8c3krecBC8CCzFuagTdsP9ypClVOUwT5_Qym3i2_1hMuE05lSKVuMLeLYi"
+        ],
+        [
+          "ajol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7pnIB9QCQ76oMw1t5zUuVdveOu-EH72MTp6gCJ6H-dLVk41R_l27Noh_CclaLgP_06rOy3iVF9nEujf7sx6ZyUjicpnthZaRgUwn_WJaZL57X79VZn4sjvMI="
+        ],
+        [
+          "ajol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEcfpUgE3lhrzuKCxRvsH9PkxO4EW6diOymPYnPIzKYarimR7l996JwJu0MY7jedVrKNJlk87dV9O6oLBVASXl3BcSVKk13kj7DX0UG6hHW-5mwpNNNofo2dEswg5j1Huh3vzPwHjxBpIbWgTRz2Marn3bWtCcNYaPs-wN26g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "### Table 1: Top Countries by Active OJS Journals (2022 Data)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "*Data derived from PKP Beacon project and OJS usage statistics .*",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "## 3. Economic Impact: Disrupting the Commercial Model",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "Open-source platforms have introduced a fundamentally different economic logic to academic publishing.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_2",
+      "section_idx": 14,
+      "idx_in_section": 2,
+      "text": "By removing the need for expensive proprietary software and leveraging library/institutional infrastructure, they make the \"Diamond Open Access\" model financially sustainable.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "### 3.1 The Cost of Publishing: Commercial vs. Scholar-Led",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "Traditional commercial publishing relies on high Article Processing Charges (APCs) or subscription fees.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_2",
+      "section_idx": 15,
+      "idx_in_section": 2,
+      "text": "*  **Commercial APCs:** The global average APC is approximately $1,626 USD, with high-impact journals charging over $5,000.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGjT-hgtGX3YdsS-qLNdz8TjqPzK9DdBkXjWh_JSNGmShAzpSf2-tgo5vvbFRYdMeo_-N-ZU5rjQpUExVNwp0NHLnEKB6oAXk1A1-NitoagonqkYmL8zkRc7R6fXN611VlJMooldpuAHXNdXUGX"
+        ],
+        [
+          "csescienceeditor.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFpCyuGqjE5RnB5AA-bYt-7neAN4zoLvRSbpDm1WCsYs5rWkhTopljEN86oMOM402pS44_Cnb1cBJn1vwHetHEQhGEJK3WYyMCUTTdzAzTB9WJ6F4JiPbIpqKTiBdOTj8xZ0J6FnMDJbpVjxOm2WCjO0yYslo8bxZlqgNKNtv_8z34="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_3",
+      "section_idx": 15,
+      "idx_in_section": 3,
+      "text": "This creates a barrier for authors in the Global South who cannot afford to pay to publish.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGDhfUGA93Ng_v2yRiJGfuSAYlofBQDHkT5VJOEj6OBPcscxIIVOlXwmmmTMM_6EODA9ZnpIqqjJaaoC-1hs7VcyCCotYLN-BdiCqxl-MaOupgLBqu_eGUHWvDbGY8ARKCJc5k9Ob8fanj6fJISjOv2Bp-pJtzvJNfMJZVBLPbx1UglNAL-iGH3mzAXkPcDDGEAxTS2xlrv0nP3zrVasrBVYRWZgM6UdILL4uvgifsZBX1rd_-MTXS92kOkkRMEhRp0Nw2EY-dp0--MWCXB8cIAHnDX78PfrFK2JaFbPDL-Wb6zrJGbPnd2lmQs6nROij-9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_4",
+      "section_idx": 15,
+      "idx_in_section": 4,
+      "text": "*  **Open Source Efficiency:** In contrast, platforms like the Open Library of Humanities (using Janeway) operate on a library partnership subsidy model.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "librarypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFinii4HDHwPdzP2IlV1-8pE6dzIz6iI_c0i5QZA7swcJ6wbunLzUkPZE0Ugty8BuKUZq4yGUS2To9vkem3M28k7lUybI5Q4jAUbJjWMTK9j5xtGTPSxtzcpg7heIfQWuHN2UVO28lnuSFtQXqq33_tWvv8DzguwnBiF1QiXrIatxR4CwQiCWtOQyaxtIky4u0q9Rrk1moLeXC-IAhMvW0LN5ZmcxQex6cHpjrxn5ofMbuP3UP7zNDxxnVX-LsmpJmoRw5JA6g="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_5",
+      "section_idx": 15,
+      "idx_in_section": 5,
+      "text": "Their base cost is approximately $500 per article, covering technology, staff, and preservation, without charging authors.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFXEkiw7Wr1rk0Os3LQvsIbJB0CjtNwsALIsEYch7YRDx4SUKq9_ZqooYDkyCHwC4Kj57Nb767m6aSScWSZ6tOPNKwZho5HtrTK5lxAmY2Q0S_ZwPJzMr5yfTFtnBZB210w"
+        ],
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFiPXtndE91wmpEi46Hrg4WcjWLd5CiqKCoa5SuEzDvQ3S9sl-G9Q0wSFVhJ3-GDYid3EQQpTlUag0wE_SRB3OyPd2ddT26MFFoq9JpysE_S981azZcSUmJ7knzjaX_DrlKabjxwyShwNwELvaMZosQt2HUXofdJQR2h2MZodRyTOUq"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_6",
+      "section_idx": 15,
+      "idx_in_section": 6,
+      "text": "*  **Library Publishing:** A study of library publishers found that small university presses using open-source tools could produce monographs and journals at significantly lower costs than commercial entities by leveraging existing institutional resources.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "librarypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFinii4HDHwPdzP2IlV1-8pE6dzIz6iI_c0i5QZA7swcJ6wbunLzUkPZE0Ugty8BuKUZq4yGUS2To9vkem3M28k7lUybI5Q4jAUbJjWMTK9j5xtGTPSxtzcpg7heIfQWuHN2UVO28lnuSFtQXqq33_tWvv8DzguwnBiF1QiXrIatxR4CwQiCWtOQyaxtIky4u0q9Rrk1moLeXC-IAhMvW0LN5ZmcxQex6cHpjrxn5ofMbuP3UP7zNDxxnVX-LsmpJmoRw5JA6g="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "### 3.2 Sustainability of Diamond Open Access",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "Diamond Open Access (free to read, free to publish) relies heavily on OSS to minimize operating costs.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "*  **Volunteer Labor + OSS:** Many journals in the Global South operate on a volunteer basis, using OJS to automate administrative tasks that would otherwise require paid staff.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "iastatedigitalpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGwh7F54SxvtqJ631xQRSrAcPXAUpLip45D3haBKt2l_nHLaxsVpm2tUYu8bwceyaW0IKklEoZchL71ulT1y-shUZ3YCclpHT2RZ6WJOftu_ldU3Zaf896ZD5imjxLetNysnk6LmdAC40nh9AjaJhyr"
+        ],
+        [
+          "themoonlight.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEhLius1La2xBp83r1bXpOenNP0UqBBZ0MxTOAwvSRjCacxszg0LHCCqdWBKZcgJZNG69R9Y8f6TOw4rtpZzhNoV4m47VnbnVhCM0RNhZEPRvxoHxyIk2QqDMbE1SGwsoFN7pZWcBf1XZUk9GX0rW9EHgPsJSyHVzK4nSg3YBoSMOtfGkHrlkW0E3p4sSc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_3",
+      "section_idx": 16,
+      "idx_in_section": 3,
+      "text": "This \"sweat equity\" combined with free software allows thousands of journals to exist without revenue streams.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "iastatedigitalpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGwh7F54SxvtqJ631xQRSrAcPXAUpLip45D3haBKt2l_nHLaxsVpm2tUYu8bwceyaW0IKklEoZchL71ulT1y-shUZ3YCclpHT2RZ6WJOftu_ldU3Zaf896ZD5imjxLetNysnk6LmdAC40nh9AjaJhyr"
+        ],
+        [
+          "themoonlight.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEhLius1La2xBp83r1bXpOenNP0UqBBZ0MxTOAwvSRjCacxszg0LHCCqdWBKZcgJZNG69R9Y8f6TOw4rtpZzhNoV4m47VnbnVhCM0RNhZEPRvxoHxyIk2QqDMbE1SGwsoFN7pZWcBf1XZUk9GX0rW9EHgPsJSyHVzK4nSg3YBoSMOtfGkHrlkW0E3p4sSc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_4",
+      "section_idx": 16,
+      "idx_in_section": 4,
+      "text": "*  **Infrastructure as a Public Good:** Initiatives like Redalyc and AmeliCA argue that science should be a global public good.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "enssib.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHITzWEN_NkHXDdk_5B4Oxl8bsGEKxMgqfbxExtpMvwiT7QAzmm-KzK_GTzjX9YC4QfBxOl4eMO21ascj_E2ecWlQP3VgA0ZBr1C_XL0Bkli17f-pgvfs_LW8vDohpkbPLJR4d8xiTKUI8idj3y6UKT5UJgjxLlxDcAwHYXe3iFyx3nXqAEjfd7Tw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_5",
+      "section_idx": 16,
+      "idx_in_section": 5,
+      "text": "By providing open infrastructure (servers, software, training) funded by public institutions, they prevent the commercial capture of academic knowledge .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "enssib.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHITzWEN_NkHXDdk_5B4Oxl8bsGEKxMgqfbxExtpMvwiT7QAzmm-KzK_GTzjX9YC4QfBxOl4eMO21ascj_E2ecWlQP3VgA0ZBr1C_XL0Bkli17f-pgvfs_LW8vDohpkbPLJR4d8xiTKUI8idj3y6UKT5UJgjxLlxDcAwHYXe3iFyx3nXqAEjfd7Tw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "## 4. Visibility, Indexing, and the Center-Periphery Dynamic",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "While OSS solves the *production* problem (how to publish), it also addresses the *distribution* problem (how to be found).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "However, a gap remains between technical visibility and prestige.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "### 4.1 Technical Visibility via Interoperability",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "OJS and similar platforms come equipped with plugins that automatically generate machine-readable metadata.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "*  **Google Scholar:** The Google Scholar Indexing Plugin in OJS ensures that articles are crawled and indexed.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEO1sUf3Ziq38vszk52rqa1dkZXlkVohF6D6zJwfn8EHp7AxhsuoiTgVTObabpRY7NjkSjxKW0JvfHAQa-6nkSArxcZGQIAgDv9QeP8xMNzYndJHbvKicn2FJHxyzvY2kg="
+        ],
+        [
+          "ojsplus.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHI2FfauUiNTqFfrck_ko8pGcR44Pcuec6IzbKdi1OpdI8dq6scf2c1Mm64Ytew-7oLcjZm1XR8lh8pA6FkGZCfcZrR63aUkGQvZF5CwMPAKK0FaG8VRkfF4eiCH2I0iUKs52qy0BOpS-dcPJnZ6Cc9rb-PnmmTvr6rwh9vrWua5zZMJ6jVbufI0Wp_14dm7-2bse1rBHjBV3Sy5yjePp1pew30lDMRcd8XUGcdpee-qyCEE9IvtqmtZsfE70KkEA=="
+        ],
+        [
+          "altechmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH6F2V6DqWy0Ge5FJvvAHg1_nC5mYu8Fkn9TLuDSwhAEson_08Pg-EXVsdn56Vy2ppAGm1Po6Rm_Ll7Bw_wsNQHa-Au1fPk-tDhNi7NVPtz4Z8NFO3N9COCbPJoFRof80vzHGwRf7HXsRjNRZ2_QnmKTw7I_794z3dmGp42EhWIgJO_Xoz05O8baMBYSX0jcrMZRJJK"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_3",
+      "section_idx": 18,
+      "idx_in_section": 3,
+      "text": "This is crucial for Global South journals, as Google Scholar is often the primary discovery tool for non-Western research.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEO1sUf3Ziq38vszk52rqa1dkZXlkVohF6D6zJwfn8EHp7AxhsuoiTgVTObabpRY7NjkSjxKW0JvfHAQa-6nkSArxcZGQIAgDv9QeP8xMNzYndJHbvKicn2FJHxyzvY2kg="
+        ],
+        [
+          "ojsplus.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHI2FfauUiNTqFfrck_ko8pGcR44Pcuec6IzbKdi1OpdI8dq6scf2c1Mm64Ytew-7oLcjZm1XR8lh8pA6FkGZCfcZrR63aUkGQvZF5CwMPAKK0FaG8VRkfF4eiCH2I0iUKs52qy0BOpS-dcPJnZ6Cc9rb-PnmmTvr6rwh9vrWua5zZMJ6jVbufI0Wp_14dm7-2bse1rBHjBV3Sy5yjePp1pew30lDMRcd8XUGcdpee-qyCEE9IvtqmtZsfE70KkEA=="
+        ],
+        [
+          "altechmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH6F2V6DqWy0Ge5FJvvAHg1_nC5mYu8Fkn9TLuDSwhAEson_08Pg-EXVsdn56Vy2ppAGm1Po6Rm_Ll7Bw_wsNQHa-Au1fPk-tDhNi7NVPtz4Z8NFO3N9COCbPJoFRof80vzHGwRf7HXsRjNRZ2_QnmKTw7I_794z3dmGp42EhWIgJO_Xoz05O8baMBYSX0jcrMZRJJK"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_4",
+      "section_idx": 18,
+      "idx_in_section": 4,
+      "text": "*  **DOAJ and Crossref:** Plugins allow for the automatic deposit of metadata to the Directory of Open Access Journals (DOAJ) and Crossref (for DOIs).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openjournalsystems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZrIgRz7-Zd_f_nHwHQ8ApNVLEXABy4W-1gNj6fHbbJujT7el6J6WMIYLx2dhmInS-kn_6c6tCK4uDIoqTKFJHZX5JRafMefmlj-i0jEvz7s-8SoSAEj_4wuaFeK5sFHhru8jFNFYQtQkoBtMtwPj7OcaRMgpe_9s="
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF1GyYkMidVHuyJy0aqldhXjZmOAsF_jUC559pjDBW5_vbKTUueim55tk288St34BuUPw5_1Q-zQqlBqUAFJIySppUEshzME28BL-8oBbuAMGuuedfoEUvykS-EGjjAUm_6Ds2hveVK635OrBuRaI_XaxefHYmIQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_5",
+      "section_idx": 18,
+      "idx_in_section": 5,
+      "text": "This integration is vital for legitimacy; a journal with a DOI and a DOAJ listing is perceived as part of the formal scholarly record.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openjournalsystems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZrIgRz7-Zd_f_nHwHQ8ApNVLEXABy4W-1gNj6fHbbJujT7el6J6WMIYLx2dhmInS-kn_6c6tCK4uDIoqTKFJHZX5JRafMefmlj-i0jEvz7s-8SoSAEj_4wuaFeK5sFHhru8jFNFYQtQkoBtMtwPj7OcaRMgpe_9s="
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF1GyYkMidVHuyJy0aqldhXjZmOAsF_jUC559pjDBW5_vbKTUueim55tk288St34BuUPw5_1Q-zQqlBqUAFJIySppUEshzME28BL-8oBbuAMGuuedfoEUvykS-EGjjAUm_6Ds2hveVK635OrBuRaI_XaxefHYmIQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_0",
+      "section_idx": 19,
+      "idx_in_section": 0,
+      "text": "### 4.2 The Prestige Gap: Scopus and Web of Science",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_1",
+      "section_idx": 19,
+      "idx_in_section": 1,
+      "text": "Despite the technical capabilities of OSS, a \"prestige gap\" persists.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_2",
+      "section_idx": 19,
+      "idx_in_section": 2,
+      "text": "*  **Exclusion:** Many journals using OJS in Indonesia and Latin America are indexed in Google Scholar but excluded from Scopus and Web of Science (WoS).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "escienceediting.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQTIrOCTMOncFPBmidz3cQHbf_PPzres6rXBbp9UxEdNYxjvUV49e0YEtxgqlSaGoEo1iKZbMkPSIwAIDI1DtPrjiRLd1Oc-64GsqNlXt7CrsH2zsaZdICxnEfQzLQZEMigWX2KoyWArGZRDuBV7bTHw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_3",
+      "section_idx": 19,
+      "idx_in_section": 3,
+      "text": "For example, only one of the 558 Indonesian journals analyzed in a 2024 study was indexed in Scopus.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "escienceediting.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQTIrOCTMOncFPBmidz3cQHbf_PPzres6rXBbp9UxEdNYxjvUV49e0YEtxgqlSaGoEo1iKZbMkPSIwAIDI1DtPrjiRLd1Oc-64GsqNlXt7CrsH2zsaZdICxnEfQzLQZEMigWX2KoyWArGZRDuBV7bTHw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_4",
+      "section_idx": 19,
+      "idx_in_section": 4,
+      "text": "*  **Systemic Bias:** Academic reward systems (tenure, promotion) often prioritize publication in Scopus/WoS-indexed journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ithaka.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY6u1N6TZ_oa063P9lTrtw6eRYTMku3viSG9PYT4n0YGmkDtKO3zrnAhNee4r7wBBVkpIUwAt9lURAKXGR6OhRzXKa0UcelmAcz3swuhz_k4ooCyfRQkLhlPtnygdQfGwcuol9YUanLzaTHUP1wt284LUUnv8Up9ElduDVMJW5vcIk1iyNhqGceA8ianqas7zsLZw="
+        ],
+        [
+          "sspnet.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGiPpqCmBbTd8_Nk_cvB6CzNIsob0ZF_sMeJDBJYaCAl0Y8XtY_kOF2V5BBlkavDREMHCF5QlFqaqTb2M2smDVpe9ljfjPx9kyTFesMnhPWyJajfvPT8r4Vr1XJzVFXOPJhPPMQrvpHdDvJzSHImBwSq_8NVEn083DfMTOohhtubdQ9OYOQc99OB_xWoy2J1Es2CmcVWOJe8tFM7E5Eo5SJji2NR1YiT4E="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_5",
+      "section_idx": 19,
+      "idx_in_section": 5,
+      "text": "This forces researchers in the Global South to publish in Global North journals (often paying APCs) rather than in their own local, OJS-hosted journals, reinforcing the center-periphery dynamic.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ithaka.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY6u1N6TZ_oa063P9lTrtw6eRYTMku3viSG9PYT4n0YGmkDtKO3zrnAhNee4r7wBBVkpIUwAt9lURAKXGR6OhRzXKa0UcelmAcz3swuhz_k4ooCyfRQkLhlPtnygdQfGwcuol9YUanLzaTHUP1wt284LUUnv8Up9ElduDVMJW5vcIk1iyNhqGceA8ianqas7zsLZw="
+        ],
+        [
+          "sspnet.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGiPpqCmBbTd8_Nk_cvB6CzNIsob0ZF_sMeJDBJYaCAl0Y8XtY_kOF2V5BBlkavDREMHCF5QlFqaqTb2M2smDVpe9ljfjPx9kyTFesMnhPWyJajfvPT8r4Vr1XJzVFXOPJhPPMQrvpHdDvJzSHImBwSq_8NVEn083DfMTOohhtubdQ9OYOQc99OB_xWoy2J1Es2CmcVWOJe8tFM7E5Eo5SJji2NR1YiT4E="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_6",
+      "section_idx": 19,
+      "idx_in_section": 6,
+      "text": "*  **Plan S and the Global South:** European initiatives like Plan S, which push for Gold OA (APCs), threaten to marginalize the non-commercial ecosystem of the Global South.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGDhfUGA93Ng_v2yRiJGfuSAYlofBQDHkT5VJOEj6OBPcscxIIVOlXwmmmTMM_6EODA9ZnpIqqjJaaoC-1hs7VcyCCotYLN-BdiCqxl-MaOupgLBqu_eGUHWvDbGY8ARKCJc5k9Ob8fanj6fJISjOv2Bp-pJtzvJNfMJZVBLPbx1UglNAL-iGH3mzAXkPcDDGEAxTS2xlrv0nP3zrVasrBVYRWZgM6UdILL4uvgifsZBX1rd_-MTXS92kOkkRMEhRp0Nw2EY-dp0--MWCXB8cIAHnDX78PfrFK2JaFbPDL-Wb6zrJGbPnd2lmQs6nROij-9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_7",
+      "section_idx": 19,
+      "idx_in_section": 7,
+      "text": "If the world flips to a \"pay-to-publish\" model, researchers in developing nations may be unable to afford publication, even if the software they use is free .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGDhfUGA93Ng_v2yRiJGfuSAYlofBQDHkT5VJOEj6OBPcscxIIVOlXwmmmTMM_6EODA9ZnpIqqjJaaoC-1hs7VcyCCotYLN-BdiCqxl-MaOupgLBqu_eGUHWvDbGY8ARKCJc5k9Ob8fanj6fJISjOv2Bp-pJtzvJNfMJZVBLPbx1UglNAL-iGH3mzAXkPcDDGEAxTS2xlrv0nP3zrVasrBVYRWZgM6UdILL4uvgifsZBX1rd_-MTXS92kOkkRMEhRp0Nw2EY-dp0--MWCXB8cIAHnDX78PfrFK2JaFbPDL-Wb6zrJGbPnd2lmQs6nROij-9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "### Key Points",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "*  **Decentralization of Publishing Power:** Open-source software (OSS), particularly Open Journal Systems (OJS), has shifted control from a few commercial conglomerates in the Global North to thousands of independent institutions worldwide, enabling a \"bibliodiversity\" that counters the homogenization of academic discourse.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ithaka.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY6u1N6TZ_oa063P9lTrtw6eRYTMku3viSG9PYT4n0YGmkDtKO3zrnAhNee4r7wBBVkpIUwAt9lURAKXGR6OhRzXKa0UcelmAcz3swuhz_k4ooCyfRQkLhlPtnygdQfGwcuol9YUanLzaTHUP1wt284LUUnv8Up9ElduDVMJW5vcIk1iyNhqGceA8ianqas7zsLZw="
+        ],
+        [
+          "ojsplus.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFU8d8cEsAzlTICCwpB8VH-7xO-0vVDl9xxoienA63DnO53WFgh0Aboum4_M4_EmRFUUHpeX96SN1-IP6mJKW49dCB0KvJpOICtwbfwr4STFQupeMg2WcnDcjpyAO949LHJUrfLFPBDpyWIpMfWPkVQ_5L2eAJ0vPcGC1xSNsJEDNllwL9jsGo-w1iiTM8c3krecBC8CCzFuagTdsP9ypClVOUwT5_Qym3i2_1hMuE05lSKVuMLeLYi"
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYl9jK-0TAcPltpVuSDwDj63q6TIwF1u7gZg_uBQe-vPMlKGFmgl8bNcTg2X8GpVJ-CVmE5ZcsP1TtXC4pgNwuHiXXxGq-9eKATDWUJPg8kXVXxGaEUQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "*  **Empowerment of the Global South:** Regions such as Latin America and Southeast Asia have utilized OSS to build robust, non-commercial publishing ecosystems.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEEzf-Gqmu783oDBSnbuju2R6QLV_jEMZyXxf2HNAyiBH5U7jG5ug3dPrvm7ZW5-EGJ4a3PDldBBHQwNI5vTK2DUBVaOb5yzeYyPwk2RUj2CvQU43TxRPjX0uTjtrZIwOY4"
+        ],
+        [
+          "enssib.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHITzWEN_NkHXDdk_5B4Oxl8bsGEKxMgqfbxExtpMvwiT7QAzmm-KzK_GTzjX9YC4QfBxOl4eMO21ascj_E2ecWlQP3VgA0ZBr1C_XL0Bkli17f-pgvfs_LW8vDohpkbPLJR4d8xiTKUI8idj3y6UKT5UJgjxLlxDcAwHYXe3iFyx3nXqAEjfd7Tw=="
+        ],
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ],
+        [
+          "escienceediting.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQTIrOCTMOncFPBmidz3cQHbf_PPzres6rXBbp9UxEdNYxjvUV49e0YEtxgqlSaGoEo1iKZbMkPSIwAIDI1DtPrjiRLd1Oc-64GsqNlXt7CrsH2zsaZdICxnEfQzLQZEMigWX2KoyWArGZRDuBV7bTHw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "Indonesia currently leads the world in OJS usage, and Latin America has established a \"Diamond Open Access\" infrastructure (Redalyc/AmeliCA) that operates independently of Article Processing Charges (APCs).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEEzf-Gqmu783oDBSnbuju2R6QLV_jEMZyXxf2HNAyiBH5U7jG5ug3dPrvm7ZW5-EGJ4a3PDldBBHQwNI5vTK2DUBVaOb5yzeYyPwk2RUj2CvQU43TxRPjX0uTjtrZIwOY4"
+        ],
+        [
+          "enssib.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHITzWEN_NkHXDdk_5B4Oxl8bsGEKxMgqfbxExtpMvwiT7QAzmm-KzK_GTzjX9YC4QfBxOl4eMO21ascj_E2ecWlQP3VgA0ZBr1C_XL0Bkli17f-pgvfs_LW8vDohpkbPLJR4d8xiTKUI8idj3y6UKT5UJgjxLlxDcAwHYXe3iFyx3nXqAEjfd7Tw=="
+        ],
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ],
+        [
+          "escienceediting.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQTIrOCTMOncFPBmidz3cQHbf_PPzres6rXBbp9UxEdNYxjvUV49e0YEtxgqlSaGoEo1iKZbMkPSIwAIDI1DtPrjiRLd1Oc-64GsqNlXt7CrsH2zsaZdICxnEfQzLQZEMigWX2KoyWArGZRDuBV7bTHw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "*  **Cost Reduction and Sustainability:** By removing licensing fees and enabling \"scholar-led\" publishing, platforms like Janeway and OJS allow institutions to publish at a fraction of the cost of commercial publishers, making the Diamond OA model financially viable.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "librarypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFinii4HDHwPdzP2IlV1-8pE6dzIz6iI_c0i5QZA7swcJ6wbunLzUkPZE0Ugty8BuKUZq4yGUS2To9vkem3M28k7lUybI5Q4jAUbJjWMTK9j5xtGTPSxtzcpg7heIfQWuHN2UVO28lnuSFtQXqq33_tWvv8DzguwnBiF1QiXrIatxR4CwQiCWtOQyaxtIky4u0q9Rrk1moLeXC-IAhMvW0LN5ZmcxQex6cHpjrxn5ofMbuP3UP7zNDxxnVX-LsmpJmoRw5JA6g="
+        ],
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrd1_Nz37SXGhJyyojaPM5tNeph0Lzl8M2uqszXBHIgh3enpc8p27KDiA6U9LX-ulKve-ZQOg8rm1sFNTD-evMTIFOsCMTX1UJy1GNa2eR4z-H-fE1up6dQEjqVz4lug=="
+        ],
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFXEkiw7Wr1rk0Os3LQvsIbJB0CjtNwsALIsEYch7YRDx4SUKq9_ZqooYDkyCHwC4Kj57Nb767m6aSScWSZ6tOPNKwZho5HtrTK5lxAmY2Q0S_ZwPJzMr5yfTFtnBZB210w"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "*  **Technical Standardization and Visibility:** OSS platforms provide built-in interoperability (OAI-PMH, DOAJ plugins, Google Scholar indexing), allowing small, peripheral journals to achieve global visibility and technical standards previously reserved for well-funded commercial titles.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openjournalsystems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZrIgRz7-Zd_f_nHwHQ8ApNVLEXABy4W-1gNj6fHbbJujT7el6J6WMIYLx2dhmInS-kn_6c6tCK4uDIoqTKFJHZX5JRafMefmlj-i0jEvz7s-8SoSAEj_4wuaFeK5sFHhru8jFNFYQtQkoBtMtwPj7OcaRMgpe_9s="
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEO1sUf3Ziq38vszk52rqa1dkZXlkVohF6D6zJwfn8EHp7AxhsuoiTgVTObabpRY7NjkSjxKW0JvfHAQa-6nkSArxcZGQIAgDv9QeP8xMNzYndJHbvKicn2FJHxyzvY2kg="
+        ],
+        [
+          "ojsplus.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHI2FfauUiNTqFfrck_ko8pGcR44Pcuec6IzbKdi1OpdI8dq6scf2c1Mm64Ytew-7oLcjZm1XR8lh8pA6FkGZCfcZrR63aUkGQvZF5CwMPAKK0FaG8VRkfF4eiCH2I0iUKs52qy0BOpS-dcPJnZ6Cc9rb-PnmmTvr6rwh9vrWua5zZMJ6jVbufI0Wp_14dm7-2bse1rBHjBV3Sy5yjePp1pew30lDMRcd8XUGcdpee-qyCEE9IvtqmtZsfE70KkEA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_0",
+      "section_idx": 20,
+      "idx_in_section": 0,
+      "text": "## 5. Case Studies of Platform Implementation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_0",
+      "section_idx": 21,
+      "idx_in_section": 0,
+      "text": "### 5.1 Open Research Europe (ORE)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_1",
+      "section_idx": 21,
+      "idx_in_section": 1,
+      "text": "Launched by the European Commission, ORE is a publishing platform for Horizon 2020 and Horizon Europe beneficiaries.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_2",
+      "section_idx": 21,
+      "idx_in_section": 2,
+      "text": "*  **Infrastructure:** It utilizes an open publishing model (post-publication peer review) and is moving toward an open-source infrastructure to ensure it remains a public good.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openaire.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOQPGg05ozPmnBH5hcy6OEx3V6j5g2_x6pi4XqWmmYCQpg8NjuTnlZ4bwyesMIlm9VFMZSDVRL36T0_I9iu28ycpxQ8lRJfzalKKBdQG2nkL4kpvVVXR9aSX0UVa4ObMSxoKdJcZuA440ykcY="
+        ],
+        [
+          "open-science.it",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF8guebZgvMkbhlokFmP_FDRnceWL9ljFTdogBM1h24AqnIvKe23k-z5qeHFOObRATF3SRbxKNkR54mnFrF-S4NMAo8HEXkCGGCe0pJZ3StuCQnTW8tqzSeplz0-enIWw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_3",
+      "section_idx": 21,
+      "idx_in_section": 3,
+      "text": "*  **Goal:** To provide a high-quality, free-to-publish venue that complies with open access mandates, reducing the reliance on commercial publishers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "libereurope.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwXSMBz7QIo1YOGI06NF0NVtMozYk4JB6bA07z4NkHLKC_t9x1qB_CPZAphUcMMFguOBw5rCYVniRr6wrAEXRUje2A8KL_N4XqJaU8Hy5cXbJBPDTwSZw8MvL-lWNWphc7FQBOFfuoEnkaUHWpSw=="
+        ],
+        [
+          "europa.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHoPjd3siSDwb8OpmnrDTV6rSRIT8hamK_tagryteBvxEpHBqe94OL99mPXFTcTy5Jaqa0K_uvJY6diPQqX46zmdxiFzv72a9cdjTb3qNB6RIIm1YGj_OGYiELC1F6wWQ4="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_0",
+      "section_idx": 22,
+      "idx_in_section": 0,
+      "text": "### 5.2 African Journals Online (AJOL)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_1",
+      "section_idx": 22,
+      "idx_in_section": 1,
+      "text": "AJOL demonstrates how OSS can aggregate fragmented national outputs into a continental force.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_2",
+      "section_idx": 22,
+      "idx_in_section": 2,
+      "text": "*  **Standardization:** AJOL assesses journals based on publishing practices (JPPS framework).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ajol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7pnIB9QCQ76oMw1t5zUuVdveOu-EH72MTp6gCJ6H-dLVk41R_l27Noh_CclaLgP_06rOy3iVF9nEujf7sx6ZyUjicpnthZaRgUwn_WJaZL57X79VZn4sjvMI="
+        ],
+        [
+          "unccd.int",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRpB4wQmTdwQXj0e0fGzLnw3cUzLw2E69xGeJXwmPO7Hy3cqQUEfDyc5iLrYfRlDCbxd9M49UBudVKdOrdZOHzNDpqv1xSTXR1TlmRW8BQ8ZoCWDjPrtUnMV5u9PeXQu8Mb1CNvHqr0070p__hXOeGN9BundDK7ui30YfZmGYG0GCH7n-JoZbucIFk"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_3",
+      "section_idx": 22,
+      "idx_in_section": 3,
+      "text": "By enforcing standards for inclusion, AJOL raises the quality of African publishing.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ajol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7pnIB9QCQ76oMw1t5zUuVdveOu-EH72MTp6gCJ6H-dLVk41R_l27Noh_CclaLgP_06rOy3iVF9nEujf7sx6ZyUjicpnthZaRgUwn_WJaZL57X79VZn4sjvMI="
+        ],
+        [
+          "unccd.int",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRpB4wQmTdwQXj0e0fGzLnw3cUzLw2E69xGeJXwmPO7Hy3cqQUEfDyc5iLrYfRlDCbxd9M49UBudVKdOrdZOHzNDpqv1xSTXR1TlmRW8BQ8ZoCWDjPrtUnMV5u9PeXQu8Mb1CNvHqr0070p__hXOeGN9BundDK7ui30YfZmGYG0GCH7n-JoZbucIFk"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_4",
+      "section_idx": 22,
+      "idx_in_section": 4,
+      "text": "*  **Access:** It provides a single search interface for over 650 journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ajol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEcfpUgE3lhrzuKCxRvsH9PkxO4EW6diOymPYnPIzKYarimR7l996JwJu0MY7jedVrKNJlk87dV9O6oLBVASXl3BcSVKk13kj7DX0UG6hHW-5mwpNNNofo2dEswg5j1Huh3vzPwHjxBpIbWgTRz2Marn3bWtCcNYaPs-wN26g=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGaKqdyhMfPj-m1Bv5TtyfG8zubQA83zRZs-vO8WuiJ52Yogl3u_9vzgsBJACtnmGapZqi2hHxJ_D42T9PXUlZY-JIdbYw5Px7wsrTRU89oB_Hy5gWa2Sgv8jUL8tGTIjJ_zmE9nHv13MI2Bw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_5",
+      "section_idx": 22,
+      "idx_in_section": 5,
+      "text": "While some are subscription-based, the platform actively encourages and supports the transition to Open Access.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ajol.info",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEcfpUgE3lhrzuKCxRvsH9PkxO4EW6diOymPYnPIzKYarimR7l996JwJu0MY7jedVrKNJlk87dV9O6oLBVASXl3BcSVKk13kj7DX0UG6hHW-5mwpNNNofo2dEswg5j1Huh3vzPwHjxBpIbWgTRz2Marn3bWtCcNYaPs-wN26g=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGaKqdyhMfPj-m1Bv5TtyfG8zubQA83zRZs-vO8WuiJ52Yogl3u_9vzgsBJACtnmGapZqi2hHxJ_D42T9PXUlZY-JIdbYw5Px7wsrTRU89oB_Hy5gWa2Sgv8jUL8tGTIjJ_zmE9nHv13MI2Bw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_0",
+      "section_idx": 23,
+      "idx_in_section": 0,
+      "text": "### 5.3 AmeliCA and Redalyc",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_1",
+      "section_idx": 23,
+      "idx_in_section": 1,
+      "text": "These platforms represent a political and technical project to defend the non-commercial nature of science.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_2",
+      "section_idx": 23,
+      "idx_in_section": 2,
+      "text": "*  **XML Markup:** They provide tools for XML JATS markup, a technical standard usually reserved for large commercial publishers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "enssib.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHITzWEN_NkHXDdk_5B4Oxl8bsGEKxMgqfbxExtpMvwiT7QAzmm-KzK_GTzjX9YC4QfBxOl4eMO21ascj_E2ecWlQP3VgA0ZBr1C_XL0Bkli17f-pgvfs_LW8vDohpkbPLJR4d8xiTKUI8idj3y6UKT5UJgjxLlxDcAwHYXe3iFyx3nXqAEjfd7Tw=="
+        ],
+        [
+          "amelica.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHjBGR4IFCR1Q1zHsLVFP_1loCsAu6Akm0yJ9FpUym9eRG8XKHz-RJpFur6ei9KEmrleZhBSg6ivvnCaUz3GUDfkX7nSjDL02DO_R9bOFfTEL7yVLodZVS3GQSiSH8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_3",
+      "section_idx": 23,
+      "idx_in_section": 3,
+      "text": "This allows small journals to produce high-quality, interoperable digital formats (HTML, PDF, ePub) without technical expertise.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "amelica.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGcvmdqKygjjWabTui8xBwiKHWAZ0VreQHaCJZ2F1uuwSGYg96VfWLlEN1tB7Us0wI3wmMzjXNgL06CvjiwKqTDbyFK2NFMV7elZwOsi9cbJkXXPyNJLblEI88BojtQXl0th5hqvHhz9w05lx5igO2alN2akMOFSIUYG4veFiNc6DrexiHQfSdcyjaho6v6LRtPYk7DS_oPV3j8KpMIoadEvTE8XGL_ub6otKRRQf8ew0kCPpPzJkbII8oACAUetPdrtWlFAkJo80O435Fugzt_f15tBbW_Cg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_4",
+      "section_idx": 23,
+      "idx_in_section": 4,
+      "text": "*  **Global Expansion:** Originally focused on Latin America, AmeliCA is expanding its \"non-commercial\" model to the Global South (Africa and Asia), promoting a \"South-South\" collaboration in scholarly communication .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "enssib.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHITzWEN_NkHXDdk_5B4Oxl8bsGEKxMgqfbxExtpMvwiT7QAzmm-KzK_GTzjX9YC4QfBxOl4eMO21ascj_E2ecWlQP3VgA0ZBr1C_XL0Bkli17f-pgvfs_LW8vDohpkbPLJR4d8xiTKUI8idj3y6UKT5UJgjxLlxDcAwHYXe3iFyx3nXqAEjfd7Tw=="
+        ],
+        [
+          "amelica.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHjBGR4IFCR1Q1zHsLVFP_1loCsAu6Akm0yJ9FpUym9eRG8XKHz-RJpFur6ei9KEmrleZhBSg6ivvnCaUz3GUDfkX7nSjDL02DO_R9bOFfTEL7yVLodZVS3GQSiSH8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_0",
+      "section_idx": 24,
+      "idx_in_section": 0,
+      "text": "## 6. Challenges and Future Directions",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_1",
+      "section_idx": 24,
+      "idx_in_section": 1,
+      "text": "Despite the successes, the open-source publishing ecosystem faces significant challenges.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_0",
+      "section_idx": 25,
+      "idx_in_section": 0,
+      "text": "### 6.1 Technical Debt and Sustainability",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_1",
+      "section_idx": 25,
+      "idx_in_section": 1,
+      "text": "*  **Maintenance:** While the software is free, hosting and maintenance are not.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ],
+        [
+          "martinchautari.org.np",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxYo9dF_TXjqx87rdZAPG9wEdyjGF2tAIxx-k_t39JcAlIIUYcxlOB8znXhUkguYOrlQOETeTEw6Mm5jSHhUp1yIKm2XPP1bUzvvGFQEDnfiUMQJQg-kyIazPIrnGqUfvRSD0280cEBPhyYfx3gSi_F5FGpw3poG4Iv_Kv"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_2",
+      "section_idx": 25,
+      "idx_in_section": 2,
+      "text": "Many small journals struggle with technical updates (e.g., upgrading OJS versions), leading to security vulnerabilities or broken plugins.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ojsplus.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHI2FfauUiNTqFfrck_ko8pGcR44Pcuec6IzbKdi1OpdI8dq6scf2c1Mm64Ytew-7oLcjZm1XR8lh8pA6FkGZCfcZrR63aUkGQvZF5CwMPAKK0FaG8VRkfF4eiCH2I0iUKs52qy0BOpS-dcPJnZ6Cc9rb-PnmmTvr6rwh9vrWua5zZMJ6jVbufI0Wp_14dm7-2bse1rBHjBV3Sy5yjePp1pew30lDMRcd8XUGcdpee-qyCEE9IvtqmtZsfE70KkEA=="
+        ],
+        [
+          "librarypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSnDwgGmzPbsP3ZgCTwkvbaPKqhePIkUsuAVCaop6JlWuyRY9mV2woKA2X9C_BajuYWFP9Z3XKyo2T8Dc2r-D3RNEWWkjj6FH6g4pplXNxQuLgPLCsIMvcZYbag0DblBv5ToDq-t_zXIh3uanBbJaYPzI="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_3",
+      "section_idx": 25,
+      "idx_in_section": 3,
+      "text": "*  **Fragmentation:** The ease of setting up a journal has led to a proliferation of titles, some of which may lack rigorous peer review or long-term preservation strategies (inactive journals).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ],
+        [
+          "martinchautari.org.np",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxYo9dF_TXjqx87rdZAPG9wEdyjGF2tAIxx-k_t39JcAlIIUYcxlOB8znXhUkguYOrlQOETeTEw6Mm5jSHhUp1yIKm2XPP1bUzvvGFQEDnfiUMQJQg-kyIazPIrnGqUfvRSD0280cEBPhyYfx3gSi_F5FGpw3poG4Iv_Kv"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_0",
+      "section_idx": 26,
+      "idx_in_section": 0,
+      "text": "### 6.2 The \"Predatory\" Stigma",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "iastatedigitalpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxVN1K5PihXPO8COiBMdtaO6nPYIrFa0cUJgbVEi7k9LBe-ApUsVZ7mxuy_GymDJSzep1EnY_XDXV-c18ZLQBqhM_dwEJy095UBMfGlgZ1Pg_UU82LuCJY-fe0i3fSV3GNanPh8Vd3TggAbMpJUluWw5IykYTgDtoBYJst_g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_1",
+      "section_idx": 26,
+      "idx_in_section": 1,
+      "text": "The low barrier to entry has allowed \"predatory\" journals to utilize OJS, sometimes casting doubt on legitimate scholar-led journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "iastatedigitalpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxVN1K5PihXPO8COiBMdtaO6nPYIrFa0cUJgbVEi7k9LBe-ApUsVZ7mxuy_GymDJSzep1EnY_XDXV-c18ZLQBqhM_dwEJy095UBMfGlgZ1Pg_UU82LuCJY-fe0i3fSV3GNanPh8Vd3TggAbMpJUluWw5IykYTgDtoBYJst_g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_2",
+      "section_idx": 26,
+      "idx_in_section": 2,
+      "text": "However, research indicates that the vast majority of OJS journals are legitimate academic efforts, often operating with minimal resources.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "iastatedigitalpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxVN1K5PihXPO8COiBMdtaO6nPYIrFa0cUJgbVEi7k9LBe-ApUsVZ7mxuy_GymDJSzep1EnY_XDXV-c18ZLQBqhM_dwEJy095UBMfGlgZ1Pg_UU82LuCJY-fe0i3fSV3GNanPh8Vd3TggAbMpJUluWw5IykYTgDtoBYJst_g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_0",
+      "section_idx": 27,
+      "idx_in_section": 0,
+      "text": "### 6.3 Integration into the Global Record",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ithaka.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY6u1N6TZ_oa063P9lTrtw6eRYTMku3viSG9PYT4n0YGmkDtKO3zrnAhNee4r7wBBVkpIUwAt9lURAKXGR6OhRzXKa0UcelmAcz3swuhz_k4ooCyfRQkLhlPtnygdQfGwcuol9YUanLzaTHUP1wt284LUUnv8Up9ElduDVMJW5vcIk1iyNhqGceA8ianqas7zsLZw="
+        ],
+        [
+          "sspnet.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGiPpqCmBbTd8_Nk_cvB6CzNIsob0ZF_sMeJDBJYaCAl0Y8XtY_kOF2V5BBlkavDREMHCF5QlFqaqTb2M2smDVpe9ljfjPx9kyTFesMnhPWyJajfvPT8r4Vr1XJzVFXOPJhPPMQrvpHdDvJzSHImBwSq_8NVEn083DfMTOohhtubdQ9OYOQc99OB_xWoy2J1Es2CmcVWOJe8tFM7E5Eo5SJji2NR1YiT4E="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_1",
+      "section_idx": 27,
+      "idx_in_section": 1,
+      "text": "The challenge remains to integrate these distributed platforms into a \"single global and trustworthy scholarly record\".",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ithaka.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY6u1N6TZ_oa063P9lTrtw6eRYTMku3viSG9PYT4n0YGmkDtKO3zrnAhNee4r7wBBVkpIUwAt9lURAKXGR6OhRzXKa0UcelmAcz3swuhz_k4ooCyfRQkLhlPtnygdQfGwcuol9YUanLzaTHUP1wt284LUUnv8Up9ElduDVMJW5vcIk1iyNhqGceA8ianqas7zsLZw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_2",
+      "section_idx": 27,
+      "idx_in_section": 2,
+      "text": "While Open Access has reduced distribution barriers, the academic reward system must evolve to value these venues equally with commercial legacy journals .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ithaka.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY6u1N6TZ_oa063P9lTrtw6eRYTMku3viSG9PYT4n0YGmkDtKO3zrnAhNee4r7wBBVkpIUwAt9lURAKXGR6OhRzXKa0UcelmAcz3swuhz_k4ooCyfRQkLhlPtnygdQfGwcuol9YUanLzaTHUP1wt284LUUnv8Up9ElduDVMJW5vcIk1iyNhqGceA8ianqas7zsLZw="
+        ],
+        [
+          "sspnet.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGiPpqCmBbTd8_Nk_cvB6CzNIsob0ZF_sMeJDBJYaCAl0Y8XtY_kOF2V5BBlkavDREMHCF5QlFqaqTb2M2smDVpe9ljfjPx9kyTFesMnhPWyJajfvPT8r4Vr1XJzVFXOPJhPPMQrvpHdDvJzSHImBwSq_8NVEn083DfMTOohhtubdQ9OYOQc99OB_xWoy2J1Es2CmcVWOJe8tFM7E5Eo5SJji2NR1YiT4E="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "28_0",
+      "section_idx": 28,
+      "idx_in_section": 0,
+      "text": "## Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_1",
+      "section_idx": 28,
+      "idx_in_section": 1,
+      "text": "Open-source publishing platforms have fundamentally democratized the global distribution of academic publishing.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_2",
+      "section_idx": 28,
+      "idx_in_section": 2,
+      "text": "By providing professional-grade infrastructure at little to no cost, platforms like OJS, Janeway, and AmeliCA have enabled the Global South to build autonomous, resilient publishing ecosystems.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_3",
+      "section_idx": 28,
+      "idx_in_section": 3,
+      "text": "This has resulted in a massive decentralization of knowledge production, with Indonesia, Brazil, and other nations emerging as publishing powerhouses.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_4",
+      "section_idx": 28,
+      "idx_in_section": 4,
+      "text": "However, a tension remains between *distribution* and *recognition*.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_5",
+      "section_idx": 28,
+      "idx_in_section": 5,
+      "text": "While OSS has solved the technical challenge of disseminating knowledge globally, the academic prestige economy continues to favor commercial, Global North incumbents.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_6",
+      "section_idx": 28,
+      "idx_in_section": 6,
+      "text": "The future of global academic publishing depends not just on the continued adoption of open-source software, but on the alignment of research assessment policies with the values of bibliodiversity and equitable access that these platforms represent.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_7",
+      "section_idx": 28,
+      "idx_in_section": 7,
+      "text": "#",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "### Overview",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "The global distribution of academic publishing has historically been characterized by a center-periphery dynamic, where knowledge production and dissemination were dominated by a small oligopoly of commercial publishers based in the Global North (primarily Europe and North America).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "This structure created significant barriers for scholars in the Global South, both in terms of accessing knowledge (paywalls) and participating in its production (exclusion from high-impact indices).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "The advent and proliferation of open-source publishing platforms\u2014most notably the Public Knowledge Project\u2019s Open Journal Systems (OJS), but also newer entrants like Janeway, PubPub, and AmeliCA\u2019s infrastructure\u2014have fundamentally disrupted this model.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "These platforms have provided the technical infrastructure necessary for universities, libraries, and scholarly societies to become publishers themselves.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "By lowering the technical and financial barriers to entry, OSS has facilitated a massive expansion in the number of journals published outside the traditional centers of academic power.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "This report details how these platforms have reshaped the geography of academic publishing, fostered new economic models, and challenged the prestige economy of the traditional scientific record.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 1. The Technological Infrastructure of Open Publishing",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "The impact of open-source platforms on global distribution is rooted in their technical architecture.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "Unlike proprietary systems that lock users into specific workflows and vendor dependencies, open-source platforms offer modularity, local control, and community-driven development.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 1.1 Open Journal Systems (OJS) as the Global Standard",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYl9jK-0TAcPltpVuSDwDj63q6TIwF1u7gZg_uBQe-vPMlKGFmgl8bNcTg2X8GpVJ-CVmE5ZcsP1TtXC4pgNwuHiXXxGq-9eKATDWUJPg8kXVXxGaEUQ=="
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxxyaCHXnEhv1VTEA0VopT_Wcp9infTgeMlyBq7Fxmpoc7dkrftgJSgENjMIBZy6ERTXcT_DV8o7JHLYhMDwRKamlkfKQigDtxe5MbG-ODxa1-HmrOiG4qFXZrK33K_4wg"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "Developed by the Public Knowledge Project (PKP) in 2001, OJS is the most widely adopted open-source publishing platform in the world.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYl9jK-0TAcPltpVuSDwDj63q6TIwF1u7gZg_uBQe-vPMlKGFmgl8bNcTg2X8GpVJ-CVmE5ZcsP1TtXC4pgNwuHiXXxGq-9eKATDWUJPg8kXVXxGaEUQ=="
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxxyaCHXnEhv1VTEA0VopT_Wcp9infTgeMlyBq7Fxmpoc7dkrftgJSgENjMIBZy6ERTXcT_DV8o7JHLYhMDwRKamlkfKQigDtxe5MbG-ODxa1-HmrOiG4qFXZrK33K_4wg"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "As of 2023, it is used by over 44,000 active journals in 148 countries, publishing in over 60 languages.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYl9jK-0TAcPltpVuSDwDj63q6TIwF1u7gZg_uBQe-vPMlKGFmgl8bNcTg2X8GpVJ-CVmE5ZcsP1TtXC4pgNwuHiXXxGq-9eKATDWUJPg8kXVXxGaEUQ=="
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxxyaCHXnEhv1VTEA0VopT_Wcp9infTgeMlyBq7Fxmpoc7dkrftgJSgENjMIBZy6ERTXcT_DV8o7JHLYhMDwRKamlkfKQigDtxe5MbG-ODxa1-HmrOiG4qFXZrK33K_4wg"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "*  **Workflow Management:** OJS manages the entire editorial workflow, from submission and peer review to copyediting and production.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYl9jK-0TAcPltpVuSDwDj63q6TIwF1u7gZg_uBQe-vPMlKGFmgl8bNcTg2X8GpVJ-CVmE5ZcsP1TtXC4pgNwuHiXXxGq-9eKATDWUJPg8kXVXxGaEUQ=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEIdm6UKQYsT4QPAC5tPcY-bob2P9OAH3MGF9FrMb53dUrCuLfY_lqAdaAt46lSp4f8oqHxQNbJxlPIOB2XXrA7TJGg1p-klbFxeDk4qqKlqKYwresvuYmz858uV33y6Zs83sk-x5SqZQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "This end-to-end capability allows institutions with limited staff to manage complex publishing operations professionally.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYl9jK-0TAcPltpVuSDwDj63q6TIwF1u7gZg_uBQe-vPMlKGFmgl8bNcTg2X8GpVJ-CVmE5ZcsP1TtXC4pgNwuHiXXxGq-9eKATDWUJPg8kXVXxGaEUQ=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEIdm6UKQYsT4QPAC5tPcY-bob2P9OAH3MGF9FrMb53dUrCuLfY_lqAdaAt46lSp4f8oqHxQNbJxlPIOB2XXrA7TJGg1p-klbFxeDk4qqKlqKYwresvuYmz858uV33y6Zs83sk-x5SqZQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "*  **Plugin Architecture:** The platform's modular design allows journals to integrate with the wider scholarly ecosystem.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openjournalsystems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZrIgRz7-Zd_f_nHwHQ8ApNVLEXABy4W-1gNj6fHbbJujT7el6J6WMIYLx2dhmInS-kn_6c6tCK4uDIoqTKFJHZX5JRafMefmlj-i0jEvz7s-8SoSAEj_4wuaFeK5sFHhru8jFNFYQtQkoBtMtwPj7OcaRMgpe_9s="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEIdm6UKQYsT4QPAC5tPcY-bob2P9OAH3MGF9FrMb53dUrCuLfY_lqAdaAt46lSp4f8oqHxQNbJxlPIOB2XXrA7TJGg1p-klbFxeDk4qqKlqKYwresvuYmz858uV33y6Zs83sk-x5SqZQ=="
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF1GyYkMidVHuyJy0aqldhXjZmOAsF_jUC559pjDBW5_vbKTUueim55tk288St34BuUPw5_1Q-zQqlBqUAFJIySppUEshzME28BL-8oBbuAMGuuedfoEUvykS-EGjjAUm_6Ds2hveVK635OrBuRaI_XaxefHYmIQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": "Plugins for Google Scholar indexing, DOAJ export, Crossref DOI registration, and LOCKSS preservation ensure that journals running on OJS meet international technical standards for discoverability and preservation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openjournalsystems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZrIgRz7-Zd_f_nHwHQ8ApNVLEXABy4W-1gNj6fHbbJujT7el6J6WMIYLx2dhmInS-kn_6c6tCK4uDIoqTKFJHZX5JRafMefmlj-i0jEvz7s-8SoSAEj_4wuaFeK5sFHhru8jFNFYQtQkoBtMtwPj7OcaRMgpe_9s="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEIdm6UKQYsT4QPAC5tPcY-bob2P9OAH3MGF9FrMb53dUrCuLfY_lqAdaAt46lSp4f8oqHxQNbJxlPIOB2XXrA7TJGg1p-klbFxeDk4qqKlqKYwresvuYmz858uV33y6Zs83sk-x5SqZQ=="
+        ],
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF1GyYkMidVHuyJy0aqldhXjZmOAsF_jUC559pjDBW5_vbKTUueim55tk288St34BuUPw5_1Q-zQqlBqUAFJIySppUEshzME28BL-8oBbuAMGuuedfoEUvykS-EGjjAUm_6Ds2hveVK635OrBuRaI_XaxefHYmIQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "*  **Localization:** OJS is multilingual by design, supporting local languages which is critical for the Global South.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYl9jK-0TAcPltpVuSDwDj63q6TIwF1u7gZg_uBQe-vPMlKGFmgl8bNcTg2X8GpVJ-CVmE5ZcsP1TtXC4pgNwuHiXXxGq-9eKATDWUJPg8kXVXxGaEUQ=="
+        ],
+        [
+          "inflibnet.ac.in",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH4hUnSWdEaU38o6nhJMUVLNaVQe52sejlnwRMsX4zfGLmPCpF8env0UXqcWgoTmFKbou2A88CUbWp5mf7Gc34Z4w7HFkPkPtz1JtNpELtDjDiXyYrOhEfBVYoxYauh3I6N9IVUA9MgJD-82QxTh6rVDAjY"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "text": "This feature allows research to be published in languages relevant to local communities rather than exclusively in English, thereby preserving local knowledge systems.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sfu.ca",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYl9jK-0TAcPltpVuSDwDj63q6TIwF1u7gZg_uBQe-vPMlKGFmgl8bNcTg2X8GpVJ-CVmE5ZcsP1TtXC4pgNwuHiXXxGq-9eKATDWUJPg8kXVXxGaEUQ=="
+        ],
+        [
+          "inflibnet.ac.in",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH4hUnSWdEaU38o6nhJMUVLNaVQe52sejlnwRMsX4zfGLmPCpF8env0UXqcWgoTmFKbou2A88CUbWp5mf7Gc34Z4w7HFkPkPtz1JtNpELtDjDiXyYrOhEfBVYoxYauh3I6N9IVUA9MgJD-82QxTh6rVDAjY"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 1.2 Janeway and the Next Generation of Platforms",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrd1_Nz37SXGhJyyojaPM5tNeph0Lzl8M2uqszXBHIgh3enpc8p27KDiA6U9LX-ulKve-ZQOg8rm1sFNTD-evMTIFOsCMTX1UJy1GNa2eR4z-H-fE1up6dQEjqVz4lug=="
+        ],
+        [
+          "janeway.systems",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxPJlm6t6KNP5OoTMP5GPD583kVdEs3H2G2vlCOJ8Ag_rK3j61Bd3JLt3jthhnSgZl5rPZUIaiK-HZvJng0sxXp7grLKKcXhBHBFtjrgDGYH-P-64vA5II"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "While OJS dominates the landscape, newer platforms like Janeway have emerged to address specific needs in the scholar-led publishing community.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrd1_Nz37SXGhJyyojaPM5tNeph0Lzl8M2uqszXBHIgh3enpc8p27KDiA6U9LX-ulKve-ZQOg8rm1sFNTD-evMTIFOsCMTX1UJy1GNa2eR4z-H-fE1up6dQEjqVz4lug=="
+        ],
+        [
+          "janeway.systems",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxPJlm6t6KNP5OoTMP5GPD583kVdEs3H2G2vlCOJ8Ag_rK3j61Bd3JLt3jthhnSgZl5rPZUIaiK-HZvJng0sxXp7grLKKcXhBHBFtjrgDGYH-P-64vA5II"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "Developed by the Centre for Technology and Publishing at Birkbeck, University of London, Janeway is designed to support the Open Library of Humanities (OLH).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrd1_Nz37SXGhJyyojaPM5tNeph0Lzl8M2uqszXBHIgh3enpc8p27KDiA6U9LX-ulKve-ZQOg8rm1sFNTD-evMTIFOsCMTX1UJy1GNa2eR4z-H-fE1up6dQEjqVz4lug=="
+        ],
+        [
+          "janeway.systems",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxPJlm6t6KNP5OoTMP5GPD583kVdEs3H2G2vlCOJ8Ag_rK3j61Bd3JLt3jthhnSgZl5rPZUIaiK-HZvJng0sxXp7grLKKcXhBHBFtjrgDGYH-P-64vA5II"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "*  **Technical Design:** Built on Python and the Django framework, Janeway offers a lightweight, modern interface that emphasizes \"scholar-led\" control.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrd1_Nz37SXGhJyyojaPM5tNeph0Lzl8M2uqszXBHIgh3enpc8p27KDiA6U9LX-ulKve-ZQOg8rm1sFNTD-evMTIFOsCMTX1UJy1GNa2eR4z-H-fE1up6dQEjqVz4lug=="
+        ],
+        [
+          "librarypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSnDwgGmzPbsP3ZgCTwkvbaPKqhePIkUsuAVCaop6JlWuyRY9mV2woKA2X9C_BajuYWFP9Z3XKyo2T8Dc2r-D3RNEWWkjj6FH6g4pplXNxQuLgPLCsIMvcZYbag0DblBv5ToDq-t_zXIh3uanBbJaYPzI="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "It is designed to remove the profit margins of infrastructure providers, demonstrating that Diamond Open Access is scalable.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrd1_Nz37SXGhJyyojaPM5tNeph0Lzl8M2uqszXBHIgh3enpc8p27KDiA6U9LX-ulKve-ZQOg8rm1sFNTD-evMTIFOsCMTX1UJy1GNa2eR4z-H-fE1up6dQEjqVz4lug=="
+        ],
+        [
+          "janeway.systems",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxPJlm6t6KNP5OoTMP5GPD583kVdEs3H2G2vlCOJ8Ag_rK3j61Bd3JLt3jthhnSgZl5rPZUIaiK-HZvJng0sxXp7grLKKcXhBHBFtjrgDGYH-P-64vA5II"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "*  **Adoption:** It has been adopted by major institutional publishers such as the California Digital Library, University of Michigan, and UCL Press, indicating a shift where libraries are reclaiming the publishing role from commercial entities.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openlibhums.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrd1_Nz37SXGhJyyojaPM5tNeph0Lzl8M2uqszXBHIgh3enpc8p27KDiA6U9LX-ulKve-ZQOg8rm1sFNTD-evMTIFOsCMTX1UJy1GNa2eR4z-H-fE1up6dQEjqVz4lug=="
+        ],
+        [
+          "librarypublishing.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSnDwgGmzPbsP3ZgCTwkvbaPKqhePIkUsuAVCaop6JlWuyRY9mV2woKA2X9C_BajuYWFP9Z3XKyo2T8Dc2r-D3RNEWWkjj6FH6g4pplXNxQuLgPLCsIMvcZYbag0DblBv5ToDq-t_zXIh3uanBbJaYPzI="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "### 1.3 PubPub and Collaborative Publishing",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bc.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHDqANMv3IbQNWGIXCyR8nJfBv_qgIENdfc8LuQSCjn8Rbv3j5GsiU8ooIwQybjcqjCO_okRgVxNvnxKHFy42ViudXnOUcXLZYrqhMH1Z9-h_mcX_XRVKsUERo--0JGFz3iSH5H08n-v2BKI4nCENOzVAU_1Rz5zWztTo5Ge4i5MJovjFmRzHdthFS_MlDl"
+        ],
+        [
+          "enago.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFvWxarIR8VpDMflG-rAvtSv_BtQVeMWyvfTdM3v2zpyJHwWZKEFgMkEVh7d38AJNfimGRjZEh3RwvYv4-FQp5xu4puGA5_sHstBguBjRgLFjbY_E-W3kw86YxZOCS7X46vgcp2I2B76cb7ZRoj3S4swm2gEDTSxRRhsSMQOyF3wnSRfBdPSIm2pr_y71wv4qwNc_DZRzYcEIxx2fB5"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "PubPub, developed by the Knowledge Futures Group, represents a shift toward \"collaborative\" and \"living\" documents.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bc.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHDqANMv3IbQNWGIXCyR8nJfBv_qgIENdfc8LuQSCjn8Rbv3j5GsiU8ooIwQybjcqjCO_okRgVxNvnxKHFy42ViudXnOUcXLZYrqhMH1Z9-h_mcX_XRVKsUERo--0JGFz3iSH5H08n-v2BKI4nCENOzVAU_1Rz5zWztTo5Ge4i5MJovjFmRzHdthFS_MlDl"
+        ],
+        [
+          "enago.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFvWxarIR8VpDMflG-rAvtSv_BtQVeMWyvfTdM3v2zpyJHwWZKEFgMkEVh7d38AJNfimGRjZEh3RwvYv4-FQp5xu4puGA5_sHstBguBjRgLFjbY_E-W3kw86YxZOCS7X46vgcp2I2B76cb7ZRoj3S4swm2gEDTSxRRhsSMQOyF3wnSRfBdPSIm2pr_y71wv4qwNc_DZRzYcEIxx2fB5"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "Unlike traditional PDF-centric workflows, PubPub focuses on web-native publishing that allows for versioning, annotation, and community interaction.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bc.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHDqANMv3IbQNWGIXCyR8nJfBv_qgIENdfc8LuQSCjn8Rbv3j5GsiU8ooIwQybjcqjCO_okRgVxNvnxKHFy42ViudXnOUcXLZYrqhMH1Z9-h_mcX_XRVKsUERo--0JGFz3iSH5H08n-v2BKI4nCENOzVAU_1Rz5zWztTo5Ge4i5MJovjFmRzHdthFS_MlDl"
+        ],
+        [
+          "enago.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFvWxarIR8VpDMflG-rAvtSv_BtQVeMWyvfTdM3v2zpyJHwWZKEFgMkEVh7d38AJNfimGRjZEh3RwvYv4-FQp5xu4puGA5_sHstBguBjRgLFjbY_E-W3kw86YxZOCS7X46vgcp2I2B76cb7ZRoj3S4swm2gEDTSxRRhsSMQOyF3wnSRfBdPSIm2pr_y71wv4qwNc_DZRzYcEIxx2fB5"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "*  **Community Publishing:** PubPub is used for \"grassroots journals\" and interactive monographs, allowing research communities to curate material according to specific fields of interest without the gatekeeping of traditional publishers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "enago.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFvWxarIR8VpDMflG-rAvtSv_BtQVeMWyvfTdM3v2zpyJHwWZKEFgMkEVh7d38AJNfimGRjZEh3RwvYv4-FQp5xu4puGA5_sHstBguBjRgLFjbY_E-W3kw86YxZOCS7X46vgcp2I2B76cb7ZRoj3S4swm2gEDTSxRRhsSMQOyF3wnSRfBdPSIm2pr_y71wv4qwNc_DZRzYcEIxx2fB5"
+        ],
+        [
+          "nobukofujita.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRgT0oOObBv2qs3E1Woyz-8_s3NflXxuURjIeElxanNjuMOe3iehl0AF5ODNV7brI6QQYUaFNN0UzlG1DujaAUrjh68Be0NPSdOQ4IblTf0P7R-dPWZmCUyixnAPHt5TkYA16ml11ENiIfnKhfoN78_hpE5bmr5Fs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "*  **Flexibility:** It supports a wide variety of formats, from traditional journals to \"experiential\" publications, providing a home for interdisciplinary work that may not fit the rigid structures of legacy platforms .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bc.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHDqANMv3IbQNWGIXCyR8nJfBv_qgIENdfc8LuQSCjn8Rbv3j5GsiU8ooIwQybjcqjCO_okRgVxNvnxKHFy42ViudXnOUcXLZYrqhMH1Z9-h_mcX_XRVKsUERo--0JGFz3iSH5H08n-v2BKI4nCENOzVAU_1Rz5zWztTo5Ge4i5MJovjFmRzHdthFS_MlDl"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "## 2. Geographical Redistribution of Knowledge Production",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "The most profound impact of open-source platforms has been the geographical shift in where journals are hosted and published.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "By providing free, high-quality infrastructure, these platforms have enabled the \"Global South\" to build independent publishing capacities.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "### 2.1 The \"OJS Phenomenon\" in Indonesia",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEEzf-Gqmu783oDBSnbuju2R6QLV_jEMZyXxf2HNAyiBH5U7jG5ug3dPrvm7ZW5-EGJ4a3PDldBBHQwNI5vTK2DUBVaOb5yzeYyPwk2RUj2CvQU43TxRPjX0uTjtrZIwOY4"
+        ],
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "Indonesia presents the most striking example of OSS adoption.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEEzf-Gqmu783oDBSnbuju2R6QLV_jEMZyXxf2HNAyiBH5U7jG5ug3dPrvm7ZW5-EGJ4a3PDldBBHQwNI5vTK2DUBVaOb5yzeYyPwk2RUj2CvQU43TxRPjX0uTjtrZIwOY4"
+        ],
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "The country has the highest number of OJS installations in the world, with nearly 20,000 active journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEEzf-Gqmu783oDBSnbuju2R6QLV_jEMZyXxf2HNAyiBH5U7jG5ug3dPrvm7ZW5-EGJ4a3PDldBBHQwNI5vTK2DUBVaOb5yzeYyPwk2RUj2CvQU43TxRPjX0uTjtrZIwOY4"
+        ],
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_3",
+      "section_idx": 8,
+      "idx_in_section": 3,
+      "text": "*  **Policy Drivers:** The Indonesian government mandates that graduate students and faculty publish their research.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "escienceediting.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQTIrOCTMOncFPBmidz3cQHbf_PPzres6rXBbp9UxEdNYxjvUV49e0YEtxgqlSaGoEo1iKZbMkPSIwAIDI1DtPrjiRLd1Oc-64GsqNlXt7CrsH2zsaZdICxnEfQzLQZEMigWX2KoyWArGZRDuBV7bTHw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_4",
+      "section_idx": 8,
+      "idx_in_section": 4,
+      "text": "To meet this demand without relying on expensive foreign journals, universities established thousands of their own journals using OJS.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "escienceediting.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQTIrOCTMOncFPBmidz3cQHbf_PPzres6rXBbp9UxEdNYxjvUV49e0YEtxgqlSaGoEo1iKZbMkPSIwAIDI1DtPrjiRLd1Oc-64GsqNlXt7CrsH2zsaZdICxnEfQzLQZEMigWX2KoyWArGZRDuBV7bTHw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_5",
+      "section_idx": 8,
+      "idx_in_section": 5,
+      "text": "*  **Scale:** As of 2022, Indonesia accounted for approximately 19,977 active OJS journals, far surpassing the United States (1,494) and Brazil (3,732).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_6",
+      "section_idx": 8,
+      "idx_in_section": 6,
+      "text": "*  **Characteristics:** A 2024 study of Indonesian university journals found that 96.7% offer free public access (Diamond OA).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "escienceediting.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQTIrOCTMOncFPBmidz3cQHbf_PPzres6rXBbp9UxEdNYxjvUV49e0YEtxgqlSaGoEo1iKZbMkPSIwAIDI1DtPrjiRLd1Oc-64GsqNlXt7CrsH2zsaZdICxnEfQzLQZEMigWX2KoyWArGZRDuBV7bTHw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_7",
+      "section_idx": 8,
+      "idx_in_section": 7,
+      "text": "While they are highly visible in Google Scholar (95.7%), they remain underrepresented in Western indices like Scopus and Web of Science, highlighting a disconnect between local output and \"global\" prestige metrics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "escienceediting.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEQTIrOCTMOncFPBmidz3cQHbf_PPzres6rXBbp9UxEdNYxjvUV49e0YEtxgqlSaGoEo1iKZbMkPSIwAIDI1DtPrjiRLd1Oc-64GsqNlXt7CrsH2zsaZdICxnEfQzLQZEMigWX2KoyWArGZRDuBV7bTHw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "### 2.2 Latin America: The Diamond Open Access Model",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "Latin America has a long tradition of non-commercial, academic-led publishing.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "Open-source infrastructure has been crucial in formalizing and interconnecting this ecosystem, often referred to as the \"Diamond\" model (free to read, free to publish).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "**Redalyc and AmeliCA:** Redalyc (based in Mexico) and AmeliCA are cooperative infrastructures that provide hosting, indexing, and visibility for journals that adhere to non-commercial principles.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "enssib.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHITzWEN_NkHXDdk_5B4Oxl8bsGEKxMgqfbxExtpMvwiT7QAzmm-KzK_GTzjX9YC4QfBxOl4eMO21ascj_E2ecWlQP3VgA0ZBr1C_XL0Bkli17f-pgvfs_LW8vDohpkbPLJR4d8xiTKUI8idj3y6UKT5UJgjxLlxDcAwHYXe3iFyx3nXqAEjfd7Tw=="
+        ],
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExOyeJ6lUEKHysvpkgFfcHGQZwOUA89ujw6OfqzePGM6xAjBnu8Vg2OJQSTnSYBLL-LkNVHbQif9dCkq8PQvpRocwkTHSufbQco66f9dxiPgLwGwHQ0hUz2TaIEsjlUEVZ6kksZRkzD7od9D_HPwn6Uo0rouBCbKi-jhNliBYTvXJ-80jEAvThr0eztG8HpXYxdEkdLmmZpeG1BCQwLECoNSA6pMLyww3q-UQWJJNkyPu30tWeZWvj2ftuXibhS8GnCxKTN3jfxlYeu1VKysnSGxqNvOsyzepyWT9zkelwSU_0MAdapRgHfs6WKPYL9ldzDyY7g7WdTFxijiM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_4",
+      "section_idx": 9,
+      "idx_in_section": 4,
+      "text": "They utilize open-source technologies to create a \"born open\" ecosystem.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "enssib.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHITzWEN_NkHXDdk_5B4Oxl8bsGEKxMgqfbxExtpMvwiT7QAzmm-KzK_GTzjX9YC4QfBxOl4eMO21ascj_E2ecWlQP3VgA0ZBr1C_XL0Bkli17f-pgvfs_LW8vDohpkbPLJR4d8xiTKUI8idj3y6UKT5UJgjxLlxDcAwHYXe3iFyx3nXqAEjfd7Tw=="
+        ],
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExOyeJ6lUEKHysvpkgFfcHGQZwOUA89ujw6OfqzePGM6xAjBnu8Vg2OJQSTnSYBLL-LkNVHbQif9dCkq8PQvpRocwkTHSufbQco66f9dxiPgLwGwHQ0hUz2TaIEsjlUEVZ6kksZRkzD7od9D_HPwn6Uo0rouBCbKi-jhNliBYTvXJ-80jEAvThr0eztG8HpXYxdEkdLmmZpeG1BCQwLECoNSA6pMLyww3q-UQWJJNkyPu30tWeZWvj2ftuXibhS8GnCxKTN3jfxlYeu1VKysnSGxqNvOsyzepyWT9zkelwSU_0MAdapRgHfs6WKPYL9ldzDyY7g7WdTFxijiM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_5",
+      "section_idx": 9,
+      "idx_in_section": 5,
+      "text": "**Infrastructure as Resistance:** These initiatives explicitly position themselves as alternatives to the commercial \"pay-to-publish\" (APC) models favored in Europe (e.g., Plan S).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExOyeJ6lUEKHysvpkgFfcHGQZwOUA89ujw6OfqzePGM6xAjBnu8Vg2OJQSTnSYBLL-LkNVHbQif9dCkq8PQvpRocwkTHSufbQco66f9dxiPgLwGwHQ0hUz2TaIEsjlUEVZ6kksZRkzD7od9D_HPwn6Uo0rouBCbKi-jhNliBYTvXJ-80jEAvThr0eztG8HpXYxdEkdLmmZpeG1BCQwLECoNSA6pMLyww3q-UQWJJNkyPu30tWeZWvj2ftuXibhS8GnCxKTN3jfxlYeu1VKysnSGxqNvOsyzepyWT9zkelwSU_0MAdapRgHfs6WKPYL9ldzDyY7g7WdTFxijiM="
+        ],
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGNffE9_0LYgYGFq6Z6nJCbmWC8VVP2qu9v3l8BPVmYj8UlMOmzoLKW8wFp1XBxv6vqcvxIq7-NPslXIKnl9MjobNmTVVf5uPAefqho5T1oZA11XixHGn3rbY55EfWPiR5Py8h7sbeJ31jymdiGK0ROczzZ61065tNg76MghePdOKQPPl5vQmVcGO3Dhx03bmEDchQUJOQEh3XT2rphRNpuk2oX_l4s0zi-DQmRvryqwVIngUnK2QqRYe4fIgIQEizKculuYxONhNn0LBZv4rjm7u6VuVf8-i7Dt3blTwjchKBqxqFh3-mg8aR9Igw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_6",
+      "section_idx": 9,
+      "idx_in_section": 6,
+      "text": "By using shared open infrastructure, they maintain academic control over the means of production.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExOyeJ6lUEKHysvpkgFfcHGQZwOUA89ujw6OfqzePGM6xAjBnu8Vg2OJQSTnSYBLL-LkNVHbQif9dCkq8PQvpRocwkTHSufbQco66f9dxiPgLwGwHQ0hUz2TaIEsjlUEVZ6kksZRkzD7od9D_HPwn6Uo0rouBCbKi-jhNliBYTvXJ-80jEAvThr0eztG8HpXYxdEkdLmmZpeG1BCQwLECoNSA6pMLyww3q-UQWJJNkyPu30tWeZWvj2ftuXibhS8GnCxKTN3jfxlYeu1VKysnSGxqNvOsyzepyWT9zkelwSU_0MAdapRgHfs6WKPYL9ldzDyY7g7WdTFxijiM="
+        ],
+        [
+          "lse.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGNffE9_0LYgYGFq6Z6nJCbmWC8VVP2qu9v3l8BPVmYj8UlMOmzoLKW8wFp1XBxv6vqcvxIq7-NPslXIKnl9MjobNmTVVf5uPAefqho5T1oZA11XixHGn3rbY55EfWPiR5Py8h7sbeJ31jymdiGK0ROczzZ61065tNg76MghePdOKQPPl5vQmVcGO3Dhx03bmEDchQUJOQEh3XT2rphRNpuk2oX_l4s0zi-DQmRvryqwVIngUnK2QqRYe4fIgIQEizKculuYxONhNn0LBZv4rjm7u6VuVf8-i7Dt3blTwjchKBqxqFh3-mg8aR9Igw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_7",
+      "section_idx": 9,
+      "idx_in_section": 7,
+      "text": "**Brazil:** Brazil is the second-largest user of OJS globally, with over 3,700 active journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEEzf-Gqmu783oDBSnbuju2R6QLV_jEMZyXxf2HNAyiBH5U7jG5ug3dPrvm7ZW5-EGJ4a3PDldBBHQwNI5vTK2DUBVaOb5yzeYyPwk2RUj2CvQU43TxRPjX0uTjtrZIwOY4"
+        ],
+        [
+          "rpubs.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELZ4U_yzQWmvJGzSgOr6bwhDFnG9bOIkFeSq01sUQUMn3fM4jfmeG8qSZy34Dli8MII9qUqMBw_oyjmnCK6NCzedP6xmK0nAXyKMcf1gAEUeoFd1Idc-HYN6TNAL6MpvQ="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_8",
+      "section_idx": 9,
+      "idx_in_section": 8,
+      "text": "The nationalization of platforms like SciELO (which often integrates with OJS workflows) demonstrates how state investment in open infrastructure can secure open access as a strategic national asset.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHnCoE-3a_jADhMVqxSjLwGgLx3D43bDF01bCdZVChjNc8EFH_zCuFtWMsfCXHHxJRr5oAy6M4bbkxhiTyBapzglRCVysZhJxOHVmKPNwjtlfa9Dq6ZjOlntVKUqFi3y511-R6ko3wpvw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

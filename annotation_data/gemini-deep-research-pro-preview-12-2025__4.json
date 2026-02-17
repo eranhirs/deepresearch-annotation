@@ -1,0 +1,3108 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "4",
+  "question": "Please provide a detailed answer to the following question:\n\nIn recommendation systems, how are new methods that optimize diversity typically evaluated?",
+  "answer": "# Comprehensive Evaluation of Diversity Optimization in Recommendation Systems\n\n### Key Points\n*   **Multi-faceted Evaluation:** The evaluation of diversity in recommender systems (RS) is not a single-metric task but requires a holistic approach combining offline metrics, online A/B testing, and user studies to capture the trade-off between accuracy and exploration.\n*   **The Accuracy-Diversity Dilemma:** A fundamental tension exists where optimizing purely for accuracy (e.g., precision, RMSE) often results in redundant recommendations (the \"filter bubble\"), while increasing diversity can degrade immediate accuracy metrics, necessitating the analysis of Pareto frontiers to find optimal trade-offs.\n*   **Standardized Metrics:** Key offline metrics include Intra-List Diversity (ILD) for dissimilarity within a list, Catalog Coverage for aggregate system breadth, and Serendipity for the discovery of unexpected yet relevant items.\n*   **Algorithmic Baselines:** New methods are typically benchmarked against established re-ranking strategies such as Maximal Marginal Relevance (MMR) and Determinantal Point Processes (DPP), which mathematically model the repulsion between selected items.\n*   **User Perception Gap:** Research indicates a discrepancy between mathematical diversity and *perceived* diversity; user studies reveal that users often favor explicit metadata-based diversity (e.g., genres) over latent feature diversity, highlighting the need for human-centric evaluation.\n\n---\n\n## 1. Introduction\n\nRecommender systems (RS) have become the primary mechanism for navigating the vast information landscape of the digital age, filtering billions of items to present users with a manageable set of choices [cite: 1, 2]. Traditionally, the evaluation of these systems focused almost exclusively on **accuracy**\u2014the ability to predict a user's rating for an item or the probability of a click [cite: 1, 3]. However, a singular focus on accuracy has been shown to lead to the \"filter bubble\" phenomenon, where users are exposed only to content that reinforces their existing preferences, and the \"long-tail\" problem, where a vast majority of catalog items remain undiscovered [cite: 4, 5].\n\nConsequently, the academic and industrial focus has shifted toward \"beyond-accuracy\" objectives, specifically **diversity**, **novelty**, and **serendipity** [cite: 6, 7]. Evaluating new methods that optimize for diversity requires a complex methodological framework. It is not sufficient to merely show that a new algorithm generates diverse items; one must demonstrate that it does so without catastrophically sacrificing relevance. This report details the rigorous evaluation protocols used in the field, ranging from mathematical offline metrics and standard datasets to live online experiments and psychological user studies.\n\n## 2. The Accuracy-Diversity Trade-off\n\n### 2.1 The Nature of the Dilemma\nThe core challenge in evaluating diversity-optimized methods is the inherent trade-off between accuracy and diversity. Accuracy metrics, such as Root Mean Square Error (RMSE) or Precision@k, reward systems that recommend items most similar to a user's historical interactions [cite: 4, 5]. In contrast, diversity metrics reward systems that recommend items that are dissimilar to each other or to the user's history.\n\nFor example, a movie recommender maximizing accuracy for a user who loves \"Star Wars\" might recommend only other \"Star Wars\" films. This achieves high precision but zero diversity. A diversity-optimized system might recommend \"Star Wars\" alongside a romantic comedy and a documentary. While this increases diversity, the probability of the user clicking the non-sci-fi options might be lower, technically reducing the system's \"accuracy\" score [cite: 4].\n\n### 2.2 Pareto Frontier Analysis\nTo evaluate a new method, researchers typically do not look for a single \"best\" score but rather analyze the **Pareto frontier**. When plotting Accuracy (y-axis) against Diversity (x-axis), a new method is considered superior if it pushes the frontier outward\u2014achieving higher diversity for the same level of accuracy, or higher accuracy for the same level of diversity, compared to baselines [cite: 8, 9].\n\nRecent theoretical work suggests this trade-off arises because standard accuracy metrics fail to account for **consumption constraints**\u2014users can only consume a finite number of items. When these constraints are modeled (e.g., via user utility functions), the \"trade-off\" diminishes, as diverse bundles naturally maximize utility by avoiding diminishing returns from redundant items [cite: 10, 11].\n\n## 3. Offline Evaluation Methodologies\n\nOffline evaluation remains the most common first step for assessing new diversity methods due to its low cost and reproducibility. It utilizes historical datasets (e.g., user-item interaction matrices) to simulate recommendations [cite: 1, 12, 13].\n\n### 3.1 Intra-List Diversity (ILD)\nThe most ubiquitous metric for evaluating individual diversity is **Intra-List Diversity (ILD)**. It measures the average pairwise dissimilarity between all items in a recommendation list $L$ of size $k$.\n\nThe formula for ILD is typically defined as:\n\\[\nILD(L) = \\frac{1}{|L|(|L|-1)} \\sum_{i \\in L} \\sum_{j \\in L, j \\neq i} dist(i, j)\n\\]\nWhere $dist(i, j)$ represents a distance measure between item $i$ and item $j$ [cite: 14, 15, 16].\n\n*   **Distance Metrics:** The choice of distance function is critical.\n    *   **Cosine Distance:** Often used when items are represented by feature vectors (e.g., TF-IDF vectors of movie plots or latent vectors from matrix factorization) [cite: 14, 17].\n    *   **Jaccard Distance:** Used for categorical data (e.g., genre overlap). If two movies share no genres, their distance is 1 [cite: 18, 19].\n    *   **Hamming Distance:** Used for binary attribute vectors [cite: 18].\n\nA higher ILD score indicates that the items within a single recommendation list are distinct from one another (e.g., a list containing a horror movie, a comedy, and a documentary) [cite: 20, 21].\n\n### 3.2 Aggregate Diversity and Coverage\nWhile ILD measures diversity for a single user, **Aggregate Diversity** measures the diversity of the system as a whole across all users. This is crucial for ensuring that the system does not simply recommend the same \"diverse\" set of popular items to everyone (e.g., everyone gets \"Titanic\" and \"The Godfather\").\n\n#### 3.2.1 Catalog Coverage\nCatalog Coverage measures the percentage of items in the system's inventory that are recommended to at least one user.\n\\[\n\\text{Catalog Coverage} = \\frac{|\\bigcup_{u \\in U} R_u|}{|I|} \\times 100\n\\]\nWhere $R_u$ is the set of items recommended to user $u$, and $I$ is the total set of available items [cite: 18, 22, 23, 24]. High coverage implies the system is effectively utilizing the \"long tail\" of the catalog, which is beneficial for provider fairness and sales diversity [cite: 4, 20].\n\n#### 3.2.2 Distributional Coverage (Entropy and Gini)\nCatalog coverage does not account for the *frequency* of recommendations. A system could recommend every item once and the most popular item a million times. To evaluate the *evenness* of distribution, researchers use:\n*   **Gini Index:** Measures the inequality of the recommendation frequency distribution. A Gini index of 0 implies perfect equality (all items recommended equally often) [cite: 22].\n*   **Shannon Entropy:** Higher entropy indicates a more uniform distribution of recommended items across the catalog [cite: 18].\n\n### 3.3 Novelty and Serendipity\nDiversity is often evaluated alongside **Novelty** and **Serendipity**, as they are distinct but related concepts.\n\n*   **Novelty:** Measures how unknown an item is to a user or the general population. It is often quantified using the self-information of an item based on its popularity:\n    \\[\n    Novelty(i) = -\\log_2 p(i)\n    \\]\n    Where $p(i)$ is the probability of observing item $i$ (often approximated by its popularity ratio). High novelty scores indicate the recommendation of obscure, long-tail items [cite: 6, 14, 25].\n\n*   **Serendipity:** This is a stricter metric than novelty. For a recommendation to be serendipitous, it must be **both** unexpected (novel) **and** relevant (useful).\n    \\[\n    Serendipity = \\frac{1}{|U|} \\sum_{u \\in U} \\frac{|R_{unexp}(u) \\cap R_{rel}(u)|}{|R(u)|}\n    \\]\n    Evaluating serendipity offline is difficult because \"relevance\" for an unobserved item is hard to verify without user feedback. Researchers often approximate this by holding out \"long-tail\" items from the user's history and checking if the model can predict them [cite: 14, 23, 25, 26].\n\n### 3.4 Unified Metrics (Accuracy + Diversity)\nTo avoid analyzing two separate metrics, some researchers propose unified metrics. For example, **$\\alpha$-NDCG** is a variation of Normalized Discounted Cumulative Gain that rewards topic diversity. It penalizes the relevance score of an item if the user has already been recommended items with the same intent or topic earlier in the list [cite: 27, 28].\n\n## 4. Online Evaluation and A/B Testing\n\nWhile offline metrics provide a theoretical baseline, they often fail to predict real-world success due to the \"misinformation effect\"\u2014offline data is biased by the previous recommender system's policy [cite: 1, 29]. Therefore, new diversity methods are ultimately evaluated in online environments.\n\n### 4.1 A/B Testing Protocols\nIn an A/B test, users are randomly split into a control group (receiving recommendations from the current baseline) and a treatment group (receiving recommendations from the new diversity-optimized method) [cite: 1, 12].\n\n### 4.2 Online Metrics\nUnlike offline proxies, online evaluation measures tangible user behavior:\n*   **Click-Through Rate (CTR):** The ratio of clicks to impressions. A common fear is that increasing diversity will lower CTR in the short term because users are shown less familiar items [cite: 1, 12].\n*   **Conversion Rate:** The percentage of recommendations that lead to a consumption event (purchase, watch, listen).\n*   **Dwell Time / Engagement:** How long the user stays on the platform. Diversity is often hypothesized to improve long-term retention by preventing boredom, even if short-term CTR drops [cite: 1, 3].\n*   **Bounce Rate:** If diversity is too high (irrelevant randomness), users may leave the platform, increasing the bounce rate [cite: 5].\n\n### 4.3 Interleaving\nA more sensitive alternative to A/B testing is **interleaving**, where a single list presented to the user contains items from both the baseline and the new algorithm (mixed together). The system tracks which algorithm contributed the items the user actually interacted with. This method requires fewer users to detect statistically significant differences in preference [cite: 30].\n\n## 5. User Studies and Perceived Diversity\n\nA critical finding in recent research is the disconnect between **algorithmic diversity** (measured by ILD) and **perceived diversity** (what users actually notice).\n\n### 5.1 The Perception Gap\nStudies have shown that users may not perceive a list as diverse even if it has a high mathematical diversity score, particularly if the diversity is based on latent features (e.g., matrix factorization vectors) rather than explicit attributes like genre or brand. Conversely, users might perceive a list as diverse based on surface-level features (e.g., different movie poster colors) even if the semantic content is similar [cite: 16, 31, 32].\n\n### 5.2 User Study Methodologies\nTo evaluate this, researchers conduct controlled experiments (often using platforms like Amazon Mechanical Turk or lab settings):\n*   **Questionnaires:** Users are shown lists generated by different algorithms and asked to rate them on Likert scales for \"variety,\" \"novelty,\" and \"satisfaction\" [cite: 1, 31].\n*   **Side-by-Side Comparison:** Users are shown two lists (one accurate, one diverse) and asked to choose which they prefer [cite: 33].\n*   **Cognitive Load:** Studies also measure the time it takes for users to make a choice. Excessive diversity can lead to \"choice overload,\" increasing the cognitive effort required to select an item [cite: 22, 32].\n\nResearch indicates that **metadata-based metrics** (e.g., diversity based on movie genres) correlate better with user perception than latent-space metrics [cite: 31].\n\n## 6. Standard Baselines and Algorithms\n\nWhen publishing a new diversity-optimizing method, it is standard practice to compare it against established re-ranking algorithms. These baselines serve as the \"control\" to prove that the new method offers a better Pareto trade-off.\n\n### 6.1 Maximal Marginal Relevance (MMR)\nMMR is the \"gold standard\" baseline for diversity. It is a greedy re-ranking algorithm that iteratively selects the item that maximizes a linear combination of relevance and dissimilarity to already selected items.\n\\[\nMMR = \\arg\\max_{i \\in C} [\\lambda \\cdot Sim_1(i, q) - (1-\\lambda) \\max_{j \\in S} Sim_2(i, j)]\n\\]\nWhere $\\lambda$ controls the trade-off. If $\\lambda=1$, it is pure relevance; if $\\lambda=0$, it is pure diversity. New methods are often evaluated by checking if they can beat MMR's curve [cite: 4, 34, 35, 36, 37].\n\n### 6.2 Determinantal Point Processes (DPP)\nDPP is a more advanced, probabilistic baseline. Unlike MMR, which is greedy, DPP models the probability of selecting a *set* of items based on the determinant of a kernel matrix $L$. The kernel matrix captures both quality (diagonal elements) and similarity (off-diagonal elements).\n\\[\nP(S) \\propto \\det(L_S)\n\\]\nDPP is favored for its mathematical elegance in modeling \"repulsion\" between items. It is often used as a strong baseline for generating coherent, diverse bundles [cite: 8, 38, 39, 40, 41, 42].\n\n### 6.3 xQuAD (Explicit Query Aspect Diversification)\nxQuAD is an intent-aware metric and re-ranking method often used as a baseline. It explicitly models the probability that a user is interested in a specific \"aspect\" (e.g., a genre or topic) and ensures the recommendation list covers these aspects proportionally to the user's interest [cite: 43, 44].\n\n## 7. Datasets and Benchmarking\n\nThe choice of dataset is pivotal for evaluating diversity. The dataset must contain rich **metadata** (genres, tags, descriptions) to calculate meaningful distance metrics.\n\n### 7.1 Common Datasets\n*   **MovieLens:** The de facto standard. Contains user ratings and, crucially, genre information for movies. Used in roughly 40% of RecSys papers [cite: 45, 46].\n*   **Last.fm:** Used for music recommendation. Contains artist tags, allowing for diversity evaluation based on genre or artist similarity [cite: 47, 48].\n*   **MIND (Microsoft News Dataset):** A large-scale dataset for news recommendation, where diversity (covering different news topics) is a critical requirement [cite: 45, 47].\n*   **Amazon Product Data:** Used for e-commerce. Allows evaluation of category coverage (e.g., recommending electronics vs. books) [cite: 45, 46].\n\n### 7.2 Synthetic Datasets\nIn some cases, researchers create synthetic datasets or modify existing ones (e.g., \"poisoning\" data) to test how robust a diversity algorithm is to extreme user behaviors or to simulate specific \"filter bubble\" scenarios [cite: 49, 50].\n\n## 8. Emerging Trends: Fairness and Long-Tail Optimization\n\nRecent evaluation frameworks have begun to merge **diversity** with **fairness**.\n*   **Provider Fairness:** Evaluating whether items from different providers (or authors/artists) are recommended equally. This is a form of \"item-side\" diversity [cite: 49, 51].\n*   **User Fairness:** Ensuring that all user groups (e.g., active vs. inactive users) receive equally diverse recommendations. Standard diversity metrics are now often broken down by user cohorts to ensure the \"rich\" (users with much history) don't get all the diversity while \"poor\" users get generic popularity lists [cite: 52, 53].\n\n## 9. Conclusion\n\nThe evaluation of new methods optimizing diversity in recommendation systems is a rigorous, multi-layered process. It begins with **offline benchmarking** using metrics like ILD and Catalog Coverage on standard datasets like MovieLens, comparing against strong baselines like MMR and DPP. It requires analyzing the **Pareto frontier** to ensure accuracy is not disproportionately sacrificed. However, because mathematical diversity does not always align with human perception, **user studies** and **online A/B testing** remain the ultimate validators, ensuring that the \"diverse\" recommendations actually enhance user satisfaction and business value rather than merely satisfying a mathematical constraint.\n\n#",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# Comprehensive Evaluation of Diversity Optimization in Recommendation Systems",
+      "header_level": 1,
+      "text": "# Comprehensive Evaluation of Diversity Optimization in Recommendation Systems\n\n",
+      "start": 0,
+      "end": 80
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "### Key Points",
+      "header_level": 3,
+      "text": "### Key Points\n*   **Multi-faceted Evaluation:** The evaluation of diversity in recommender systems (RS) is not a single-metric task but requires a holistic approach combining offline metrics, online A/B testing, and user studies to capture the trade-off between accuracy and exploration.\n*   **The Accuracy-Diversity Dilemma:** A fundamental tension exists where optimizing purely for accuracy (e.g., precision, RMSE) often results in redundant recommendations (the \"filter bubble\"), while increasing diversity can degrade immediate accuracy metrics, necessitating the analysis of Pareto frontiers to find optimal trade-offs.\n*   **Standardized Metrics:** Key offline metrics include Intra-List Diversity (ILD) for dissimilarity within a list, Catalog Coverage for aggregate system breadth, and Serendipity for the discovery of unexpected yet relevant items.\n*   **Algorithmic Baselines:** New methods are typically benchmarked against established re-ranking strategies such as Maximal Marginal Relevance (MMR) and Determinantal Point Processes (DPP), which mathematically model the repulsion between selected items.\n*   **User Perception Gap:** Research indicates a discrepancy between mathematical diversity and *perceived* diversity; user studies reveal that users often favor explicit metadata-based diversity (e.g., genres) over latent feature diversity, highlighting the need for human-centric evaluation.\n\n---\n\n",
+      "start": 80,
+      "end": 1499
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 1. Introduction",
+      "header_level": 2,
+      "text": "## 1. Introduction\n\nRecommender systems (RS) have become the primary mechanism for navigating the vast information landscape of the digital age, filtering billions of items to present users with a manageable set of choices [cite: 1, 2]. Traditionally, the evaluation of these systems focused almost exclusively on **accuracy**\u2014the ability to predict a user's rating for an item or the probability of a click [cite: 1, 3]. However, a singular focus on accuracy has been shown to lead to the \"filter bubble\" phenomenon, where users are exposed only to content that reinforces their existing preferences, and the \"long-tail\" problem, where a vast majority of catalog items remain undiscovered [cite: 4, 5].\n\nConsequently, the academic and industrial focus has shifted toward \"beyond-accuracy\" objectives, specifically **diversity**, **novelty**, and **serendipity** [cite: 6, 7]. Evaluating new methods that optimize for diversity requires a complex methodological framework. It is not sufficient to merely show that a new algorithm generates diverse items; one must demonstrate that it does so without catastrophically sacrificing relevance. This report details the rigorous evaluation protocols used in the field, ranging from mathematical offline metrics and standard datasets to live online experiments and psychological user studies.\n\n",
+      "start": 1499,
+      "end": 2836
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 2. The Accuracy-Diversity Trade-off",
+      "header_level": 2,
+      "text": "## 2. The Accuracy-Diversity Trade-off\n\n",
+      "start": 2836,
+      "end": 2876
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 2.1 The Nature of the Dilemma",
+      "header_level": 3,
+      "text": "### 2.1 The Nature of the Dilemma\nThe core challenge in evaluating diversity-optimized methods is the inherent trade-off between accuracy and diversity. Accuracy metrics, such as Root Mean Square Error (RMSE) or Precision@k, reward systems that recommend items most similar to a user's historical interactions [cite: 4, 5]. In contrast, diversity metrics reward systems that recommend items that are dissimilar to each other or to the user's history.\n\nFor example, a movie recommender maximizing accuracy for a user who loves \"Star Wars\" might recommend only other \"Star Wars\" films. This achieves high precision but zero diversity. A diversity-optimized system might recommend \"Star Wars\" alongside a romantic comedy and a documentary. While this increases diversity, the probability of the user clicking the non-sci-fi options might be lower, technically reducing the system's \"accuracy\" score [cite: 4].\n\n",
+      "start": 2876,
+      "end": 3784
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 2.2 Pareto Frontier Analysis",
+      "header_level": 3,
+      "text": "### 2.2 Pareto Frontier Analysis\nTo evaluate a new method, researchers typically do not look for a single \"best\" score but rather analyze the **Pareto frontier**. When plotting Accuracy (y-axis) against Diversity (x-axis), a new method is considered superior if it pushes the frontier outward\u2014achieving higher diversity for the same level of accuracy, or higher accuracy for the same level of diversity, compared to baselines [cite: 8, 9].\n\nRecent theoretical work suggests this trade-off arises because standard accuracy metrics fail to account for **consumption constraints**\u2014users can only consume a finite number of items. When these constraints are modeled (e.g., via user utility functions), the \"trade-off\" diminishes, as diverse bundles naturally maximize utility by avoiding diminishing returns from redundant items [cite: 10, 11].\n\n",
+      "start": 3784,
+      "end": 4626
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## 3. Offline Evaluation Methodologies",
+      "header_level": 2,
+      "text": "## 3. Offline Evaluation Methodologies\n\nOffline evaluation remains the most common first step for assessing new diversity methods due to its low cost and reproducibility. It utilizes historical datasets (e.g., user-item interaction matrices) to simulate recommendations [cite: 1, 12, 13].\n\n",
+      "start": 4626,
+      "end": 4916
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### 3.1 Intra-List Diversity (ILD)",
+      "header_level": 3,
+      "text": "### 3.1 Intra-List Diversity (ILD)\nThe most ubiquitous metric for evaluating individual diversity is **Intra-List Diversity (ILD)**. It measures the average pairwise dissimilarity between all items in a recommendation list $L$ of size $k$.\n\nThe formula for ILD is typically defined as:\n\\[\nILD(L) = \\frac{1}{|L|(|L|-1)} \\sum_{i \\in L} \\sum_{j \\in L, j \\neq i} dist(i, j)\n\\]\nWhere $dist(i, j)$ represents a distance measure between item $i$ and item $j$ [cite: 14, 15, 16].\n\n*   **Distance Metrics:** The choice of distance function is critical.\n    *   **Cosine Distance:** Often used when items are represented by feature vectors (e.g., TF-IDF vectors of movie plots or latent vectors from matrix factorization) [cite: 14, 17].\n    *   **Jaccard Distance:** Used for categorical data (e.g., genre overlap). If two movies share no genres, their distance is 1 [cite: 18, 19].\n    *   **Hamming Distance:** Used for binary attribute vectors [cite: 18].\n\nA higher ILD score indicates that the items within a single recommendation list are distinct from one another (e.g., a list containing a horror movie, a comedy, and a documentary) [cite: 20, 21].\n\n",
+      "start": 4916,
+      "end": 6064
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "### 3.2 Aggregate Diversity and Coverage",
+      "header_level": 3,
+      "text": "### 3.2 Aggregate Diversity and Coverage\nWhile ILD measures diversity for a single user, **Aggregate Diversity** measures the diversity of the system as a whole across all users. This is crucial for ensuring that the system does not simply recommend the same \"diverse\" set of popular items to everyone (e.g., everyone gets \"Titanic\" and \"The Godfather\").\n\n",
+      "start": 6064,
+      "end": 6420
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "#### 3.2.1 Catalog Coverage",
+      "header_level": 4,
+      "text": "#### 3.2.1 Catalog Coverage\nCatalog Coverage measures the percentage of items in the system's inventory that are recommended to at least one user.\n\\[\n\\text{Catalog Coverage} = \\frac{|\\bigcup_{u \\in U} R_u|}{|I|} \\times 100\n\\]\nWhere $R_u$ is the set of items recommended to user $u$, and $I$ is the total set of available items [cite: 18, 22, 23, 24]. High coverage implies the system is effectively utilizing the \"long tail\" of the catalog, which is beneficial for provider fairness and sales diversity [cite: 4, 20].\n\n",
+      "start": 6420,
+      "end": 6939
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "#### 3.2.2 Distributional Coverage (Entropy and Gini)",
+      "header_level": 4,
+      "text": "#### 3.2.2 Distributional Coverage (Entropy and Gini)\nCatalog coverage does not account for the *frequency* of recommendations. A system could recommend every item once and the most popular item a million times. To evaluate the *evenness* of distribution, researchers use:\n*   **Gini Index:** Measures the inequality of the recommendation frequency distribution. A Gini index of 0 implies perfect equality (all items recommended equally often) [cite: 22].\n*   **Shannon Entropy:** Higher entropy indicates a more uniform distribution of recommended items across the catalog [cite: 18].\n\n",
+      "start": 6939,
+      "end": 7526
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "### 3.3 Novelty and Serendipity",
+      "header_level": 3,
+      "text": "### 3.3 Novelty and Serendipity\nDiversity is often evaluated alongside **Novelty** and **Serendipity**, as they are distinct but related concepts.\n\n*   **Novelty:** Measures how unknown an item is to a user or the general population. It is often quantified using the self-information of an item based on its popularity:\n    \\[\n    Novelty(i) = -\\log_2 p(i)\n    \\]\n    Where $p(i)$ is the probability of observing item $i$ (often approximated by its popularity ratio). High novelty scores indicate the recommendation of obscure, long-tail items [cite: 6, 14, 25].\n\n*   **Serendipity:** This is a stricter metric than novelty. For a recommendation to be serendipitous, it must be **both** unexpected (novel) **and** relevant (useful).\n    \\[\n    Serendipity = \\frac{1}{|U|} \\sum_{u \\in U} \\frac{|R_{unexp}(u) \\cap R_{rel}(u)|}{|R(u)|}\n    \\]\n    Evaluating serendipity offline is difficult because \"relevance\" for an unobserved item is hard to verify without user feedback. Researchers often approximate this by holding out \"long-tail\" items from the user's history and checking if the model can predict them [cite: 14, 23, 25, 26].\n\n",
+      "start": 7526,
+      "end": 8658
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "### 3.4 Unified Metrics (Accuracy + Diversity)",
+      "header_level": 3,
+      "text": "### 3.4 Unified Metrics (Accuracy + Diversity)\nTo avoid analyzing two separate metrics, some researchers propose unified metrics. For example, **$\\alpha$-NDCG** is a variation of Normalized Discounted Cumulative Gain that rewards topic diversity. It penalizes the relevance score of an item if the user has already been recommended items with the same intent or topic earlier in the list [cite: 27, 28].\n\n",
+      "start": 8658,
+      "end": 9063
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "## 4. Online Evaluation and A/B Testing",
+      "header_level": 2,
+      "text": "## 4. Online Evaluation and A/B Testing\n\nWhile offline metrics provide a theoretical baseline, they often fail to predict real-world success due to the \"misinformation effect\"\u2014offline data is biased by the previous recommender system's policy [cite: 1, 29]. Therefore, new diversity methods are ultimately evaluated in online environments.\n\n",
+      "start": 9063,
+      "end": 9404
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "### 4.1 A/B Testing Protocols",
+      "header_level": 3,
+      "text": "### 4.1 A/B Testing Protocols\nIn an A/B test, users are randomly split into a control group (receiving recommendations from the current baseline) and a treatment group (receiving recommendations from the new diversity-optimized method) [cite: 1, 12].\n\n",
+      "start": 9404,
+      "end": 9656
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "### 4.2 Online Metrics",
+      "header_level": 3,
+      "text": "### 4.2 Online Metrics\nUnlike offline proxies, online evaluation measures tangible user behavior:\n*   **Click-Through Rate (CTR):** The ratio of clicks to impressions. A common fear is that increasing diversity will lower CTR in the short term because users are shown less familiar items [cite: 1, 12].\n*   **Conversion Rate:** The percentage of recommendations that lead to a consumption event (purchase, watch, listen).\n*   **Dwell Time / Engagement:** How long the user stays on the platform. Diversity is often hypothesized to improve long-term retention by preventing boredom, even if short-term CTR drops [cite: 1, 3].\n*   **Bounce Rate:** If diversity is too high (irrelevant randomness), users may leave the platform, increasing the bounce rate [cite: 5].\n\n",
+      "start": 9656,
+      "end": 10421
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "### 4.3 Interleaving",
+      "header_level": 3,
+      "text": "### 4.3 Interleaving\nA more sensitive alternative to A/B testing is **interleaving**, where a single list presented to the user contains items from both the baseline and the new algorithm (mixed together). The system tracks which algorithm contributed the items the user actually interacted with. This method requires fewer users to detect statistically significant differences in preference [cite: 30].\n\n",
+      "start": 10421,
+      "end": 10826
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "## 5. User Studies and Perceived Diversity",
+      "header_level": 2,
+      "text": "## 5. User Studies and Perceived Diversity\n\nA critical finding in recent research is the disconnect between **algorithmic diversity** (measured by ILD) and **perceived diversity** (what users actually notice).\n\n",
+      "start": 10826,
+      "end": 11037
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "### 5.1 The Perception Gap",
+      "header_level": 3,
+      "text": "### 5.1 The Perception Gap\nStudies have shown that users may not perceive a list as diverse even if it has a high mathematical diversity score, particularly if the diversity is based on latent features (e.g., matrix factorization vectors) rather than explicit attributes like genre or brand. Conversely, users might perceive a list as diverse based on surface-level features (e.g., different movie poster colors) even if the semantic content is similar [cite: 16, 31, 32].\n\n",
+      "start": 11037,
+      "end": 11511
+    },
+    {
+      "idx": 19,
+      "section_type": "text",
+      "header": "### 5.2 User Study Methodologies",
+      "header_level": 3,
+      "text": "### 5.2 User Study Methodologies\nTo evaluate this, researchers conduct controlled experiments (often using platforms like Amazon Mechanical Turk or lab settings):\n*   **Questionnaires:** Users are shown lists generated by different algorithms and asked to rate them on Likert scales for \"variety,\" \"novelty,\" and \"satisfaction\" [cite: 1, 31].\n*   **Side-by-Side Comparison:** Users are shown two lists (one accurate, one diverse) and asked to choose which they prefer [cite: 33].\n*   **Cognitive Load:** Studies also measure the time it takes for users to make a choice. Excessive diversity can lead to \"choice overload,\" increasing the cognitive effort required to select an item [cite: 22, 32].\n\nResearch indicates that **metadata-based metrics** (e.g., diversity based on movie genres) correlate better with user perception than latent-space metrics [cite: 31].\n\n",
+      "start": 11511,
+      "end": 12377
+    },
+    {
+      "idx": 20,
+      "section_type": "text",
+      "header": "## 6. Standard Baselines and Algorithms",
+      "header_level": 2,
+      "text": "## 6. Standard Baselines and Algorithms\n\nWhen publishing a new diversity-optimizing method, it is standard practice to compare it against established re-ranking algorithms. These baselines serve as the \"control\" to prove that the new method offers a better Pareto trade-off.\n\n",
+      "start": 12377,
+      "end": 12653
+    },
+    {
+      "idx": 21,
+      "section_type": "text",
+      "header": "### 6.1 Maximal Marginal Relevance (MMR)",
+      "header_level": 3,
+      "text": "### 6.1 Maximal Marginal Relevance (MMR)\nMMR is the \"gold standard\" baseline for diversity. It is a greedy re-ranking algorithm that iteratively selects the item that maximizes a linear combination of relevance and dissimilarity to already selected items.\n\\[\nMMR = \\arg\\max_{i \\in C} [\\lambda \\cdot Sim_1(i, q) - (1-\\lambda) \\max_{j \\in S} Sim_2(i, j)]\n\\]\nWhere $\\lambda$ controls the trade-off. If $\\lambda=1$, it is pure relevance; if $\\lambda=0$, it is pure diversity. New methods are often evaluated by checking if they can beat MMR's curve [cite: 4, 34, 35, 36, 37].\n\n",
+      "start": 12653,
+      "end": 13226
+    },
+    {
+      "idx": 22,
+      "section_type": "text",
+      "header": "### 6.2 Determinantal Point Processes (DPP)",
+      "header_level": 3,
+      "text": "### 6.2 Determinantal Point Processes (DPP)\nDPP is a more advanced, probabilistic baseline. Unlike MMR, which is greedy, DPP models the probability of selecting a *set* of items based on the determinant of a kernel matrix $L$. The kernel matrix captures both quality (diagonal elements) and similarity (off-diagonal elements).\n\\[\nP(S) \\propto \\det(L_S)\n\\]\nDPP is favored for its mathematical elegance in modeling \"repulsion\" between items. It is often used as a strong baseline for generating coherent, diverse bundles [cite: 8, 38, 39, 40, 41, 42].\n\n",
+      "start": 13226,
+      "end": 13777
+    },
+    {
+      "idx": 23,
+      "section_type": "text",
+      "header": "### 6.3 xQuAD (Explicit Query Aspect Diversification)",
+      "header_level": 3,
+      "text": "### 6.3 xQuAD (Explicit Query Aspect Diversification)\nxQuAD is an intent-aware metric and re-ranking method often used as a baseline. It explicitly models the probability that a user is interested in a specific \"aspect\" (e.g., a genre or topic) and ensures the recommendation list covers these aspects proportionally to the user's interest [cite: 43, 44].\n\n",
+      "start": 13777,
+      "end": 14134
+    },
+    {
+      "idx": 24,
+      "section_type": "text",
+      "header": "## 7. Datasets and Benchmarking",
+      "header_level": 2,
+      "text": "## 7. Datasets and Benchmarking\n\nThe choice of dataset is pivotal for evaluating diversity. The dataset must contain rich **metadata** (genres, tags, descriptions) to calculate meaningful distance metrics.\n\n",
+      "start": 14134,
+      "end": 14341
+    },
+    {
+      "idx": 25,
+      "section_type": "text",
+      "header": "### 7.1 Common Datasets",
+      "header_level": 3,
+      "text": "### 7.1 Common Datasets\n*   **MovieLens:** The de facto standard. Contains user ratings and, crucially, genre information for movies. Used in roughly 40% of RecSys papers [cite: 45, 46].\n*   **Last.fm:** Used for music recommendation. Contains artist tags, allowing for diversity evaluation based on genre or artist similarity [cite: 47, 48].\n*   **MIND (Microsoft News Dataset):** A large-scale dataset for news recommendation, where diversity (covering different news topics) is a critical requirement [cite: 45, 47].\n*   **Amazon Product Data:** Used for e-commerce. Allows evaluation of category coverage (e.g., recommending electronics vs. books) [cite: 45, 46].\n\n",
+      "start": 14341,
+      "end": 15010
+    },
+    {
+      "idx": 26,
+      "section_type": "text",
+      "header": "### 7.2 Synthetic Datasets",
+      "header_level": 3,
+      "text": "### 7.2 Synthetic Datasets\nIn some cases, researchers create synthetic datasets or modify existing ones (e.g., \"poisoning\" data) to test how robust a diversity algorithm is to extreme user behaviors or to simulate specific \"filter bubble\" scenarios [cite: 49, 50].\n\n",
+      "start": 15010,
+      "end": 15276
+    },
+    {
+      "idx": 27,
+      "section_type": "text",
+      "header": "## 8. Emerging Trends: Fairness and Long-Tail Optimization",
+      "header_level": 2,
+      "text": "## 8. Emerging Trends: Fairness and Long-Tail Optimization\n\nRecent evaluation frameworks have begun to merge **diversity** with **fairness**.\n*   **Provider Fairness:** Evaluating whether items from different providers (or authors/artists) are recommended equally. This is a form of \"item-side\" diversity [cite: 49, 51].\n*   **User Fairness:** Ensuring that all user groups (e.g., active vs. inactive users) receive equally diverse recommendations. Standard diversity metrics are now often broken down by user cohorts to ensure the \"rich\" (users with much history) don't get all the diversity while \"poor\" users get generic popularity lists [cite: 52, 53].\n\n",
+      "start": 15276,
+      "end": 15934
+    },
+    {
+      "idx": 28,
+      "section_type": "text",
+      "header": "## 9. Conclusion",
+      "header_level": 2,
+      "text": "## 9. Conclusion\n\nThe evaluation of new methods optimizing diversity in recommendation systems is a rigorous, multi-layered process. It begins with **offline benchmarking** using metrics like ILD and Catalog Coverage on standard datasets like MovieLens, comparing against strong baselines like MMR and DPP. It requires analyzing the **Pareto frontier** to ensure accuracy is not disproportionately sacrificed. However, because mathematical diversity does not always align with human perception, **user studies** and **online A/B testing** remain the ultimate validators, ensuring that the \"diverse\" recommendations actually enhance user satisfaction and business value rather than merely satisfying a mathematical constraint.\n\n#",
+      "start": 15934,
+      "end": 16662
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# Comprehensive Evaluation of Diversity Optimization in Recommendation Systems",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "#### 3.2.2 Distributional Coverage (Entropy and Gini)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "Catalog coverage does not account for the *frequency* of recommendations.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "A system could recommend every item once and the most popular item a million times.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "To evaluate the *evenness* of distribution, researchers use:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_4",
+      "section_idx": 10,
+      "idx_in_section": 4,
+      "text": "*  **Gini Index:** Measures the inequality of the recommendation frequency distribution.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHbQhczyOOPIoVJDOmbOm-Pg00TST6qpW-92751DNt66Gsv64MZf6wMmqsOuWO8m9AAzUsFlYkdi3AMsQApjpyF2Sh5Lfn4jV1vSQ_ir0eOdEB28isRHUw8EA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_5",
+      "section_idx": 10,
+      "idx_in_section": 5,
+      "text": "A Gini index of 0 implies perfect equality (all items recommended equally often).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF16kA27sJz8zd5JXsTe6Ksft2ZH-AjV6zCjPOGfixVauTtOgjTS-xhswsklY1UAlFdTP2tTbhQfy7bl0aHvBhTuDh1ZOr03X5b46VEPRqbJPmL__l2MSnN0cACCQa8U1Uv5IOWEwcI0StXUm5a9W1Ig9YHmNFhfAtoyOi6IyomWkVwuBCnO1xRT9zJmMvQQtA3_VVPWzoltgPj-0pXYCFxTvBETS--cA2JHwvtpA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_6",
+      "section_idx": 10,
+      "idx_in_section": 6,
+      "text": "*  **Shannon Entropy:** Higher entropy indicates a more uniform distribution of recommended items across the catalog.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHbQhczyOOPIoVJDOmbOm-Pg00TST6qpW-92751DNt66Gsv64MZf6wMmqsOuWO8m9AAzUsFlYkdi3AMsQApjpyF2Sh5Lfn4jV1vSQ_ir0eOdEB28isRHUw8EA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "### 3.3 Novelty and Serendipity",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "Diversity is often evaluated alongside **Novelty** and **Serendipity**, as they are distinct but related concepts.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_10",
+      "section_idx": 11,
+      "idx_in_section": 10,
+      "text": "For a recommendation to be serendipitous, it must be **both** unexpected (novel) **and** relevant (useful).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGs2byK3QKvgbDCHIFWVd5cBi-Eq047SVLx7IKQxF9gkNC6Pir4WsJTbMbgne0yxbsep4xtL7xBL98b0pTYvDFBQ7W34M--tpoupB7nGXd4kQWBVePaxw=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaQVLaOC4vSrqa_DWBef5AfZY6jQc1vlId4jjIV1rhvXD4H9Al431yVJTjS6BgqIWWOeP9sZFAWad6JME0knj2QOadRgVgcyyF4PNen_-q6hrhVujHdKE4hNCT6DOscEenprfhBQR6MGnbRGpVhp9EAej0FCsfnTpzKT1xldOFSB81xN3wowz_de8Ot3Fp3jJe"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_11",
+      "section_idx": 11,
+      "idx_in_section": 11,
+      "text": "\\[",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGs2byK3QKvgbDCHIFWVd5cBi-Eq047SVLx7IKQxF9gkNC6Pir4WsJTbMbgne0yxbsep4xtL7xBL98b0pTYvDFBQ7W34M--tpoupB7nGXd4kQWBVePaxw=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaQVLaOC4vSrqa_DWBef5AfZY6jQc1vlId4jjIV1rhvXD4H9Al431yVJTjS6BgqIWWOeP9sZFAWad6JME0knj2QOadRgVgcyyF4PNen_-q6hrhVujHdKE4hNCT6DOscEenprfhBQR6MGnbRGpVhp9EAej0FCsfnTpzKT1xldOFSB81xN3wowz_de8Ot3Fp3jJe"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_12",
+      "section_idx": 11,
+      "idx_in_section": 12,
+      "text": "Serendipity = \\frac{1}{|U|} \\sum_{u \\in U} \\frac{|R_{unexp}(u) \\cap R_{rel}(u)|}{|R(u)|}",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGs2byK3QKvgbDCHIFWVd5cBi-Eq047SVLx7IKQxF9gkNC6Pir4WsJTbMbgne0yxbsep4xtL7xBL98b0pTYvDFBQ7W34M--tpoupB7nGXd4kQWBVePaxw=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaQVLaOC4vSrqa_DWBef5AfZY6jQc1vlId4jjIV1rhvXD4H9Al431yVJTjS6BgqIWWOeP9sZFAWad6JME0knj2QOadRgVgcyyF4PNen_-q6hrhVujHdKE4hNCT6DOscEenprfhBQR6MGnbRGpVhp9EAej0FCsfnTpzKT1xldOFSB81xN3wowz_de8Ot3Fp3jJe"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_13",
+      "section_idx": 11,
+      "idx_in_section": 13,
+      "text": "\\]",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGs2byK3QKvgbDCHIFWVd5cBi-Eq047SVLx7IKQxF9gkNC6Pir4WsJTbMbgne0yxbsep4xtL7xBL98b0pTYvDFBQ7W34M--tpoupB7nGXd4kQWBVePaxw=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaQVLaOC4vSrqa_DWBef5AfZY6jQc1vlId4jjIV1rhvXD4H9Al431yVJTjS6BgqIWWOeP9sZFAWad6JME0knj2QOadRgVgcyyF4PNen_-q6hrhVujHdKE4hNCT6DOscEenprfhBQR6MGnbRGpVhp9EAej0FCsfnTpzKT1xldOFSB81xN3wowz_de8Ot3Fp3jJe"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_14",
+      "section_idx": 11,
+      "idx_in_section": 14,
+      "text": "Evaluating serendipity offline is difficult because \"relevance\" for an unobserved item is hard to verify without user feedback.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGs2byK3QKvgbDCHIFWVd5cBi-Eq047SVLx7IKQxF9gkNC6Pir4WsJTbMbgne0yxbsep4xtL7xBL98b0pTYvDFBQ7W34M--tpoupB7nGXd4kQWBVePaxw=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaQVLaOC4vSrqa_DWBef5AfZY6jQc1vlId4jjIV1rhvXD4H9Al431yVJTjS6BgqIWWOeP9sZFAWad6JME0knj2QOadRgVgcyyF4PNen_-q6hrhVujHdKE4hNCT6DOscEenprfhBQR6MGnbRGpVhp9EAej0FCsfnTpzKT1xldOFSB81xN3wowz_de8Ot3Fp3jJe"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_15",
+      "section_idx": 11,
+      "idx_in_section": 15,
+      "text": "Researchers often approximate this by holding out \"long-tail\" items from the user's history and checking if the model can predict them.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGs2byK3QKvgbDCHIFWVd5cBi-Eq047SVLx7IKQxF9gkNC6Pir4WsJTbMbgne0yxbsep4xtL7xBL98b0pTYvDFBQ7W34M--tpoupB7nGXd4kQWBVePaxw=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaQVLaOC4vSrqa_DWBef5AfZY6jQc1vlId4jjIV1rhvXD4H9Al431yVJTjS6BgqIWWOeP9sZFAWad6JME0knj2QOadRgVgcyyF4PNen_-q6hrhVujHdKE4hNCT6DOscEenprfhBQR6MGnbRGpVhp9EAej0FCsfnTpzKT1xldOFSB81xN3wowz_de8Ot3Fp3jJe"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "**Novelty:** Measures how unknown an item is to a user or the general population.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uop.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJt4L1cM_brABe5HRTDsFBF8iq9vnw9h0TSBRset5ydxnc27QpMF7dJTMF7zbGaMdPiFNlqSqAOvqjVzzkWo05N0hqIqLNJAttCzld1Ppq-8pAOvcgGCahiEy-qrWgYG7woT4EdUDkhkRlSrwJ-sgcW2PBic7mC6tw3ncDRkhmQ7aR8UvTfvhnH5-QV7kWUvH-N8L0cThf2wU4qia6nr6moLNpxMcR6w1abhZz3BVP8iXSSB0suZIzijo4TCL_IkW7OfB35QQYnm4udbGOKGaoD8iJ6_J0CMpoprufe51YsuLtey7mdlbSEu3yJZ7wMVcUEv-jJYWYqhZpNXBzLYA="
+        ],
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "It is often quantified using the self-information of an item based on its popularity:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uop.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJt4L1cM_brABe5HRTDsFBF8iq9vnw9h0TSBRset5ydxnc27QpMF7dJTMF7zbGaMdPiFNlqSqAOvqjVzzkWo05N0hqIqLNJAttCzld1Ppq-8pAOvcgGCahiEy-qrWgYG7woT4EdUDkhkRlSrwJ-sgcW2PBic7mC6tw3ncDRkhmQ7aR8UvTfvhnH5-QV7kWUvH-N8L0cThf2wU4qia6nr6moLNpxMcR6w1abhZz3BVP8iXSSB0suZIzijo4TCL_IkW7OfB35QQYnm4udbGOKGaoD8iJ6_J0CMpoprufe51YsuLtey7mdlbSEu3yJZ7wMVcUEv-jJYWYqhZpNXBzLYA="
+        ],
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "\\[",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uop.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJt4L1cM_brABe5HRTDsFBF8iq9vnw9h0TSBRset5ydxnc27QpMF7dJTMF7zbGaMdPiFNlqSqAOvqjVzzkWo05N0hqIqLNJAttCzld1Ppq-8pAOvcgGCahiEy-qrWgYG7woT4EdUDkhkRlSrwJ-sgcW2PBic7mC6tw3ncDRkhmQ7aR8UvTfvhnH5-QV7kWUvH-N8L0cThf2wU4qia6nr6moLNpxMcR6w1abhZz3BVP8iXSSB0suZIzijo4TCL_IkW7OfB35QQYnm4udbGOKGaoD8iJ6_J0CMpoprufe51YsuLtey7mdlbSEu3yJZ7wMVcUEv-jJYWYqhZpNXBzLYA="
+        ],
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "Novelty(i) = -\\log_2 p(i)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uop.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJt4L1cM_brABe5HRTDsFBF8iq9vnw9h0TSBRset5ydxnc27QpMF7dJTMF7zbGaMdPiFNlqSqAOvqjVzzkWo05N0hqIqLNJAttCzld1Ppq-8pAOvcgGCahiEy-qrWgYG7woT4EdUDkhkRlSrwJ-sgcW2PBic7mC6tw3ncDRkhmQ7aR8UvTfvhnH5-QV7kWUvH-N8L0cThf2wU4qia6nr6moLNpxMcR6w1abhZz3BVP8iXSSB0suZIzijo4TCL_IkW7OfB35QQYnm4udbGOKGaoD8iJ6_J0CMpoprufe51YsuLtey7mdlbSEu3yJZ7wMVcUEv-jJYWYqhZpNXBzLYA="
+        ],
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "text": "\\]",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uop.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJt4L1cM_brABe5HRTDsFBF8iq9vnw9h0TSBRset5ydxnc27QpMF7dJTMF7zbGaMdPiFNlqSqAOvqjVzzkWo05N0hqIqLNJAttCzld1Ppq-8pAOvcgGCahiEy-qrWgYG7woT4EdUDkhkRlSrwJ-sgcW2PBic7mC6tw3ncDRkhmQ7aR8UvTfvhnH5-QV7kWUvH-N8L0cThf2wU4qia6nr6moLNpxMcR6w1abhZz3BVP8iXSSB0suZIzijo4TCL_IkW7OfB35QQYnm4udbGOKGaoD8iJ6_J0CMpoprufe51YsuLtey7mdlbSEu3yJZ7wMVcUEv-jJYWYqhZpNXBzLYA="
+        ],
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_7",
+      "section_idx": 11,
+      "idx_in_section": 7,
+      "text": "Where $p(i)$ is the probability of observing item $i$ (often approximated by its popularity ratio).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uop.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJt4L1cM_brABe5HRTDsFBF8iq9vnw9h0TSBRset5ydxnc27QpMF7dJTMF7zbGaMdPiFNlqSqAOvqjVzzkWo05N0hqIqLNJAttCzld1Ppq-8pAOvcgGCahiEy-qrWgYG7woT4EdUDkhkRlSrwJ-sgcW2PBic7mC6tw3ncDRkhmQ7aR8UvTfvhnH5-QV7kWUvH-N8L0cThf2wU4qia6nr6moLNpxMcR6w1abhZz3BVP8iXSSB0suZIzijo4TCL_IkW7OfB35QQYnm4udbGOKGaoD8iJ6_J0CMpoprufe51YsuLtey7mdlbSEu3yJZ7wMVcUEv-jJYWYqhZpNXBzLYA="
+        ],
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_8",
+      "section_idx": 11,
+      "idx_in_section": 8,
+      "text": "High novelty scores indicate the recommendation of obscure, long-tail items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uop.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJt4L1cM_brABe5HRTDsFBF8iq9vnw9h0TSBRset5ydxnc27QpMF7dJTMF7zbGaMdPiFNlqSqAOvqjVzzkWo05N0hqIqLNJAttCzld1Ppq-8pAOvcgGCahiEy-qrWgYG7woT4EdUDkhkRlSrwJ-sgcW2PBic7mC6tw3ncDRkhmQ7aR8UvTfvhnH5-QV7kWUvH-N8L0cThf2wU4qia6nr6moLNpxMcR6w1abhZz3BVP8iXSSB0suZIzijo4TCL_IkW7OfB35QQYnm4udbGOKGaoD8iJ6_J0CMpoprufe51YsuLtey7mdlbSEu3yJZ7wMVcUEv-jJYWYqhZpNXBzLYA="
+        ],
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_9",
+      "section_idx": 11,
+      "idx_in_section": 9,
+      "text": "**Serendipity:** This is a stricter metric than novelty.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGs2byK3QKvgbDCHIFWVd5cBi-Eq047SVLx7IKQxF9gkNC6Pir4WsJTbMbgne0yxbsep4xtL7xBL98b0pTYvDFBQ7W34M--tpoupB7nGXd4kQWBVePaxw=="
+        ],
+        [
+          "eugeneyan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFKg0PM0WeDUO7OTg9WavZ_AFpCHmmAQX98levkaSDVVjjr3x7KuSSyYFqOfxzNd_cTMeK89t3dINEbfjwrAgFNc-7RuV4qF-vcjSNKsoQiJms32lekn_iTZrAzI6swrQSSm9PfrLR0fuLNhH2H2xprF2Eqy3CKUTx5YaYGa6p-cXP-xUs="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaQVLaOC4vSrqa_DWBef5AfZY6jQc1vlId4jjIV1rhvXD4H9Al431yVJTjS6BgqIWWOeP9sZFAWad6JME0knj2QOadRgVgcyyF4PNen_-q6hrhVujHdKE4hNCT6DOscEenprfhBQR6MGnbRGpVhp9EAej0FCsfnTpzKT1xldOFSB81xN3wowz_de8Ot3Fp3jJe"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "### 3.4 Unified Metrics (Accuracy + Diversity)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgRkHafPcsCLHafJuctafqw_KMm8vkb__UEx2XqJypZXj-AYj8kShmhLuuyXmdNDrquQsTgumPU7jh5R6EFNWaBEcwS-MC0nmksJgyy_0Lfk3o9zzCZ0G0ISy9-4G7necI"
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOVcft1RBcvz_fZyCVxAATIE-CGgsNMzkkqe7FT75ZJAdeXqFpZr9V_3EKTo6i_K39egkS4HlpIKOGZiSaNfEDJFKOzsrbTTkzRWc8D6f56ZcFfNPV-MeIya4X708Cd5OKQI_jnsCRfnXRvN2zTiT79RJ1qtJfQ0fMpuj5rIT-bapBG0RrMw5MuSK0Ya1dVZGIBsp_BWKa-a1AlpPsIw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "To avoid analyzing two separate metrics, some researchers propose unified metrics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgRkHafPcsCLHafJuctafqw_KMm8vkb__UEx2XqJypZXj-AYj8kShmhLuuyXmdNDrquQsTgumPU7jh5R6EFNWaBEcwS-MC0nmksJgyy_0Lfk3o9zzCZ0G0ISy9-4G7necI"
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOVcft1RBcvz_fZyCVxAATIE-CGgsNMzkkqe7FT75ZJAdeXqFpZr9V_3EKTo6i_K39egkS4HlpIKOGZiSaNfEDJFKOzsrbTTkzRWc8D6f56ZcFfNPV-MeIya4X708Cd5OKQI_jnsCRfnXRvN2zTiT79RJ1qtJfQ0fMpuj5rIT-bapBG0RrMw5MuSK0Ya1dVZGIBsp_BWKa-a1AlpPsIw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_2",
+      "section_idx": 12,
+      "idx_in_section": 2,
+      "text": "For example, **$\\alpha$-NDCG** is a variation of Normalized Discounted Cumulative Gain that rewards topic diversity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgRkHafPcsCLHafJuctafqw_KMm8vkb__UEx2XqJypZXj-AYj8kShmhLuuyXmdNDrquQsTgumPU7jh5R6EFNWaBEcwS-MC0nmksJgyy_0Lfk3o9zzCZ0G0ISy9-4G7necI"
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOVcft1RBcvz_fZyCVxAATIE-CGgsNMzkkqe7FT75ZJAdeXqFpZr9V_3EKTo6i_K39egkS4HlpIKOGZiSaNfEDJFKOzsrbTTkzRWc8D6f56ZcFfNPV-MeIya4X708Cd5OKQI_jnsCRfnXRvN2zTiT79RJ1qtJfQ0fMpuj5rIT-bapBG0RrMw5MuSK0Ya1dVZGIBsp_BWKa-a1AlpPsIw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_3",
+      "section_idx": 12,
+      "idx_in_section": 3,
+      "text": "It penalizes the relevance score of an item if the user has already been recommended items with the same intent or topic earlier in the list.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgRkHafPcsCLHafJuctafqw_KMm8vkb__UEx2XqJypZXj-AYj8kShmhLuuyXmdNDrquQsTgumPU7jh5R6EFNWaBEcwS-MC0nmksJgyy_0Lfk3o9zzCZ0G0ISy9-4G7necI"
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOVcft1RBcvz_fZyCVxAATIE-CGgsNMzkkqe7FT75ZJAdeXqFpZr9V_3EKTo6i_K39egkS4HlpIKOGZiSaNfEDJFKOzsrbTTkzRWc8D6f56ZcFfNPV-MeIya4X708Cd5OKQI_jnsCRfnXRvN2zTiT79RJ1qtJfQ0fMpuj5rIT-bapBG0RrMw5MuSK0Ya1dVZGIBsp_BWKa-a1AlpPsIw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "## 4. Online Evaluation and A/B Testing",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "While offline metrics provide a theoretical baseline, they often fail to predict real-world success due to the \"misinformation effect\"\u2014offline data is biased by the previous recommender system's policy.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "cvut.cz",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG_latw-rPE4ha78CnkE-z25luQLSD651esYVPizfVTXp1vngsS3p8adeTpXIx6mcGkFPGtVMWMM3TYBFH_ltGBckAwypYlpD8Y1k_uNw6XGENLn9kgHXlbpYtFxy-3A9o_j35yUr845LjqRjQalRqA6Ai-vARxsF8M7nA="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_2",
+      "section_idx": 13,
+      "idx_in_section": 2,
+      "text": "Therefore, new diversity methods are ultimately evaluated in online environments.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "### 4.1 A/B Testing Protocols",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDt18t5zOdOmZ9d66WrSkjXv19zYwWvdisf_u1J-_QpnwZR0WL5b--KHBzVP5s9XsVkvGl6TD9Kw5u48T6GxPdcOKXic98CnIlG74Vq3mT8uCCte0aP67qt74TOuPK6cPtIubHaQjDbNDP7gvcNur35xnYACbkikvfrx4q0G7xqadioKK9eWC5dVL_IJEX7mWS6adTyvLNnGksbTEOKdnys1qm_fELWI1uzYDOiKE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "In an A/B test, users are randomly split into a control group (receiving recommendations from the current baseline) and a treatment group (receiving recommendations from the new diversity-optimized method).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDt18t5zOdOmZ9d66WrSkjXv19zYwWvdisf_u1J-_QpnwZR0WL5b--KHBzVP5s9XsVkvGl6TD9Kw5u48T6GxPdcOKXic98CnIlG74Vq3mT8uCCte0aP67qt74TOuPK6cPtIubHaQjDbNDP7gvcNur35xnYACbkikvfrx4q0G7xqadioKK9eWC5dVL_IJEX7mWS6adTyvLNnGksbTEOKdnys1qm_fELWI1uzYDOiKE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "### 4.2 Online Metrics",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "Unlike offline proxies, online evaluation measures tangible user behavior:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_2",
+      "section_idx": 15,
+      "idx_in_section": 2,
+      "text": "*  **Click-Through Rate (CTR):** The ratio of clicks to impressions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDt18t5zOdOmZ9d66WrSkjXv19zYwWvdisf_u1J-_QpnwZR0WL5b--KHBzVP5s9XsVkvGl6TD9Kw5u48T6GxPdcOKXic98CnIlG74Vq3mT8uCCte0aP67qt74TOuPK6cPtIubHaQjDbNDP7gvcNur35xnYACbkikvfrx4q0G7xqadioKK9eWC5dVL_IJEX7mWS6adTyvLNnGksbTEOKdnys1qm_fELWI1uzYDOiKE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_3",
+      "section_idx": 15,
+      "idx_in_section": 3,
+      "text": "A common fear is that increasing diversity will lower CTR in the short term because users are shown less familiar items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDt18t5zOdOmZ9d66WrSkjXv19zYwWvdisf_u1J-_QpnwZR0WL5b--KHBzVP5s9XsVkvGl6TD9Kw5u48T6GxPdcOKXic98CnIlG74Vq3mT8uCCte0aP67qt74TOuPK6cPtIubHaQjDbNDP7gvcNur35xnYACbkikvfrx4q0G7xqadioKK9eWC5dVL_IJEX7mWS6adTyvLNnGksbTEOKdnys1qm_fELWI1uzYDOiKE="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_4",
+      "section_idx": 15,
+      "idx_in_section": 4,
+      "text": "*  **Conversion Rate:** The percentage of recommendations that lead to a consumption event (purchase, watch, listen).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_5",
+      "section_idx": 15,
+      "idx_in_section": 5,
+      "text": "*  **Dwell Time / Engagement:** How long the user stays on the platform.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "zilliz.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHH84xVyyr_oPXfo8uAug8GPnbYjpTT_Wl0qKWlLBpb3T9PRhLAt6izfQnFkmWTsDni5A58BJOEMPwi1VGyS-X7lU3aRCXpmLZQVVo6MUaybj3nMQyhbAS5d-e1EcCVCJwNezsbQ6BDK0YDMs0KyHX-uhN8MZhNOiPB1I1gZ13uPPiE4HGTlWWiQnPk19Oq1pxmVjDuJUFugE8hHKc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_6",
+      "section_idx": 15,
+      "idx_in_section": 6,
+      "text": "Diversity is often hypothesized to improve long-term retention by preventing boredom, even if short-term CTR drops.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "unimelb.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEbsB2clfP-7s-xqagG367xif-vciV-PulwLEjH9DTcXOv2TBxkzCR0AlRYkiOgIxpHU96IlYGWtrVJ8LxlFEMgtepzOgbwsnxUBa1l1xeE6He-0RKBOGQ8z1PqIBpnt8WlSFibO9OQ0WEvAXl2huqaPM0WQm19gg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_7",
+      "section_idx": 15,
+      "idx_in_section": 7,
+      "text": "*  **Bounce Rate:** If diversity is too high (irrelevant randomness), users may leave the platform, increasing the bounce rate.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "zilliz.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHH84xVyyr_oPXfo8uAug8GPnbYjpTT_Wl0qKWlLBpb3T9PRhLAt6izfQnFkmWTsDni5A58BJOEMPwi1VGyS-X7lU3aRCXpmLZQVVo6MUaybj3nMQyhbAS5d-e1EcCVCJwNezsbQ6BDK0YDMs0KyHX-uhN8MZhNOiPB1I1gZ13uPPiE4HGTlWWiQnPk19Oq1pxmVjDuJUFugE8hHKc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "### 4.3 Interleaving",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "shaped.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRX3-Scgrfk_p8-r327Pq5R9RSZk_Z3xo2FX6mXVwhOWoLyqOqiwp0dZOiUF9f_5cqXPSZotvD1XuHqgyvMLnSoz8e7v3R-6PTjMMjxMl0UH73XTGPvnU1OPdrWh1qKozYWD9LfEOWFT_KWdB3MRl0jjwwjcL4cl3noGK8XTXPa4EdlWNfGPzx1Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "A more sensitive alternative to A/B testing is **interleaving**, where a single list presented to the user contains items from both the baseline and the new algorithm (mixed together).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "shaped.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRX3-Scgrfk_p8-r327Pq5R9RSZk_Z3xo2FX6mXVwhOWoLyqOqiwp0dZOiUF9f_5cqXPSZotvD1XuHqgyvMLnSoz8e7v3R-6PTjMMjxMl0UH73XTGPvnU1OPdrWh1qKozYWD9LfEOWFT_KWdB3MRl0jjwwjcL4cl3noGK8XTXPa4EdlWNfGPzx1Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "The system tracks which algorithm contributed the items the user actually interacted with.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "shaped.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRX3-Scgrfk_p8-r327Pq5R9RSZk_Z3xo2FX6mXVwhOWoLyqOqiwp0dZOiUF9f_5cqXPSZotvD1XuHqgyvMLnSoz8e7v3R-6PTjMMjxMl0UH73XTGPvnU1OPdrWh1qKozYWD9LfEOWFT_KWdB3MRl0jjwwjcL4cl3noGK8XTXPa4EdlWNfGPzx1Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_3",
+      "section_idx": 16,
+      "idx_in_section": 3,
+      "text": "This method requires fewer users to detect statistically significant differences in preference.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "shaped.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHRX3-Scgrfk_p8-r327Pq5R9RSZk_Z3xo2FX6mXVwhOWoLyqOqiwp0dZOiUF9f_5cqXPSZotvD1XuHqgyvMLnSoz8e7v3R-6PTjMMjxMl0UH73XTGPvnU1OPdrWh1qKozYWD9LfEOWFT_KWdB3MRl0jjwwjcL4cl3noGK8XTXPa4EdlWNfGPzx1Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "## 5. User Studies and Perceived Diversity",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "A critical finding in recent research is the disconnect between **algorithmic diversity** (measured by ILD) and **perceived diversity** (what users actually notice).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "### 5.1 The Perception Gap",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "christinebauer.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw4OJypB6bxWK2EWbVo5AJZzEVkXP9FQA7C8QKSoHKFeJM82WhLLFrQVGDG3o3RDvbetRdG31Fti4qhhzUGFipvl-AUjdNgfoY_Rd9z8SdFDqHY06i6rEoTgRV6mLgIVSdRVfJ1hYAxc0NJqY="
+        ],
+        [
+          "ludovicoboratto.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4czRLqf0MU_-lYJVhdEq9u6UDAs7J8Cw0rZ0p8tGSrcGgpm6venrZDdUdDiMnO1dyAOPOXogy5mUgXT5ollnjOwtDpdwh4sNQ8Rck5LsxgHACFqebxqG92c9ukEgQ6dMJKqFAy1JPZninrGdAic8ljOTSkaXvybCk9YK4qyBHJ5yocgSY5IL1oBXk"
+        ],
+        [
+          "ceur-ws.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF1oEa8rzKgz191RI6JvcQCYIb3-ogxy2tvH_5Xe0LY424f4PVuQzXp1t9sWJznwWEG-fAjITbpqFq6XHW00AJfAVp8CMRjLG_bs9f2eXNBpeNtUziQBhjgR16YA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "Studies have shown that users may not perceive a list as diverse even if it has a high mathematical diversity score, particularly if the diversity is based on latent features (e.g., matrix factorization vectors) rather than explicit attributes like genre or brand.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "christinebauer.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw4OJypB6bxWK2EWbVo5AJZzEVkXP9FQA7C8QKSoHKFeJM82WhLLFrQVGDG3o3RDvbetRdG31Fti4qhhzUGFipvl-AUjdNgfoY_Rd9z8SdFDqHY06i6rEoTgRV6mLgIVSdRVfJ1hYAxc0NJqY="
+        ],
+        [
+          "ludovicoboratto.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4czRLqf0MU_-lYJVhdEq9u6UDAs7J8Cw0rZ0p8tGSrcGgpm6venrZDdUdDiMnO1dyAOPOXogy5mUgXT5ollnjOwtDpdwh4sNQ8Rck5LsxgHACFqebxqG92c9ukEgQ6dMJKqFAy1JPZninrGdAic8ljOTSkaXvybCk9YK4qyBHJ5yocgSY5IL1oBXk"
+        ],
+        [
+          "ceur-ws.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF1oEa8rzKgz191RI6JvcQCYIb3-ogxy2tvH_5Xe0LY424f4PVuQzXp1t9sWJznwWEG-fAjITbpqFq6XHW00AJfAVp8CMRjLG_bs9f2eXNBpeNtUziQBhjgR16YA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "Conversely, users might perceive a list as diverse based on surface-level features (e.g., different movie poster colors) even if the semantic content is similar.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "christinebauer.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw4OJypB6bxWK2EWbVo5AJZzEVkXP9FQA7C8QKSoHKFeJM82WhLLFrQVGDG3o3RDvbetRdG31Fti4qhhzUGFipvl-AUjdNgfoY_Rd9z8SdFDqHY06i6rEoTgRV6mLgIVSdRVfJ1hYAxc0NJqY="
+        ],
+        [
+          "ludovicoboratto.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4czRLqf0MU_-lYJVhdEq9u6UDAs7J8Cw0rZ0p8tGSrcGgpm6venrZDdUdDiMnO1dyAOPOXogy5mUgXT5ollnjOwtDpdwh4sNQ8Rck5LsxgHACFqebxqG92c9ukEgQ6dMJKqFAy1JPZninrGdAic8ljOTSkaXvybCk9YK4qyBHJ5yocgSY5IL1oBXk"
+        ],
+        [
+          "ceur-ws.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF1oEa8rzKgz191RI6JvcQCYIb3-ogxy2tvH_5Xe0LY424f4PVuQzXp1t9sWJznwWEG-fAjITbpqFq6XHW00AJfAVp8CMRjLG_bs9f2eXNBpeNtUziQBhjgR16YA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_0",
+      "section_idx": 19,
+      "idx_in_section": 0,
+      "text": "### 5.2 User Study Methodologies",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_1",
+      "section_idx": 19,
+      "idx_in_section": 1,
+      "text": "To evaluate this, researchers conduct controlled experiments (often using platforms like Amazon Mechanical Turk or lab settings):",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_2",
+      "section_idx": 19,
+      "idx_in_section": 2,
+      "text": "*  **Questionnaires:** Users are shown lists generated by different algorithms and asked to rate them on Likert scales for \"variety,\" \"novelty,\" and \"satisfaction\".",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "ludovicoboratto.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4czRLqf0MU_-lYJVhdEq9u6UDAs7J8Cw0rZ0p8tGSrcGgpm6venrZDdUdDiMnO1dyAOPOXogy5mUgXT5ollnjOwtDpdwh4sNQ8Rck5LsxgHACFqebxqG92c9ukEgQ6dMJKqFAy1JPZninrGdAic8ljOTSkaXvybCk9YK4qyBHJ5yocgSY5IL1oBXk"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_3",
+      "section_idx": 19,
+      "idx_in_section": 3,
+      "text": "*  **Side-by-Side Comparison:** Users are shown two lists (one accurate, one diverse) and asked to choose which they prefer.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "txst.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHOAT_2BByuM4G7wiX0mtdl2v0onP2MHMkpRcoQoGk8esaQObdBA-MFJAptwRTG95amncUvne5A1ooDzURtyKAXr_DGkDSHpqkuduXT1i1ycOSWu7Crmt4icHBu8jRdPMy7CeN5KOz1d_CtL5r98y2a-HDk1y4IxSq4WRbVaW3OwBo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_4",
+      "section_idx": 19,
+      "idx_in_section": 4,
+      "text": "*  **Cognitive Load:** Studies also measure the time it takes for users to make a choice.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ludovicoboratto.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4czRLqf0MU_-lYJVhdEq9u6UDAs7J8Cw0rZ0p8tGSrcGgpm6venrZDdUdDiMnO1dyAOPOXogy5mUgXT5ollnjOwtDpdwh4sNQ8Rck5LsxgHACFqebxqG92c9ukEgQ6dMJKqFAy1JPZninrGdAic8ljOTSkaXvybCk9YK4qyBHJ5yocgSY5IL1oBXk"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_5",
+      "section_idx": 19,
+      "idx_in_section": 5,
+      "text": "Excessive diversity can lead to \"choice overload,\" increasing the cognitive effort required to select an item.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF16kA27sJz8zd5JXsTe6Ksft2ZH-AjV6zCjPOGfixVauTtOgjTS-xhswsklY1UAlFdTP2tTbhQfy7bl0aHvBhTuDh1ZOr03X5b46VEPRqbJPmL__l2MSnN0cACCQa8U1Uv5IOWEwcI0StXUm5a9W1Ig9YHmNFhfAtoyOi6IyomWkVwuBCnO1xRT9zJmMvQQtA3_VVPWzoltgPj-0pXYCFxTvBETS--cA2JHwvtpA=="
+        ],
+        [
+          "ceur-ws.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF1oEa8rzKgz191RI6JvcQCYIb3-ogxy2tvH_5Xe0LY424f4PVuQzXp1t9sWJznwWEG-fAjITbpqFq6XHW00AJfAVp8CMRjLG_bs9f2eXNBpeNtUziQBhjgR16YA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_6",
+      "section_idx": 19,
+      "idx_in_section": 6,
+      "text": "Research indicates that **metadata-based metrics** (e.g., diversity based on movie genres) correlate better with user perception than latent-space metrics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ludovicoboratto.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4czRLqf0MU_-lYJVhdEq9u6UDAs7J8Cw0rZ0p8tGSrcGgpm6venrZDdUdDiMnO1dyAOPOXogy5mUgXT5ollnjOwtDpdwh4sNQ8Rck5LsxgHACFqebxqG92c9ukEgQ6dMJKqFAy1JPZninrGdAic8ljOTSkaXvybCk9YK4qyBHJ5yocgSY5IL1oBXk"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "### Key Points",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "*  **Multi-faceted Evaluation:** The evaluation of diversity in recommender systems (RS) is not a single-metric task but requires a holistic approach combining offline metrics, online A/B testing, and user studies to capture the trade-off between accuracy and exploration.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "*  **The Accuracy-Diversity Dilemma:** A fundamental tension exists where optimizing purely for accuracy (e.g., precision, RMSE) often results in redundant recommendations (the \"filter bubble\"), while increasing diversity can degrade immediate accuracy metrics, necessitating the analysis of Pareto frontiers to find optimal trade-offs.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "*  **Standardized Metrics:** Key offline metrics include Intra-List Diversity (ILD) for dissimilarity within a list, Catalog Coverage for aggregate system breadth, and Serendipity for the discovery of unexpected yet relevant items.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "*  **Algorithmic Baselines:** New methods are typically benchmarked against established re-ranking strategies such as Maximal Marginal Relevance (MMR) and Determinantal Point Processes (DPP), which mathematically model the repulsion between selected items.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "*  **User Perception Gap:** Research indicates a discrepancy between mathematical diversity and *perceived* diversity; user studies reveal that users often favor explicit metadata-based diversity (e.g., genres) over latent feature diversity, highlighting the need for human-centric evaluation.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_0",
+      "section_idx": 20,
+      "idx_in_section": 0,
+      "text": "## 6. Standard Baselines and Algorithms",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_1",
+      "section_idx": 20,
+      "idx_in_section": 1,
+      "text": "When publishing a new diversity-optimizing method, it is standard practice to compare it against established re-ranking algorithms.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_2",
+      "section_idx": 20,
+      "idx_in_section": 2,
+      "text": "These baselines serve as the \"control\" to prove that the new method offers a better Pareto trade-off.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_0",
+      "section_idx": 21,
+      "idx_in_section": 0,
+      "text": "### 6.1 Maximal Marginal Relevance (MMR)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_1",
+      "section_idx": 21,
+      "idx_in_section": 1,
+      "text": "MMR is the \"gold standard\" baseline for diversity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_2",
+      "section_idx": 21,
+      "idx_in_section": 2,
+      "text": "It is a greedy re-ranking algorithm that iteratively selects the item that maximizes a linear combination of relevance and dissimilarity to already selected items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_3",
+      "section_idx": 21,
+      "idx_in_section": 3,
+      "text": "\\[",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_4",
+      "section_idx": 21,
+      "idx_in_section": 4,
+      "text": "MMR = \\arg\\max_{i \\in C} [\\lambda \\cdot Sim_1(i, q) - (1-\\lambda) \\max_{j \\in S} Sim_2(i, j)]",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_5",
+      "section_idx": 21,
+      "idx_in_section": 5,
+      "text": "\\]",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_6",
+      "section_idx": 21,
+      "idx_in_section": 6,
+      "text": "Where $\\lambda$ controls the trade-off.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_7",
+      "section_idx": 21,
+      "idx_in_section": 7,
+      "text": "If $\\lambda=1$, it is pure relevance; if $\\lambda=0$, it is pure diversity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_8",
+      "section_idx": 21,
+      "idx_in_section": 8,
+      "text": "New methods are often evaluated by checking if they can beat MMR's curve.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqi7W1K7Uyrm2Dm7ox3gCN1wfKyenMaGzOLhuuUTQdOWh6eKcyHvZR-3vbBCx0qvO4B_MYN4CewKC_SygnKt6zU4St6aXPTtWts8ShM1o8GuFbLFPWwnN9mvJunj-6VtP_K4-EXQ-WW4MozfMgpgMvCAxykGAaN6AG7w-noMwiBnDfNPHoOtAh5v7US8I_yKv3qIiBE7Ln0GoAIZ73__TJE6CANl-pakAOumH1JSC_"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFGsDA4i8silbo0ZUXl1bP6SEnK_zvDdDL-ixylx0oC_9nuQ54BDuZbxucWj_9snjugOysoDLdiX-9ZDsV0njaU45PLXdMcJq0jf-2zzyB97oKyzeb5nYnux2V3l56ff8uOrCLC1Bl5u8O6yj0gMbd3VFZdXk_PhjujJVP5Ly9Caizr8cI8wX3R1rvKAxSqn1W2Woe8VzczyxDKkkZscxd6U1YTBRNXGeMFtvRoGSgyj_dZm8J0u-hhDm8ipSSGbIy7"
+        ],
+        [
+          "elastic.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpSQCaLQA1qPTBH09lvXYl_wXJHMkQpZ6q90YLmGeNHuB3sBi51Nlqx3vhbALza2VXuTpBbuPpBMVokYkWUM5UAAVgn1jxvcM0rEnUYPQjSswxPsD7A3wvO5W2mEsW-WWsnaz37e6-MSmytHCs3xn85qZ_8bf1uaHMT_xUNV0UzXPTL2FyLFwl4Bk="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGehwpbQ_59kRLemGiZNbXgO_j3dM7JKopZARcbUN26TvpKCKjbXG3ZFzNZrRCUFHXqgBYLNFt_W_RAE-hEfqw1HAia4owAnrFbuVngtj_n9rfqNGBKAUiHSdmKFH3kErDi_V3AiPkLEAZBsk_rkyn4mFmWohoX5bc9qP41jIZm_S4tGeWzihtPC89CG7nFV7me1ISIZMINZnAXCTIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_0",
+      "section_idx": 22,
+      "idx_in_section": 0,
+      "text": "### 6.2 Determinantal Point Processes (DPP)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "anu.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFceKZKxwSgBjtQ98bQYNs4Y5bYg_46R1R3tvSgGBcJRf7wnbR9Wvjvt6GmfWVAPbFhnkRK_iiWeVhtBd5ZayMUij8sKHFUXrE6Tw8-T1ZS2SgH1Nk6y9qbKwgfy06_vxup4b2Tgawetay_MTM0woVZqvyBW-p7oKsfBKG7LoOa_ZmwT4LetAPeUPVe"
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGR-6IhlJJI2PFLHTdpla-7T3rAz16gqTXFUmlfBPfl3fpOwUi3P1avXKgeW_NziIUx8CBflfQ8ctIIfBQ9jQtmok7-YELhLRTe9g4Fdam1dHSTlCJPBDG1Q4yC5Q_DrUtfZUUhIU-0tqKhpV7FUuMZlU7QBTVrXzljaocSaD8YfzetMsQFMY52lv-aL_9Z_zh7-rcDId2_S5wgdK-wUv1SXYdHYatYTNQr7ke02UJCgPTl1SdIWDiXaotNqA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGEYwwfgcWumncxYxAaI_KhrXGKAOwV0BwT0gR495SiXxnw_87iJnlXjN_hwW5vCJ4jVN91fMsJJaXCTCm4MdRWYJJdmWXmo5TIzmr93B8nAzAg24nhprO0ZoWN6Ge_BL_1IAyvTnIcnx19W19EDwQHc7LtaR3KsdsFObzeC8QWHA1DzI2vd8MmmfW1_ttOG6Ua-yEideWaPvKrM3VlZbd5uZIhH5P30RGMiQ-_m0Nr4hvMDK2PK4uJkWk1fw9CoU52"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGH32xbzDSHqehHIlRYV5nXPyeIERbu5qj9NF4wzdwqwKe7C4rqnL4HOq7sgVeyAxd6pyUBgIZPkJp1Ny4r-UEvuxraQV2XIceCdyO5aJmJKeDOy1_TYf5HkKHqUrhVaexdxZKK0d7Q52hNmIuzvnz6yFqa1rle-aerWXwoVn5XehddmmXUDyVKwC1FbvlnX_gmAndTvy1mMdIKsj5WW1H8Y71bw9kcBnYg_gA-"
+        ],
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEN8qDvc5XXDsOxO_CXFrSnUYXftpU5Wj3sX6RZ8BsIYWUdogU3BNa5zY_OSAmRXm4x5HGzs_TxVNKsYV2KFLEH7co-beRFuD4LEY-zRBjtMYbOTzJGFTodbHHhEq1cEyy5EjvrCX2dIf9DNTBy171OSffs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_1",
+      "section_idx": 22,
+      "idx_in_section": 1,
+      "text": "DPP is a more advanced, probabilistic baseline.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "anu.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFceKZKxwSgBjtQ98bQYNs4Y5bYg_46R1R3tvSgGBcJRf7wnbR9Wvjvt6GmfWVAPbFhnkRK_iiWeVhtBd5ZayMUij8sKHFUXrE6Tw8-T1ZS2SgH1Nk6y9qbKwgfy06_vxup4b2Tgawetay_MTM0woVZqvyBW-p7oKsfBKG7LoOa_ZmwT4LetAPeUPVe"
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGR-6IhlJJI2PFLHTdpla-7T3rAz16gqTXFUmlfBPfl3fpOwUi3P1avXKgeW_NziIUx8CBflfQ8ctIIfBQ9jQtmok7-YELhLRTe9g4Fdam1dHSTlCJPBDG1Q4yC5Q_DrUtfZUUhIU-0tqKhpV7FUuMZlU7QBTVrXzljaocSaD8YfzetMsQFMY52lv-aL_9Z_zh7-rcDId2_S5wgdK-wUv1SXYdHYatYTNQr7ke02UJCgPTl1SdIWDiXaotNqA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGEYwwfgcWumncxYxAaI_KhrXGKAOwV0BwT0gR495SiXxnw_87iJnlXjN_hwW5vCJ4jVN91fMsJJaXCTCm4MdRWYJJdmWXmo5TIzmr93B8nAzAg24nhprO0ZoWN6Ge_BL_1IAyvTnIcnx19W19EDwQHc7LtaR3KsdsFObzeC8QWHA1DzI2vd8MmmfW1_ttOG6Ua-yEideWaPvKrM3VlZbd5uZIhH5P30RGMiQ-_m0Nr4hvMDK2PK4uJkWk1fw9CoU52"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGH32xbzDSHqehHIlRYV5nXPyeIERbu5qj9NF4wzdwqwKe7C4rqnL4HOq7sgVeyAxd6pyUBgIZPkJp1Ny4r-UEvuxraQV2XIceCdyO5aJmJKeDOy1_TYf5HkKHqUrhVaexdxZKK0d7Q52hNmIuzvnz6yFqa1rle-aerWXwoVn5XehddmmXUDyVKwC1FbvlnX_gmAndTvy1mMdIKsj5WW1H8Y71bw9kcBnYg_gA-"
+        ],
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEN8qDvc5XXDsOxO_CXFrSnUYXftpU5Wj3sX6RZ8BsIYWUdogU3BNa5zY_OSAmRXm4x5HGzs_TxVNKsYV2KFLEH7co-beRFuD4LEY-zRBjtMYbOTzJGFTodbHHhEq1cEyy5EjvrCX2dIf9DNTBy171OSffs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_2",
+      "section_idx": 22,
+      "idx_in_section": 2,
+      "text": "Unlike MMR, which is greedy, DPP models the probability of selecting a *set* of items based on the determinant of a kernel matrix $L$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "anu.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFceKZKxwSgBjtQ98bQYNs4Y5bYg_46R1R3tvSgGBcJRf7wnbR9Wvjvt6GmfWVAPbFhnkRK_iiWeVhtBd5ZayMUij8sKHFUXrE6Tw8-T1ZS2SgH1Nk6y9qbKwgfy06_vxup4b2Tgawetay_MTM0woVZqvyBW-p7oKsfBKG7LoOa_ZmwT4LetAPeUPVe"
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGR-6IhlJJI2PFLHTdpla-7T3rAz16gqTXFUmlfBPfl3fpOwUi3P1avXKgeW_NziIUx8CBflfQ8ctIIfBQ9jQtmok7-YELhLRTe9g4Fdam1dHSTlCJPBDG1Q4yC5Q_DrUtfZUUhIU-0tqKhpV7FUuMZlU7QBTVrXzljaocSaD8YfzetMsQFMY52lv-aL_9Z_zh7-rcDId2_S5wgdK-wUv1SXYdHYatYTNQr7ke02UJCgPTl1SdIWDiXaotNqA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGEYwwfgcWumncxYxAaI_KhrXGKAOwV0BwT0gR495SiXxnw_87iJnlXjN_hwW5vCJ4jVN91fMsJJaXCTCm4MdRWYJJdmWXmo5TIzmr93B8nAzAg24nhprO0ZoWN6Ge_BL_1IAyvTnIcnx19W19EDwQHc7LtaR3KsdsFObzeC8QWHA1DzI2vd8MmmfW1_ttOG6Ua-yEideWaPvKrM3VlZbd5uZIhH5P30RGMiQ-_m0Nr4hvMDK2PK4uJkWk1fw9CoU52"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGH32xbzDSHqehHIlRYV5nXPyeIERbu5qj9NF4wzdwqwKe7C4rqnL4HOq7sgVeyAxd6pyUBgIZPkJp1Ny4r-UEvuxraQV2XIceCdyO5aJmJKeDOy1_TYf5HkKHqUrhVaexdxZKK0d7Q52hNmIuzvnz6yFqa1rle-aerWXwoVn5XehddmmXUDyVKwC1FbvlnX_gmAndTvy1mMdIKsj5WW1H8Y71bw9kcBnYg_gA-"
+        ],
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEN8qDvc5XXDsOxO_CXFrSnUYXftpU5Wj3sX6RZ8BsIYWUdogU3BNa5zY_OSAmRXm4x5HGzs_TxVNKsYV2KFLEH7co-beRFuD4LEY-zRBjtMYbOTzJGFTodbHHhEq1cEyy5EjvrCX2dIf9DNTBy171OSffs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_3",
+      "section_idx": 22,
+      "idx_in_section": 3,
+      "text": "The kernel matrix captures both quality (diagonal elements) and similarity (off-diagonal elements).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "anu.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFceKZKxwSgBjtQ98bQYNs4Y5bYg_46R1R3tvSgGBcJRf7wnbR9Wvjvt6GmfWVAPbFhnkRK_iiWeVhtBd5ZayMUij8sKHFUXrE6Tw8-T1ZS2SgH1Nk6y9qbKwgfy06_vxup4b2Tgawetay_MTM0woVZqvyBW-p7oKsfBKG7LoOa_ZmwT4LetAPeUPVe"
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGR-6IhlJJI2PFLHTdpla-7T3rAz16gqTXFUmlfBPfl3fpOwUi3P1avXKgeW_NziIUx8CBflfQ8ctIIfBQ9jQtmok7-YELhLRTe9g4Fdam1dHSTlCJPBDG1Q4yC5Q_DrUtfZUUhIU-0tqKhpV7FUuMZlU7QBTVrXzljaocSaD8YfzetMsQFMY52lv-aL_9Z_zh7-rcDId2_S5wgdK-wUv1SXYdHYatYTNQr7ke02UJCgPTl1SdIWDiXaotNqA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGEYwwfgcWumncxYxAaI_KhrXGKAOwV0BwT0gR495SiXxnw_87iJnlXjN_hwW5vCJ4jVN91fMsJJaXCTCm4MdRWYJJdmWXmo5TIzmr93B8nAzAg24nhprO0ZoWN6Ge_BL_1IAyvTnIcnx19W19EDwQHc7LtaR3KsdsFObzeC8QWHA1DzI2vd8MmmfW1_ttOG6Ua-yEideWaPvKrM3VlZbd5uZIhH5P30RGMiQ-_m0Nr4hvMDK2PK4uJkWk1fw9CoU52"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGH32xbzDSHqehHIlRYV5nXPyeIERbu5qj9NF4wzdwqwKe7C4rqnL4HOq7sgVeyAxd6pyUBgIZPkJp1Ny4r-UEvuxraQV2XIceCdyO5aJmJKeDOy1_TYf5HkKHqUrhVaexdxZKK0d7Q52hNmIuzvnz6yFqa1rle-aerWXwoVn5XehddmmXUDyVKwC1FbvlnX_gmAndTvy1mMdIKsj5WW1H8Y71bw9kcBnYg_gA-"
+        ],
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEN8qDvc5XXDsOxO_CXFrSnUYXftpU5Wj3sX6RZ8BsIYWUdogU3BNa5zY_OSAmRXm4x5HGzs_TxVNKsYV2KFLEH7co-beRFuD4LEY-zRBjtMYbOTzJGFTodbHHhEq1cEyy5EjvrCX2dIf9DNTBy171OSffs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_4",
+      "section_idx": 22,
+      "idx_in_section": 4,
+      "text": "\\[\nP(S) \\propto \\det(L_S)\n\\]",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "anu.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFceKZKxwSgBjtQ98bQYNs4Y5bYg_46R1R3tvSgGBcJRf7wnbR9Wvjvt6GmfWVAPbFhnkRK_iiWeVhtBd5ZayMUij8sKHFUXrE6Tw8-T1ZS2SgH1Nk6y9qbKwgfy06_vxup4b2Tgawetay_MTM0woVZqvyBW-p7oKsfBKG7LoOa_ZmwT4LetAPeUPVe"
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGR-6IhlJJI2PFLHTdpla-7T3rAz16gqTXFUmlfBPfl3fpOwUi3P1avXKgeW_NziIUx8CBflfQ8ctIIfBQ9jQtmok7-YELhLRTe9g4Fdam1dHSTlCJPBDG1Q4yC5Q_DrUtfZUUhIU-0tqKhpV7FUuMZlU7QBTVrXzljaocSaD8YfzetMsQFMY52lv-aL_9Z_zh7-rcDId2_S5wgdK-wUv1SXYdHYatYTNQr7ke02UJCgPTl1SdIWDiXaotNqA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGEYwwfgcWumncxYxAaI_KhrXGKAOwV0BwT0gR495SiXxnw_87iJnlXjN_hwW5vCJ4jVN91fMsJJaXCTCm4MdRWYJJdmWXmo5TIzmr93B8nAzAg24nhprO0ZoWN6Ge_BL_1IAyvTnIcnx19W19EDwQHc7LtaR3KsdsFObzeC8QWHA1DzI2vd8MmmfW1_ttOG6Ua-yEideWaPvKrM3VlZbd5uZIhH5P30RGMiQ-_m0Nr4hvMDK2PK4uJkWk1fw9CoU52"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGH32xbzDSHqehHIlRYV5nXPyeIERbu5qj9NF4wzdwqwKe7C4rqnL4HOq7sgVeyAxd6pyUBgIZPkJp1Ny4r-UEvuxraQV2XIceCdyO5aJmJKeDOy1_TYf5HkKHqUrhVaexdxZKK0d7Q52hNmIuzvnz6yFqa1rle-aerWXwoVn5XehddmmXUDyVKwC1FbvlnX_gmAndTvy1mMdIKsj5WW1H8Y71bw9kcBnYg_gA-"
+        ],
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEN8qDvc5XXDsOxO_CXFrSnUYXftpU5Wj3sX6RZ8BsIYWUdogU3BNa5zY_OSAmRXm4x5HGzs_TxVNKsYV2KFLEH7co-beRFuD4LEY-zRBjtMYbOTzJGFTodbHHhEq1cEyy5EjvrCX2dIf9DNTBy171OSffs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_5",
+      "section_idx": 22,
+      "idx_in_section": 5,
+      "text": "DPP is favored for its mathematical elegance in modeling \"repulsion\" between items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "anu.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFceKZKxwSgBjtQ98bQYNs4Y5bYg_46R1R3tvSgGBcJRf7wnbR9Wvjvt6GmfWVAPbFhnkRK_iiWeVhtBd5ZayMUij8sKHFUXrE6Tw8-T1ZS2SgH1Nk6y9qbKwgfy06_vxup4b2Tgawetay_MTM0woVZqvyBW-p7oKsfBKG7LoOa_ZmwT4LetAPeUPVe"
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGR-6IhlJJI2PFLHTdpla-7T3rAz16gqTXFUmlfBPfl3fpOwUi3P1avXKgeW_NziIUx8CBflfQ8ctIIfBQ9jQtmok7-YELhLRTe9g4Fdam1dHSTlCJPBDG1Q4yC5Q_DrUtfZUUhIU-0tqKhpV7FUuMZlU7QBTVrXzljaocSaD8YfzetMsQFMY52lv-aL_9Z_zh7-rcDId2_S5wgdK-wUv1SXYdHYatYTNQr7ke02UJCgPTl1SdIWDiXaotNqA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGEYwwfgcWumncxYxAaI_KhrXGKAOwV0BwT0gR495SiXxnw_87iJnlXjN_hwW5vCJ4jVN91fMsJJaXCTCm4MdRWYJJdmWXmo5TIzmr93B8nAzAg24nhprO0ZoWN6Ge_BL_1IAyvTnIcnx19W19EDwQHc7LtaR3KsdsFObzeC8QWHA1DzI2vd8MmmfW1_ttOG6Ua-yEideWaPvKrM3VlZbd5uZIhH5P30RGMiQ-_m0Nr4hvMDK2PK4uJkWk1fw9CoU52"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGH32xbzDSHqehHIlRYV5nXPyeIERbu5qj9NF4wzdwqwKe7C4rqnL4HOq7sgVeyAxd6pyUBgIZPkJp1Ny4r-UEvuxraQV2XIceCdyO5aJmJKeDOy1_TYf5HkKHqUrhVaexdxZKK0d7Q52hNmIuzvnz6yFqa1rle-aerWXwoVn5XehddmmXUDyVKwC1FbvlnX_gmAndTvy1mMdIKsj5WW1H8Y71bw9kcBnYg_gA-"
+        ],
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEN8qDvc5XXDsOxO_CXFrSnUYXftpU5Wj3sX6RZ8BsIYWUdogU3BNa5zY_OSAmRXm4x5HGzs_TxVNKsYV2KFLEH7co-beRFuD4LEY-zRBjtMYbOTzJGFTodbHHhEq1cEyy5EjvrCX2dIf9DNTBy171OSffs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_6",
+      "section_idx": 22,
+      "idx_in_section": 6,
+      "text": "It is often used as a strong baseline for generating coherent, diverse bundles.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "anu.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFceKZKxwSgBjtQ98bQYNs4Y5bYg_46R1R3tvSgGBcJRf7wnbR9Wvjvt6GmfWVAPbFhnkRK_iiWeVhtBd5ZayMUij8sKHFUXrE6Tw8-T1ZS2SgH1Nk6y9qbKwgfy06_vxup4b2Tgawetay_MTM0woVZqvyBW-p7oKsfBKG7LoOa_ZmwT4LetAPeUPVe"
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGR-6IhlJJI2PFLHTdpla-7T3rAz16gqTXFUmlfBPfl3fpOwUi3P1avXKgeW_NziIUx8CBflfQ8ctIIfBQ9jQtmok7-YELhLRTe9g4Fdam1dHSTlCJPBDG1Q4yC5Q_DrUtfZUUhIU-0tqKhpV7FUuMZlU7QBTVrXzljaocSaD8YfzetMsQFMY52lv-aL_9Z_zh7-rcDId2_S5wgdK-wUv1SXYdHYatYTNQr7ke02UJCgPTl1SdIWDiXaotNqA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGEYwwfgcWumncxYxAaI_KhrXGKAOwV0BwT0gR495SiXxnw_87iJnlXjN_hwW5vCJ4jVN91fMsJJaXCTCm4MdRWYJJdmWXmo5TIzmr93B8nAzAg24nhprO0ZoWN6Ge_BL_1IAyvTnIcnx19W19EDwQHc7LtaR3KsdsFObzeC8QWHA1DzI2vd8MmmfW1_ttOG6Ua-yEideWaPvKrM3VlZbd5uZIhH5P30RGMiQ-_m0Nr4hvMDK2PK4uJkWk1fw9CoU52"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGH32xbzDSHqehHIlRYV5nXPyeIERbu5qj9NF4wzdwqwKe7C4rqnL4HOq7sgVeyAxd6pyUBgIZPkJp1Ny4r-UEvuxraQV2XIceCdyO5aJmJKeDOy1_TYf5HkKHqUrhVaexdxZKK0d7Q52hNmIuzvnz6yFqa1rle-aerWXwoVn5XehddmmXUDyVKwC1FbvlnX_gmAndTvy1mMdIKsj5WW1H8Y71bw9kcBnYg_gA-"
+        ],
+        [
+          "stanford.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEN8qDvc5XXDsOxO_CXFrSnUYXftpU5Wj3sX6RZ8BsIYWUdogU3BNa5zY_OSAmRXm4x5HGzs_TxVNKsYV2KFLEH7co-beRFuD4LEY-zRBjtMYbOTzJGFTodbHHhEq1cEyy5EjvrCX2dIf9DNTBy171OSffs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_0",
+      "section_idx": 23,
+      "idx_in_section": 0,
+      "text": "### 6.3 xQuAD (Explicit Query Aspect Diversification)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEyPxiTkPM1w24bdz66CZO-eyw30IRMy2ftwIIbzanj_G0uJkBSRatjqmKwmH3uhAybho0HyR1z4AItrXrES9vIZ8tKZiDIOzNsoHAP3aycBBrEk5aGSqPjHA=="
+        ],
+        [
+          "poliba.it",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmDB-VY_J5z_4ws2OWI3u2QIb_u0IjOrWkasTk7kUCISY6XjSIHhqa2ERtKzDtMVhSUAoKsZg5OVVn0P6hRgnoPSMppwoy5ccdJpr8Uu2JoEJT08iCoJFuVUD0V2RkqrIvcRu7p7SnYpha3qrATF_IGMgks_5mt4rHWR36WEFIxZfhHJJ2MuNG-IiVeQbN2g75lkK5mHAzW64aXNwv28xe7JkEAGRY5Z0SwduMjKdxIfrdzQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_1",
+      "section_idx": 23,
+      "idx_in_section": 1,
+      "text": "xQuAD is an intent-aware metric and re-ranking method often used as a baseline.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEyPxiTkPM1w24bdz66CZO-eyw30IRMy2ftwIIbzanj_G0uJkBSRatjqmKwmH3uhAybho0HyR1z4AItrXrES9vIZ8tKZiDIOzNsoHAP3aycBBrEk5aGSqPjHA=="
+        ],
+        [
+          "poliba.it",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmDB-VY_J5z_4ws2OWI3u2QIb_u0IjOrWkasTk7kUCISY6XjSIHhqa2ERtKzDtMVhSUAoKsZg5OVVn0P6hRgnoPSMppwoy5ccdJpr8Uu2JoEJT08iCoJFuVUD0V2RkqrIvcRu7p7SnYpha3qrATF_IGMgks_5mt4rHWR36WEFIxZfhHJJ2MuNG-IiVeQbN2g75lkK5mHAzW64aXNwv28xe7JkEAGRY5Z0SwduMjKdxIfrdzQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_2",
+      "section_idx": 23,
+      "idx_in_section": 2,
+      "text": "It explicitly models the probability that a user is interested in a specific \"aspect\" (e.g., a genre or topic) and ensures the recommendation list covers these aspects proportionally to the user's interest.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEyPxiTkPM1w24bdz66CZO-eyw30IRMy2ftwIIbzanj_G0uJkBSRatjqmKwmH3uhAybho0HyR1z4AItrXrES9vIZ8tKZiDIOzNsoHAP3aycBBrEk5aGSqPjHA=="
+        ],
+        [
+          "poliba.it",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmDB-VY_J5z_4ws2OWI3u2QIb_u0IjOrWkasTk7kUCISY6XjSIHhqa2ERtKzDtMVhSUAoKsZg5OVVn0P6hRgnoPSMppwoy5ccdJpr8Uu2JoEJT08iCoJFuVUD0V2RkqrIvcRu7p7SnYpha3qrATF_IGMgks_5mt4rHWR36WEFIxZfhHJJ2MuNG-IiVeQbN2g75lkK5mHAzW64aXNwv28xe7JkEAGRY5Z0SwduMjKdxIfrdzQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_0",
+      "section_idx": 24,
+      "idx_in_section": 0,
+      "text": "## 7. Datasets and Benchmarking",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_1",
+      "section_idx": 24,
+      "idx_in_section": 1,
+      "text": "The choice of dataset is pivotal for evaluating diversity.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_2",
+      "section_idx": 24,
+      "idx_in_section": 2,
+      "text": "The dataset must contain rich **metadata** (genres, tags, descriptions) to calculate meaningful distance metrics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_0",
+      "section_idx": 25,
+      "idx_in_section": 0,
+      "text": "### 7.1 Common Datasets",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_1",
+      "section_idx": 25,
+      "idx_in_section": 1,
+      "text": "*  **MovieLens:** The de facto standard.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRkfIe_etQxqL3xRgWkXoZof_Aob1kEdGe6R6srQNqA5xpuozhyJ0AqShQzChgzMEXktHG392Nf-U871e9IRRSYZRtl_4f3_n1fKTTo0zbR_shrbN7R5UeZuRpMZS88ZQlIEfgfdGI5ZrIi5OiYPCRHYeFsUzuzaAMm-Sg-AbO0AXqsnSfvkirxzbex7rdEPBAINJ1mngfG2DL1jXBLQ=="
+        ],
+        [
+          "recommender-systems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO3eIvpyH2TnbK-17LDqcgbAPzhvQeLS0Mb0PXcs8C-gnn7XK4TDc47f6e41Fl6jun4DcmsJL3SqavhpLJXzxbVBRIHkLihgaBsWX436HpXrFhqoxSOP8sl_yDMYVARNereYrx88QpwxY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_2",
+      "section_idx": 25,
+      "idx_in_section": 2,
+      "text": "Contains user ratings and, crucially, genre information for movies.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRkfIe_etQxqL3xRgWkXoZof_Aob1kEdGe6R6srQNqA5xpuozhyJ0AqShQzChgzMEXktHG392Nf-U871e9IRRSYZRtl_4f3_n1fKTTo0zbR_shrbN7R5UeZuRpMZS88ZQlIEfgfdGI5ZrIi5OiYPCRHYeFsUzuzaAMm-Sg-AbO0AXqsnSfvkirxzbex7rdEPBAINJ1mngfG2DL1jXBLQ=="
+        ],
+        [
+          "recommender-systems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO3eIvpyH2TnbK-17LDqcgbAPzhvQeLS0Mb0PXcs8C-gnn7XK4TDc47f6e41Fl6jun4DcmsJL3SqavhpLJXzxbVBRIHkLihgaBsWX436HpXrFhqoxSOP8sl_yDMYVARNereYrx88QpwxY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_3",
+      "section_idx": 25,
+      "idx_in_section": 3,
+      "text": "Used in roughly 40% of RecSys papers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRkfIe_etQxqL3xRgWkXoZof_Aob1kEdGe6R6srQNqA5xpuozhyJ0AqShQzChgzMEXktHG392Nf-U871e9IRRSYZRtl_4f3_n1fKTTo0zbR_shrbN7R5UeZuRpMZS88ZQlIEfgfdGI5ZrIi5OiYPCRHYeFsUzuzaAMm-Sg-AbO0AXqsnSfvkirxzbex7rdEPBAINJ1mngfG2DL1jXBLQ=="
+        ],
+        [
+          "recommender-systems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO3eIvpyH2TnbK-17LDqcgbAPzhvQeLS0Mb0PXcs8C-gnn7XK4TDc47f6e41Fl6jun4DcmsJL3SqavhpLJXzxbVBRIHkLihgaBsWX436HpXrFhqoxSOP8sl_yDMYVARNereYrx88QpwxY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_4",
+      "section_idx": 25,
+      "idx_in_section": 4,
+      "text": "*  **Last.fm:** Used for music recommendation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgsO6YtHQmNWA03fYKxQ5bDRhd71fgR-QtyIzxPux2ozeh5jdOQ68Su5-7TkJph4n6REUGR40kK07wokQ74JCjUfCetptOoUNEtjcrSLkJ01J6cXWK8pRXVHdXK4WrNyM="
+        ],
+        [
+          "ceur-ws.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBBWL7Kdv9kNVO_9jPmzuQiWQSG-Jfeu7DisK6NLbuFc2nGk9drU-6gtHCQJKHu5S2U5ElHl1rZjEsbWvlrunhcybBdn7ffnIPzXJuPd1uTu5pi85IcIwk0e4kHd4="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_5",
+      "section_idx": 25,
+      "idx_in_section": 5,
+      "text": "Contains artist tags, allowing for diversity evaluation based on genre or artist similarity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgsO6YtHQmNWA03fYKxQ5bDRhd71fgR-QtyIzxPux2ozeh5jdOQ68Su5-7TkJph4n6REUGR40kK07wokQ74JCjUfCetptOoUNEtjcrSLkJ01J6cXWK8pRXVHdXK4WrNyM="
+        ],
+        [
+          "ceur-ws.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGBBWL7Kdv9kNVO_9jPmzuQiWQSG-Jfeu7DisK6NLbuFc2nGk9drU-6gtHCQJKHu5S2U5ElHl1rZjEsbWvlrunhcybBdn7ffnIPzXJuPd1uTu5pi85IcIwk0e4kHd4="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_6",
+      "section_idx": 25,
+      "idx_in_section": 6,
+      "text": "*  **MIND (Microsoft News Dataset):** A large-scale dataset for news recommendation, where diversity (covering different news topics) is a critical requirement.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRkfIe_etQxqL3xRgWkXoZof_Aob1kEdGe6R6srQNqA5xpuozhyJ0AqShQzChgzMEXktHG392Nf-U871e9IRRSYZRtl_4f3_n1fKTTo0zbR_shrbN7R5UeZuRpMZS88ZQlIEfgfdGI5ZrIi5OiYPCRHYeFsUzuzaAMm-Sg-AbO0AXqsnSfvkirxzbex7rdEPBAINJ1mngfG2DL1jXBLQ=="
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgsO6YtHQmNWA03fYKxQ5bDRhd71fgR-QtyIzxPux2ozeh5jdOQ68Su5-7TkJph4n6REUGR40kK07wokQ74JCjUfCetptOoUNEtjcrSLkJ01J6cXWK8pRXVHdXK4WrNyM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_7",
+      "section_idx": 25,
+      "idx_in_section": 7,
+      "text": "*  **Amazon Product Data:** Used for e-commerce.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRkfIe_etQxqL3xRgWkXoZof_Aob1kEdGe6R6srQNqA5xpuozhyJ0AqShQzChgzMEXktHG392Nf-U871e9IRRSYZRtl_4f3_n1fKTTo0zbR_shrbN7R5UeZuRpMZS88ZQlIEfgfdGI5ZrIi5OiYPCRHYeFsUzuzaAMm-Sg-AbO0AXqsnSfvkirxzbex7rdEPBAINJ1mngfG2DL1jXBLQ=="
+        ],
+        [
+          "recommender-systems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO3eIvpyH2TnbK-17LDqcgbAPzhvQeLS0Mb0PXcs8C-gnn7XK4TDc47f6e41Fl6jun4DcmsJL3SqavhpLJXzxbVBRIHkLihgaBsWX436HpXrFhqoxSOP8sl_yDMYVARNereYrx88QpwxY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_8",
+      "section_idx": 25,
+      "idx_in_section": 8,
+      "text": "Allows evaluation of category coverage (e.g., recommending electronics vs. books).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRkfIe_etQxqL3xRgWkXoZof_Aob1kEdGe6R6srQNqA5xpuozhyJ0AqShQzChgzMEXktHG392Nf-U871e9IRRSYZRtl_4f3_n1fKTTo0zbR_shrbN7R5UeZuRpMZS88ZQlIEfgfdGI5ZrIi5OiYPCRHYeFsUzuzaAMm-Sg-AbO0AXqsnSfvkirxzbex7rdEPBAINJ1mngfG2DL1jXBLQ=="
+        ],
+        [
+          "recommender-systems.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFO3eIvpyH2TnbK-17LDqcgbAPzhvQeLS0Mb0PXcs8C-gnn7XK4TDc47f6e41Fl6jun4DcmsJL3SqavhpLJXzxbVBRIHkLihgaBsWX436HpXrFhqoxSOP8sl_yDMYVARNereYrx88QpwxY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_0",
+      "section_idx": 26,
+      "idx_in_section": 0,
+      "text": "### 7.2 Synthetic Datasets",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGh7g2oWwwe59QWuIP4tSaxG7mFswOcdsi_vzdqJjY8vvmnzJ5kVfqs9b4prF0lm7vg5jAx4Ck-YTt-8ZgysP03WoII2d68TCy-5BbhDv8lsUS16vfn6ch_9w=="
+        ],
+        [
+          "uibk.ac.at",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEwGUd7VySjkJUkulVsF4vYx1v31RXKJ-YGEC4-8B_luryo7PGf9Ikwypwy_AhvR5BKi6yl8WD1Ui5kumz_hNlwas9JWVyVtpli4OPlb8Ew33NqcE07Bj5Wwk2dF1CPvFoOwH8z_xXXUkGjStEx_C5TrCUgZ4v1olzbZJz6bw0rRA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_1",
+      "section_idx": 26,
+      "idx_in_section": 1,
+      "text": "In some cases, researchers create synthetic datasets or modify existing ones (e.g., \"poisoning\" data) to test how robust a diversity algorithm is to extreme user behaviors or to simulate specific \"filter bubble\" scenarios.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGh7g2oWwwe59QWuIP4tSaxG7mFswOcdsi_vzdqJjY8vvmnzJ5kVfqs9b4prF0lm7vg5jAx4Ck-YTt-8ZgysP03WoII2d68TCy-5BbhDv8lsUS16vfn6ch_9w=="
+        ],
+        [
+          "uibk.ac.at",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEwGUd7VySjkJUkulVsF4vYx1v31RXKJ-YGEC4-8B_luryo7PGf9Ikwypwy_AhvR5BKi6yl8WD1Ui5kumz_hNlwas9JWVyVtpli4OPlb8Ew33NqcE07Bj5Wwk2dF1CPvFoOwH8z_xXXUkGjStEx_C5TrCUgZ4v1olzbZJz6bw0rRA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_0",
+      "section_idx": 27,
+      "idx_in_section": 0,
+      "text": "## 8. Emerging Trends: Fairness and Long-Tail Optimization",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_1",
+      "section_idx": 27,
+      "idx_in_section": 1,
+      "text": "Recent evaluation frameworks have begun to merge **diversity** with **fairness**.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_2",
+      "section_idx": 27,
+      "idx_in_section": 2,
+      "text": "*  **Provider Fairness:** Evaluating whether items from different providers (or authors/artists) are recommended equally.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGh7g2oWwwe59QWuIP4tSaxG7mFswOcdsi_vzdqJjY8vvmnzJ5kVfqs9b4prF0lm7vg5jAx4Ck-YTt-8ZgysP03WoII2d68TCy-5BbhDv8lsUS16vfn6ch_9w=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5DZVWFU0Sdh2rWO6nD6HfrLC_6FxA_NbjkY6nWXnIp1GJ1lDvlN-NxfTbGbq-oVVQH4RsV89y0Ixubi5Ax1thKrjb5_jYsNOqqoN7P_3Iy-pYPNB4zA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_3",
+      "section_idx": 27,
+      "idx_in_section": 3,
+      "text": "This is a form of \"item-side\" diversity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGh7g2oWwwe59QWuIP4tSaxG7mFswOcdsi_vzdqJjY8vvmnzJ5kVfqs9b4prF0lm7vg5jAx4Ck-YTt-8ZgysP03WoII2d68TCy-5BbhDv8lsUS16vfn6ch_9w=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5DZVWFU0Sdh2rWO6nD6HfrLC_6FxA_NbjkY6nWXnIp1GJ1lDvlN-NxfTbGbq-oVVQH4RsV89y0Ixubi5Ax1thKrjb5_jYsNOqqoN7P_3Iy-pYPNB4zA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_4",
+      "section_idx": 27,
+      "idx_in_section": 4,
+      "text": "*  **User Fairness:** Ensuring that all user groups (e.g., active vs. inactive users) receive equally diverse recommendations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGJvfXtauVoOmmSM0B5iV635eblRgXh7z_KlltpDYBOqmDHdNGnF1ugTdorA23xS7Mkf3e2w44aFK09QrMDxLEUtOKk5ucNUYzgmUAqdHsJFql1MexlC16P1g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPFyuAqNO5i7a9ZQyQ88IicyfE77JwRou9-PnwIeUW-YQH9HhWoZLwxOy9rMNZm8fLhO3f5C2CHnqdSEFdy02MnhVr7xHDeKhH-LvakIx41mLMhJRRMg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_5",
+      "section_idx": 27,
+      "idx_in_section": 5,
+      "text": "Standard diversity metrics are now often broken down by user cohorts to ensure the \"rich\" (users with much history) don't get all the diversity while \"poor\" users get generic popularity lists.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGJvfXtauVoOmmSM0B5iV635eblRgXh7z_KlltpDYBOqmDHdNGnF1ugTdorA23xS7Mkf3e2w44aFK09QrMDxLEUtOKk5ucNUYzgmUAqdHsJFql1MexlC16P1g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPFyuAqNO5i7a9ZQyQ88IicyfE77JwRou9-PnwIeUW-YQH9HhWoZLwxOy9rMNZm8fLhO3f5C2CHnqdSEFdy02MnhVr7xHDeKhH-LvakIx41mLMhJRRMg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "28_0",
+      "section_idx": 28,
+      "idx_in_section": 0,
+      "text": "## 9. Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_1",
+      "section_idx": 28,
+      "idx_in_section": 1,
+      "text": "The evaluation of new methods optimizing diversity in recommendation systems is a rigorous, multi-layered process.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_2",
+      "section_idx": 28,
+      "idx_in_section": 2,
+      "text": "It begins with **offline benchmarking** using metrics like ILD and Catalog Coverage on standard datasets like MovieLens, comparing against strong baselines like MMR and DPP.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_3",
+      "section_idx": 28,
+      "idx_in_section": 3,
+      "text": "It requires analyzing the **Pareto frontier** to ensure accuracy is not disproportionately sacrificed.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_4",
+      "section_idx": 28,
+      "idx_in_section": 4,
+      "text": "However, because mathematical diversity does not always align with human perception, **user studies** and **online A/B testing** remain the ultimate validators, ensuring that the \"diverse\" recommendations actually enhance user satisfaction and business value rather than merely satisfying a mathematical constraint.\n\n#",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 1. Introduction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "Recommender systems (RS) have become the primary mechanism for navigating the vast information landscape of the digital age, filtering billions of items to present users with a manageable set of choices.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGkudbKKtOlY03atOmdleICabR7BEnUcO6sfCnV_DgJ379hONEf4LRSGAYP4uw0_wNfPvBiJEypvgsr3s2Aymd5mol2hR7lf6ECJ9313Zo8M1seA_pYoQqIytEvO9OiyRLzpmtJw_c="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "Traditionally, the evaluation of these systems focused almost exclusively on **accuracy**\u2014the ability to predict a user's rating for an item or the probability of a click.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "unimelb.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEbsB2clfP-7s-xqagG367xif-vciV-PulwLEjH9DTcXOv2TBxkzCR0AlRYkiOgIxpHU96IlYGWtrVJ8LxlFEMgtepzOgbwsnxUBa1l1xeE6He-0RKBOGQ8z1PqIBpnt8WlSFibO9OQ0WEvAXl2huqaPM0WQm19gg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "However, a singular focus on accuracy has been shown to lead to the \"filter bubble\" phenomenon, where users are exposed only to content that reinforces their existing preferences, and the \"long-tail\" problem, where a vast majority of catalog items remain undiscovered.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "zilliz.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHH84xVyyr_oPXfo8uAug8GPnbYjpTT_Wl0qKWlLBpb3T9PRhLAt6izfQnFkmWTsDni5A58BJOEMPwi1VGyS-X7lU3aRCXpmLZQVVo6MUaybj3nMQyhbAS5d-e1EcCVCJwNezsbQ6BDK0YDMs0KyHX-uhN8MZhNOiPB1I1gZ13uPPiE4HGTlWWiQnPk19Oq1pxmVjDuJUFugE8hHKc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "Consequently, the academic and industrial focus has shifted toward \"beyond-accuracy\" objectives, specifically **diversity**, **novelty**, and **serendipity**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uop.gr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJt4L1cM_brABe5HRTDsFBF8iq9vnw9h0TSBRset5ydxnc27QpMF7dJTMF7zbGaMdPiFNlqSqAOvqjVzzkWo05N0hqIqLNJAttCzld1Ppq-8pAOvcgGCahiEy-qrWgYG7woT4EdUDkhkRlSrwJ-sgcW2PBic7mC6tw3ncDRkhmQ7aR8UvTfvhnH5-QV7kWUvH-N8L0cThf2wU4qia6nr6moLNpxMcR6w1abhZz3BVP8iXSSB0suZIzijo4TCL_IkW7OfB35QQYnm4udbGOKGaoD8iJ6_J0CMpoprufe51YsuLtey7mdlbSEu3yJZ7wMVcUEv-jJYWYqhZpNXBzLYA="
+        ],
+        [
+          "ucc.ie",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF6frpV7d17WUMN-GdARTwh9AK8Nfy6wW-SOUCm8Xsxwhx0-GqM9dH7NII6gQd3F9aN2Sgyc1K-Sw2kfXlZ4zPSiq3TRfJ2TM4f0EtZawm5mowaohwdKgc7ByXMQ_B28eDFAyduYVOIlPjOA7QWwxieEt6lSOKrx2gnTP-Q3vkXG0ykKpsP4L6wp_eeE9Qk_DJYFX4zp9hDc-kT5Po6DDSW"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "Evaluating new methods that optimize for diversity requires a complex methodological framework.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "It is not sufficient to merely show that a new algorithm generates diverse items; one must demonstrate that it does so without catastrophically sacrificing relevance.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_7",
+      "section_idx": 2,
+      "idx_in_section": 7,
+      "text": "This report details the rigorous evaluation protocols used in the field, ranging from mathematical offline metrics and standard datasets to live online experiments and psychological user studies.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 2. The Accuracy-Diversity Trade-off",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 2.1 The Nature of the Dilemma",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "The core challenge in evaluating diversity-optimized methods is the inherent trade-off between accuracy and diversity.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "Accuracy metrics, such as Root Mean Square Error (RMSE) or Precision@k, reward systems that recommend items most similar to a user's historical interactions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "zilliz.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHH84xVyyr_oPXfo8uAug8GPnbYjpTT_Wl0qKWlLBpb3T9PRhLAt6izfQnFkmWTsDni5A58BJOEMPwi1VGyS-X7lU3aRCXpmLZQVVo6MUaybj3nMQyhbAS5d-e1EcCVCJwNezsbQ6BDK0YDMs0KyHX-uhN8MZhNOiPB1I1gZ13uPPiE4HGTlWWiQnPk19Oq1pxmVjDuJUFugE8hHKc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "In contrast, diversity metrics reward systems that recommend items that are dissimilar to each other or to the user's history.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "For example, a movie recommender maximizing accuracy for a user who loves \"Star Wars\" might recommend only other \"Star Wars\" films.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "This achieves high precision but zero diversity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": "A diversity-optimized system might recommend \"Star Wars\" alongside a romantic comedy and a documentary.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "While this increases diversity, the probability of the user clicking the non-sci-fi options might be lower, technically reducing the system's \"accuracy\" score.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 2.2 Pareto Frontier Analysis",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "wordpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHs0d6C8reHKSk22RslOhGJugVULyfhyLE1c6dBUUkB0dVjXDBJRNasAr3OOJacmklBEUxCTuY6eDvl4Abbr0o7EpANH4Fy6TenwoS31Qr7YKtHPH-jwZ52O1_1Sz7-aaoMKn39yYwCBDdxm_bZ8mfJMG3j4pjDvuKh5Dr7u3Q7TAr7A48UXSvF"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "To evaluate a new method, researchers typically do not look for a single \"best\" score but rather analyze the **Pareto frontier**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "wordpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHs0d6C8reHKSk22RslOhGJugVULyfhyLE1c6dBUUkB0dVjXDBJRNasAr3OOJacmklBEUxCTuY6eDvl4Abbr0o7EpANH4Fy6TenwoS31Qr7YKtHPH-jwZ52O1_1Sz7-aaoMKn39yYwCBDdxm_bZ8mfJMG3j4pjDvuKh5Dr7u3Q7TAr7A48UXSvF"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "When plotting Accuracy (y-axis) against Diversity (x-axis), a new method is considered superior if it pushes the frontier outward\u2014achieving higher diversity for the same level of accuracy, or higher accuracy for the same level of diversity, compared to baselines.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVCQEeifLh5NTT8yIsXKQdO7JjSFj_Cn_ktMExkfB8tTfPaeUQXnYqnCowaasjol3zjKogknouXwwkGxzXJpoxtgH3W3VOxLDtgXeClvClYuC_ir-obzxXryqhwTRIkdWstunT2-jwe_IuOFaynTO696hhHKuUKWgFXDerLOYkvq2KIFbkSzWCUm1dI-FJbs-2EQJZSZxVo6XVgK6_ygwP2HiDVPG9xN4pEyHF1XGJER0ZEqloUu512A=="
+        ],
+        [
+          "wordpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHs0d6C8reHKSk22RslOhGJugVULyfhyLE1c6dBUUkB0dVjXDBJRNasAr3OOJacmklBEUxCTuY6eDvl4Abbr0o7EpANH4Fy6TenwoS31Qr7YKtHPH-jwZ52O1_1Sz7-aaoMKn39yYwCBDdxm_bZ8mfJMG3j4pjDvuKh5Dr7u3Q7TAr7A48UXSvF"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "Recent theoretical work suggests this trade-off arises because standard accuracy metrics fail to account for **consumption constraints**\u2014users can only consume a finite number of items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFZqj7l5IcmbHs384KTJmrubaCxQETmjPMRKBdspD6gxRbEa3aJGgk9EqrM8M4tEyMFSdlbi4l3T--vJub3sC-TNT0ib8YSdI7DSrUHHKqdVPv5R806-Q=="
+        ],
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFj-71qje9m2rbZOiSTzCXGGY6-BWhJ4zn8vhW8Xo1WreUTvRxNPjcSX2plk0PhmoElYWlWoxQMUASev6xw9ZN9ZrlsmUykoJgSHhy7pqQO4kPd_Aa83xp61vP9TL3T1IU="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "When these constraints are modeled (e.g., via user utility functions), the \"trade-off\" diminishes, as diverse bundles naturally maximize utility by avoiding diminishing returns from redundant items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFZqj7l5IcmbHs384KTJmrubaCxQETmjPMRKBdspD6gxRbEa3aJGgk9EqrM8M4tEyMFSdlbi4l3T--vJub3sC-TNT0ib8YSdI7DSrUHHKqdVPv5R806-Q=="
+        ],
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFj-71qje9m2rbZOiSTzCXGGY6-BWhJ4zn8vhW8Xo1WreUTvRxNPjcSX2plk0PhmoElYWlWoxQMUASev6xw9ZN9ZrlsmUykoJgSHhy7pqQO4kPd_Aa83xp61vP9TL3T1IU="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## 3. Offline Evaluation Methodologies",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "Offline evaluation remains the most common first step for assessing new diversity methods due to its low cost and reproducibility.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDt18t5zOdOmZ9d66WrSkjXv19zYwWvdisf_u1J-_QpnwZR0WL5b--KHBzVP5s9XsVkvGl6TD9Kw5u48T6GxPdcOKXic98CnIlG74Vq3mT8uCCte0aP67qt74TOuPK6cPtIubHaQjDbNDP7gvcNur35xnYACbkikvfrx4q0G7xqadioKK9eWC5dVL_IJEX7mWS6adTyvLNnGksbTEOKdnys1qm_fELWI1uzYDOiKE="
+        ],
+        [
+          "zilliz.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH9gzptr8ZlNXWCDX_fZcC_2m8-QJXyBONGM8zrNWTw6hBBtuoILPfBjtskWX0CKwx0KHLFkZuc_ebevOj8NiyDoB4Uuy30SleC91uNHJidHZuGZ_MKS502EG8vnaxna2gdr95QPYE0tA4RjnGKvyDHBD9XQ8YqIEU2dnynEqDroNnfwrnMj2Bc9q22xVI_qcUW6VPF4_VabANb-hR35eC86-sw"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "It utilizes historical datasets (e.g., user-item interaction matrices) to simulate recommendations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEecoVBk0Gqcg1fZc7SdCJKrQRdXwpM6jIm5V0v6w4N93h9U2JT3S6NkYNJAAa-lu1NUq2bcqBdoMdBDGOOmBgfB7MYNqYOwO2KiG45Hpl5V8i7-QyksAjDEg=="
+        ],
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDt18t5zOdOmZ9d66WrSkjXv19zYwWvdisf_u1J-_QpnwZR0WL5b--KHBzVP5s9XsVkvGl6TD9Kw5u48T6GxPdcOKXic98CnIlG74Vq3mT8uCCte0aP67qt74TOuPK6cPtIubHaQjDbNDP7gvcNur35xnYACbkikvfrx4q0G7xqadioKK9eWC5dVL_IJEX7mWS6adTyvLNnGksbTEOKdnys1qm_fELWI1uzYDOiKE="
+        ],
+        [
+          "zilliz.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH9gzptr8ZlNXWCDX_fZcC_2m8-QJXyBONGM8zrNWTw6hBBtuoILPfBjtskWX0CKwx0KHLFkZuc_ebevOj8NiyDoB4Uuy30SleC91uNHJidHZuGZ_MKS502EG8vnaxna2gdr95QPYE0tA4RjnGKvyDHBD9XQ8YqIEU2dnynEqDroNnfwrnMj2Bc9q22xVI_qcUW6VPF4_VabANb-hR35eC86-sw"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### 3.1 Intra-List Diversity (ILD)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "The most ubiquitous metric for evaluating individual diversity is **Intra-List Diversity (ILD)**.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_10",
+      "section_idx": 7,
+      "idx_in_section": 10,
+      "text": "*  **Jaccard Distance:** Used for categorical data (e.g., genre overlap).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHbQhczyOOPIoVJDOmbOm-Pg00TST6qpW-92751DNt66Gsv64MZf6wMmqsOuWO8m9AAzUsFlYkdi3AMsQApjpyF2Sh5Lfn4jV1vSQ_ir0eOdEB28isRHUw8EA=="
+        ],
+        [
+          "dvrc.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEVNkDvqUAqqKUT9BGbkI9lCVbQI_nF1dea7c7ngkjH8nEezBQ1H_xq4EaPfmh4KZrSSR1eMKNMyJJVmIhW0q7Yf-KVbyiV2Q3d3HGiDLD1rIbOeZYRG8_BaUPJQ8pxfFJBVYpZjVAFaUmbcwKE15R3S-uJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_11",
+      "section_idx": 7,
+      "idx_in_section": 11,
+      "text": "If two movies share no genres, their distance is 1.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHbQhczyOOPIoVJDOmbOm-Pg00TST6qpW-92751DNt66Gsv64MZf6wMmqsOuWO8m9AAzUsFlYkdi3AMsQApjpyF2Sh5Lfn4jV1vSQ_ir0eOdEB28isRHUw8EA=="
+        ],
+        [
+          "dvrc.fr",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEVNkDvqUAqqKUT9BGbkI9lCVbQI_nF1dea7c7ngkjH8nEezBQ1H_xq4EaPfmh4KZrSSR1eMKNMyJJVmIhW0q7Yf-KVbyiV2Q3d3HGiDLD1rIbOeZYRG8_BaUPJQ8pxfFJBVYpZjVAFaUmbcwKE15R3S-uJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_12",
+      "section_idx": 7,
+      "idx_in_section": 12,
+      "text": "*  **Hamming Distance:** Used for binary attribute vectors.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHbQhczyOOPIoVJDOmbOm-Pg00TST6qpW-92751DNt66Gsv64MZf6wMmqsOuWO8m9AAzUsFlYkdi3AMsQApjpyF2Sh5Lfn4jV1vSQ_ir0eOdEB28isRHUw8EA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_13",
+      "section_idx": 7,
+      "idx_in_section": 13,
+      "text": "A higher ILD score indicates that the items within a single recommendation list are distinct from one another (e.g., a list containing a horror movie, a comedy, and a documentary).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "plainenglish.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy8WAwWWoslHd4Z1BD5k-P7sx3YE7i-vWClBIQPZWukMWhBVuSJwySD2rViFCwJT3JlH8thnAYefVPlZjU5wd3iCIgQzIOZdlgSRBoBxgqFiFF0LqBqvGVcxRbF4lTOjgPAFivCoOLaD9a-d3vOkyuWtQx-cfINmGLqCSgTNwwpbJkPXu-OqUhvGFZjE9g2e2D8-2G3EPiAiGYVeuxZuxJxfG1tVXsesHBL661kTvCAWo76UIjrtrY"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFIDGFOSbtqrL2vU8Jv4e4mS4G-CPgwRYm8PEqbioXejJKPn0pDrVSWbQf4rzSOpwXd6luOPIgaQ3uBT_zdiN7YcSh2LzJIMqdBpj8MD1TqBIvSj1INsg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "It measures the average pairwise dissimilarity between all items in a recommendation list $L$ of size $k$.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "The formula for ILD is typically defined as:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2UtltBgJ2Qy1oogT5bdsv-WoKRGUyhTYzB9uadSBUpjJ0znjCr0AdUndULEiNh5L4H5kVxCrIcwUTxUnLINx06enu3rClYgKGFQx3j7_kUiq7yFrSqpEr-t2ec73OwDzj7RGBv2dtkfzSgr_m6Ypvv2rXS1fPwA21DHrGYScDMBaH0Bidc4X8QVfoqpSp26qYKt3AAHw="
+        ],
+        [
+          "christinebauer.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw4OJypB6bxWK2EWbVo5AJZzEVkXP9FQA7C8QKSoHKFeJM82WhLLFrQVGDG3o3RDvbetRdG31Fti4qhhzUGFipvl-AUjdNgfoY_Rd9z8SdFDqHY06i6rEoTgRV6mLgIVSdRVfJ1hYAxc0NJqY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_4",
+      "section_idx": 7,
+      "idx_in_section": 4,
+      "text": "\\[",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2UtltBgJ2Qy1oogT5bdsv-WoKRGUyhTYzB9uadSBUpjJ0znjCr0AdUndULEiNh5L4H5kVxCrIcwUTxUnLINx06enu3rClYgKGFQx3j7_kUiq7yFrSqpEr-t2ec73OwDzj7RGBv2dtkfzSgr_m6Ypvv2rXS1fPwA21DHrGYScDMBaH0Bidc4X8QVfoqpSp26qYKt3AAHw="
+        ],
+        [
+          "christinebauer.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw4OJypB6bxWK2EWbVo5AJZzEVkXP9FQA7C8QKSoHKFeJM82WhLLFrQVGDG3o3RDvbetRdG31Fti4qhhzUGFipvl-AUjdNgfoY_Rd9z8SdFDqHY06i6rEoTgRV6mLgIVSdRVfJ1hYAxc0NJqY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_5",
+      "section_idx": 7,
+      "idx_in_section": 5,
+      "text": "ILD(L) = \\frac{1}{|L|(|L|-1)} \\sum_{i \\in L} \\sum_{j \\in L, j \\neq i} dist(i, j)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2UtltBgJ2Qy1oogT5bdsv-WoKRGUyhTYzB9uadSBUpjJ0znjCr0AdUndULEiNh5L4H5kVxCrIcwUTxUnLINx06enu3rClYgKGFQx3j7_kUiq7yFrSqpEr-t2ec73OwDzj7RGBv2dtkfzSgr_m6Ypvv2rXS1fPwA21DHrGYScDMBaH0Bidc4X8QVfoqpSp26qYKt3AAHw="
+        ],
+        [
+          "christinebauer.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw4OJypB6bxWK2EWbVo5AJZzEVkXP9FQA7C8QKSoHKFeJM82WhLLFrQVGDG3o3RDvbetRdG31Fti4qhhzUGFipvl-AUjdNgfoY_Rd9z8SdFDqHY06i6rEoTgRV6mLgIVSdRVfJ1hYAxc0NJqY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_6",
+      "section_idx": 7,
+      "idx_in_section": 6,
+      "text": "\\]",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2UtltBgJ2Qy1oogT5bdsv-WoKRGUyhTYzB9uadSBUpjJ0znjCr0AdUndULEiNh5L4H5kVxCrIcwUTxUnLINx06enu3rClYgKGFQx3j7_kUiq7yFrSqpEr-t2ec73OwDzj7RGBv2dtkfzSgr_m6Ypvv2rXS1fPwA21DHrGYScDMBaH0Bidc4X8QVfoqpSp26qYKt3AAHw="
+        ],
+        [
+          "christinebauer.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw4OJypB6bxWK2EWbVo5AJZzEVkXP9FQA7C8QKSoHKFeJM82WhLLFrQVGDG3o3RDvbetRdG31Fti4qhhzUGFipvl-AUjdNgfoY_Rd9z8SdFDqHY06i6rEoTgRV6mLgIVSdRVfJ1hYAxc0NJqY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_7",
+      "section_idx": 7,
+      "idx_in_section": 7,
+      "text": "Where $dist(i, j)$ represents a distance measure between item $i$ and item $j$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH2UtltBgJ2Qy1oogT5bdsv-WoKRGUyhTYzB9uadSBUpjJ0znjCr0AdUndULEiNh5L4H5kVxCrIcwUTxUnLINx06enu3rClYgKGFQx3j7_kUiq7yFrSqpEr-t2ec73OwDzj7RGBv2dtkfzSgr_m6Ypvv2rXS1fPwA21DHrGYScDMBaH0Bidc4X8QVfoqpSp26qYKt3AAHw="
+        ],
+        [
+          "christinebauer.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw4OJypB6bxWK2EWbVo5AJZzEVkXP9FQA7C8QKSoHKFeJM82WhLLFrQVGDG3o3RDvbetRdG31Fti4qhhzUGFipvl-AUjdNgfoY_Rd9z8SdFDqHY06i6rEoTgRV6mLgIVSdRVfJ1hYAxc0NJqY="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_8",
+      "section_idx": 7,
+      "idx_in_section": 8,
+      "text": "*  **Distance Metrics:** The choice of distance function is critical.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_9",
+      "section_idx": 7,
+      "idx_in_section": 9,
+      "text": "*  **Cosine Distance:** Often used when items are represented by feature vectors (e.g., TF-IDF vectors of movie plots or latent vectors from matrix factorization).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "evidentlyai.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1gh9nvrgEyj1exin2UkPCUEuVAaamUsuz4hxq2kIjHlASGhVREFFW1lsiFJrN_3Sy3nbCMagNxndg76rZY37xFSXmqUaiPVvKq0fb8FI13hRYYIpovMVx5i6tDcm73pGuvRcvGFaocNGAh3gystehL7aG9PxGIygLRAFwAEVjPA=="
+        ],
+        [
+          "codesignal.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF7ivf-UNvzyCyNVbz2bLRrZaSx0gVyYRddaIC6hZSUX9isGqxALu0YxgFeV-xtOEss38IhnOiSpcX7COBMi0K2TwxIYm-JmWdMgV1IHhEzW953yVhwcH1N_PMgtlpBl1CFUY286g9dWqTnNVDqZmvcuA-lGRv2yxBspXwEXXP1BrDULYMOL3oZmb1-X0eFAS2Jwd2vd7KT1m2JKsZO5Jr4R-MYqeanX4-sfEiHoya50Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "### 3.2 Aggregate Diversity and Coverage",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "While ILD measures diversity for a single user, **Aggregate Diversity** measures the diversity of the system as a whole across all users.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "This is crucial for ensuring that the system does not simply recommend the same \"diverse\" set of popular items to everyone (e.g., everyone gets \"Titanic\" and \"The Godfather\").",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "#### 3.2.1 Catalog Coverage",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "plainenglish.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy8WAwWWoslHd4Z1BD5k-P7sx3YE7i-vWClBIQPZWukMWhBVuSJwySD2rViFCwJT3JlH8thnAYefVPlZjU5wd3iCIgQzIOZdlgSRBoBxgqFiFF0LqBqvGVcxRbF4lTOjgPAFivCoOLaD9a-d3vOkyuWtQx-cfINmGLqCSgTNwwpbJkPXu-OqUhvGFZjE9g2e2D8-2G3EPiAiGYVeuxZuxJxfG1tVXsesHBL661kTvCAWo76UIjrtrY"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "Catalog Coverage measures the percentage of items in the system's inventory that are recommended to at least one user.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "plainenglish.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy8WAwWWoslHd4Z1BD5k-P7sx3YE7i-vWClBIQPZWukMWhBVuSJwySD2rViFCwJT3JlH8thnAYefVPlZjU5wd3iCIgQzIOZdlgSRBoBxgqFiFF0LqBqvGVcxRbF4lTOjgPAFivCoOLaD9a-d3vOkyuWtQx-cfINmGLqCSgTNwwpbJkPXu-OqUhvGFZjE9g2e2D8-2G3EPiAiGYVeuxZuxJxfG1tVXsesHBL661kTvCAWo76UIjrtrY"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "\\[",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "plainenglish.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy8WAwWWoslHd4Z1BD5k-P7sx3YE7i-vWClBIQPZWukMWhBVuSJwySD2rViFCwJT3JlH8thnAYefVPlZjU5wd3iCIgQzIOZdlgSRBoBxgqFiFF0LqBqvGVcxRbF4lTOjgPAFivCoOLaD9a-d3vOkyuWtQx-cfINmGLqCSgTNwwpbJkPXu-OqUhvGFZjE9g2e2D8-2G3EPiAiGYVeuxZuxJxfG1tVXsesHBL661kTvCAWo76UIjrtrY"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "\\text{Catalog Coverage} = \\frac{|\\bigcup_{u \\in U} R_u|}{|I|} \\times 100",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "plainenglish.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy8WAwWWoslHd4Z1BD5k-P7sx3YE7i-vWClBIQPZWukMWhBVuSJwySD2rViFCwJT3JlH8thnAYefVPlZjU5wd3iCIgQzIOZdlgSRBoBxgqFiFF0LqBqvGVcxRbF4lTOjgPAFivCoOLaD9a-d3vOkyuWtQx-cfINmGLqCSgTNwwpbJkPXu-OqUhvGFZjE9g2e2D8-2G3EPiAiGYVeuxZuxJxfG1tVXsesHBL661kTvCAWo76UIjrtrY"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_4",
+      "section_idx": 9,
+      "idx_in_section": 4,
+      "text": "\\]",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "plainenglish.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy8WAwWWoslHd4Z1BD5k-P7sx3YE7i-vWClBIQPZWukMWhBVuSJwySD2rViFCwJT3JlH8thnAYefVPlZjU5wd3iCIgQzIOZdlgSRBoBxgqFiFF0LqBqvGVcxRbF4lTOjgPAFivCoOLaD9a-d3vOkyuWtQx-cfINmGLqCSgTNwwpbJkPXu-OqUhvGFZjE9g2e2D8-2G3EPiAiGYVeuxZuxJxfG1tVXsesHBL661kTvCAWo76UIjrtrY"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_5",
+      "section_idx": 9,
+      "idx_in_section": 5,
+      "text": "Where $R_u$ is the set of items recommended to user $u$, and $I$ is the total set of available items.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHbQhczyOOPIoVJDOmbOm-Pg00TST6qpW-92751DNt66Gsv64MZf6wMmqsOuWO8m9AAzUsFlYkdi3AMsQApjpyF2Sh5Lfn4jV1vSQ_ir0eOdEB28isRHUw8EA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF16kA27sJz8zd5JXsTe6Ksft2ZH-AjV6zCjPOGfixVauTtOgjTS-xhswsklY1UAlFdTP2tTbhQfy7bl0aHvBhTuDh1ZOr03X5b46VEPRqbJPmL__l2MSnN0cACCQa8U1Uv5IOWEwcI0StXUm5a9W1Ig9YHmNFhfAtoyOi6IyomWkVwuBCnO1xRT9zJmMvQQtA3_VVPWzoltgPj-0pXYCFxTvBETS--cA2JHwvtpA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGs2byK3QKvgbDCHIFWVd5cBi-Eq047SVLx7IKQxF9gkNC6Pir4WsJTbMbgne0yxbsep4xtL7xBL98b0pTYvDFBQ7W34M--tpoupB7nGXd4kQWBVePaxw=="
+        ],
+        [
+          "shaped.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUoCiK0xx21sXF82cz-HtVr3MlN-j11ce9s13jDls10P5MAJl2VeEBqw8UAe6NJNgJh_HqmXdrIJQz1I1qiTLANWwHsAChJUh0cx2JWoR-MBCbspp83FdYXpfK8INF6W-5kXw7YCSiQN3-1ceA7AshL-9GlGL8Q3j63U3w6HiT-d1Z2KR3wbdxLPZL_b95SnFxywDu4LFkqEA="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_6",
+      "section_idx": 9,
+      "idx_in_section": 6,
+      "text": "High coverage implies the system is effectively utilizing the \"long tail\" of the catalog, which is beneficial for provider fairness and sales diversity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "milvus.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwvoLG8WuCVkG23w6eH3b1HMR8T-jOV3PjTPNYB7R_8LePa_mlHem6045jU57opf9nC1GAfjiKjDFUJJb9kvws_Q967oa4qwmd8U_cYIx-BwQsrFuZbJtUlzWIV_QfJEDUx69Gc0z7CU0p9lpkt655koJ9v3lUYK3vdrkGefiXLZqkCY8hlvCx3PNPrNMaguFjZ34lG86o7cPAkUMo4jDsa2jELz7mPw=="
+        ],
+        [
+          "plainenglish.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEy8WAwWWoslHd4Z1BD5k-P7sx3YE7i-vWClBIQPZWukMWhBVuSJwySD2rViFCwJT3JlH8thnAYefVPlZjU5wd3iCIgQzIOZdlgSRBoBxgqFiFF0LqBqvGVcxRbF4lTOjgPAFivCoOLaD9a-d3vOkyuWtQx-cfINmGLqCSgTNwwpbJkPXu-OqUhvGFZjE9g2e2D8-2G3EPiAiGYVeuxZuxJxfG1tVXsesHBL661kTvCAWo76UIjrtrY"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

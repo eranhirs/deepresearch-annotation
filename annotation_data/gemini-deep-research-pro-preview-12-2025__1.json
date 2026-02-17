@@ -1,0 +1,1690 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "1",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat publicly available datasets are typically used for evaluating type inference systems in python?",
+  "answer": "# Comprehensive Analysis of Publicly Available Datasets for Evaluating Type Inference Systems in Python\n\n### Key Points\n*   **Dichotomy of Datasets:** The landscape of Python type inference datasets is divided into two primary categories: large-scale corpora derived from open-source repositories (e.g., ManyTypes4Py, Typilus) used primarily for training and evaluating Machine Learning (ML) models, and curated micro-benchmarks (e.g., TypeEvalPy) designed to stress-test specific language features and static analysis tools.\n*   **The \"Gold Standard\" Corpus:** **ManyTypes4Py** is currently the most prominent and widely used large-scale dataset, offering over 5,000 de-duplicated projects with nearly 1 million type annotations, specifically structured to mitigate data leakage and duplication bias in ML training.\n*   **Emergence of LLM Benchmarks:** Recent developments have introduced **TypyBench**, a benchmark specifically designed to evaluate Large Language Models (LLMs) on repository-level type inference, introducing novel metrics for semantic similarity and consistency that traditional exact-match metrics miss.\n*   **Standardization Efforts:** **TypeEvalPy** represents a shift toward standardized, reproducible micro-benchmarking, allowing for the direct comparison of diverse tools (both static and ML-based) across specific Python features like recursion, dynamic attributes, and complex generics.\n*   **Domain-Specific Challenges:** Research into **CrossDomainTypes4Py** highlights the difficulty of generalizing type inference across different software domains (e.g., Web vs. Scientific), revealing that models trained on general corpora often fail when subjected to domain shifts.\n\n---\n\n## 1. Introduction\n\nThe dynamic nature of Python, while offering flexibility and rapid prototyping capabilities, presents significant challenges for tooling, particularly in the realm of static analysis and error detection. The introduction of optional static typing via PEP 484 has catalyzed a surge in research regarding automated type inference\u2014the process of deducing type information from unannotated code. To evaluate the efficacy of these systems, whether they are based on traditional static analysis, probabilistic graphical models, or modern deep learning architectures, researchers rely on high-quality, publicly available datasets.\n\nThis report provides an exhaustive examination of the datasets currently available for evaluating Python type inference systems. These datasets range from massive collections of mined GitHub repositories intended for training neural networks to precision-engineered micro-benchmarks designed to expose edge cases in inference logic. The analysis categorizes these datasets by their primary utility (training vs. benchmarking), structural composition, and the specific evaluation metrics they support.\n\n## 2. Large-Scale Corpora for Machine Learning-Based Inference\n\nThe dominant approach in modern type inference involves training machine learning models on vast amounts of code. Consequently, the largest available datasets are those constructed by mining open-source repositories, filtering for existing type annotations (often added by developers using MyPy or Pyre), and processing them into structured formats suitable for neural networks.\n\n### 2.1 ManyTypes4Py\n**ManyTypes4Py** stands as the most comprehensive and rigorously constructed dataset for Python type inference currently available in the public domain. Developed to address the limitations of previous datasets regarding size and code duplication, it serves as the primary benchmark for training and evaluating deep learning models like Type4Py.\n\n*   **Composition and Scale:** The dataset comprises 5,382 Python projects sourced from GitHub. It contains approximately 869,000 type annotations in its base version. To augment this, the authors utilized the Pyre type checker to infer additional types, resulting in a \"complete\" version containing up to 3.3 million type annotations [cite: 1, 2].\n*   **Data Processing Pipeline:** A critical feature of ManyTypes4Py is its reliance on the **LibSA4Py** pipeline. This lightweight static analyzer extracts Abstract Syntax Trees (ASTs) and generates a JSON-formatted representation for each file. This representation includes 16 distinct \"type hints\" (natural language and contextual features) and a sequence-to-sequence (seq2seq) representation of the code, facilitating the training of various model architectures [cite: 3, 4].\n*   **De-duplication:** A pervasive issue in code corpora is duplication, which can lead to inflated performance metrics due to data leakage between training and test sets. ManyTypes4Py addresses this using **CD4Py**, a tool that identifies and removes duplicate files. The dataset is explicitly split into training, validation, and test sets by file to ensure rigorous evaluation [cite: 5, 6].\n*   **Availability:** The dataset is hosted on Zenodo, with the processing tools and extraction pipelines available on GitHub, ensuring reproducibility for subsequent research [cite: 1, 2].\n\n### 2.2 The Typilus Dataset\nIntroduced at PLDI 2020, the **Typilus** dataset was designed for graph-based neural networks (GNNs). Unlike sequence-based datasets, Typilus focuses on representing code as a graph to capture data flow and semantic relationships, which are crucial for inferring types in complex contexts.\n\n*   **Composition:** The dataset consists of approximately 600 Python projects (some sources indicate a file count of roughly 118,000 files). It includes a total of nearly 6 million symbols, of which approximately 250,000 have non-`Any`, non-`None` type annotations [cite: 7, 8].\n*   **Structure:** The data is processed to support \"TypeSpace,\" a continuous relaxation of discrete types. This allows the evaluation of a model's ability to predict rare and user-defined types via nearest-neighbor search in an embedding space, rather than simple classification.\n*   **Evaluation Focus:** This dataset is particularly useful for evaluating **one-shot learning** and the prediction of open vocabularies. It highlights the \"long-tail\" distribution of types in Python, where a few types (int, str, bool) are ubiquitous, but the vast majority of types are user-defined classes that appear infrequently [cite: 9, 10].\n\n### 2.3 Py150 (Python-150k)\nWhile originally created for code completion tasks by Raychev et al. (2016), the **Py150** dataset remains a foundational resource in the field. It contains 150,000 Python source files collected from GitHub.\n\n*   **Relevance to Type Inference:** Although Py150 was not built explicitly for type inference (many files lack annotations), it is frequently used as a pre-training corpus for models that learn code representations (embeddings) before being fine-tuned on annotated datasets like ManyTypes4Py. It serves as a baseline for understanding how well models grasp Python syntax and semantics independent of type labels [cite: 3, 11].\n*   **Limitations:** The dataset suffers from age (mostly Python 2.7 era code) and a lack of explicit de-duplication in its original form, though subsequent works have attempted to clean it. It is less suitable for evaluating modern type inference systems that rely on Python 3 syntax and type hinting standards [cite: 3, 11].\n\n### 2.4 TypePY and PyInfer Dataset\nTo address the scarcity of human-labeled data, the authors of **PyInfer** created the **TypePY** dataset.\n\n*   **Methodology:** Rather than relying solely on developer-provided annotations, this dataset was constructed by running **PySonar2**, an advanced semantic indexer, on top-star GitHub repositories. This process generated a massive set of \"ground truth\" annotations based on static analysis.\n*   **Scale:** The dataset reportedly contains over 77 million annotations extracted from 320,402 source files. This scale allows for the evaluation of variable-level inference, a more granular task than the function-signature inference focused on by other datasets [cite: 12, 13].\n*   **Utility:** It is particularly valuable for evaluating systems that aim to annotate local variables within function bodies, a task where context is highly localized and often missing from function-header-only datasets [cite: 12].\n\n---\n\n## 3. Micro-Benchmarks for Standardized Tool Evaluation\n\nWhile large corpora measure how well ML models generalize, they are often too noisy to pinpoint specific failures in reasoning. Micro-benchmarks provide controlled environments to test specific language features (e.g., recursion, inheritance, dynamic attributes).\n\n### 3.1 TypeEvalPy\n**TypeEvalPy** is the current state-of-the-art framework for micro-benchmarking Python type inference tools. It was developed to provide a standardized process for assessing performance, addressing the lack of a unified evaluation framework in the community.\n\n*   **Composition:** The benchmark contains 154 carefully crafted code snippets with 845 type annotations. These snippets are categorized into 18 distinct groups targeting specific Python features, such as classes, dynamic features, generators, and external libraries [cite: 14, 15, 16].\n*   **Infrastructure:** TypeEvalPy is not just a dataset but a full execution framework. It manages containerized versions of various tools (including Pyright, Pytype, Jedi, Scalpel, HiTyper, and Type4Py), runs them against the snippets, translates their output into a standardized format, and produces comparative metrics [cite: 16, 17].\n*   **Evaluation Metrics:** It measures precision, recall, and accuracy, but crucially, it allows for the analysis of \"mismatched types\"\u2014predictions that are semantically close but syntactically different from the ground truth. This framework is essential for developers of static analysis tools who need to verify compliance with Python's typing rules [cite: 16, 18].\n\n---\n\n## 4. Repository-Level and LLM-Centric Benchmarks\n\nThe advent of Large Language Models (LLMs) has shifted the focus from local inference (predicting a single variable's type) to repository-level inference (ensuring consistency across modules).\n\n### 4.1 TypyBench\n**TypyBench** is a recently introduced benchmark (2025) designed specifically to evaluate LLMs on the task of inferring types for entire, real-world Python repositories.\n\n*   **Dataset Composition:** It consists of 50 high-quality, open-source Python repositories. These repositories were selected for their diversity in domains (data science, web development, systems) and type usage. The evaluation protocol involves stripping all original type annotations to create a \"blind\" inference scenario [cite: 19].\n*   **Novel Metrics:** TypyBench introduces two critical metrics:\n    1.  **TypeSim (Type Similarity):** Measures the semantic similarity between the inferred type and the ground truth, acknowledging that `Sequence[str]` and `List[str]` may be functionally equivalent in certain contexts.\n    2.  **TypeCheck:** Assesses the global consistency of the inferred types by running a static type checker (like MyPy) on the code with the inferred annotations. This measures whether the LLM's predictions actually result in valid, type-safe code [cite: 20, 21].\n*   **Significance:** This dataset addresses the \"hallucination\" problem in LLMs, where a model might predict a type that looks correct locally but causes conflicts when imported elsewhere in the project [cite: 22, 23].\n\n### 4.2 CrossDomainTypes4Py\nTo evaluate the robustness of inference systems against domain shifts, researchers introduced **CrossDomainTypes4Py**.\n\n*   **Motivation:** Most ML models are trained on generic codebases. This dataset tests whether a model trained on web development code can accurately infer types in scientific calculation code, and vice versa.\n*   **Structure:** It contains two distinct subsets of repositories: one from the **Web Development** domain and one from the **Scientific Calculation** domain. The dataset includes over 1 million type annotations.\n*   **Findings:** Evaluations using this dataset have shown that \"dataset shift\" significantly degrades performance, highlighting the need for domain-adaptation techniques in type inference research [cite: 24, 25, 26].\n\n---\n\n## 5. Comparative Analysis of Datasets\n\nThe following table summarizes the key characteristics of the primary datasets discussed.\n\n| Dataset | Primary Use Case | Scale | Granularity | Key Features |\n| :--- | :--- | :--- | :--- | :--- |\n| **ManyTypes4Py** | ML Model Training | 5,382 Projects; ~1M Annotations | File/Function | De-duplicated; AST-processed; JSON format; Standard for Deep Learning [cite: 1, 3]. |\n| **Typilus** | GNN Training | ~600 Projects | Symbol/Graph | Graph-based representation; Focus on \"TypeSpace\" and rare types [cite: 7, 10]. |\n| **TypeEvalPy** | Tool Benchmarking | 154 Snippets; 845 Annotations | Micro-benchmark | Covers 18 language features; Containerized runner; Standardized metrics [cite: 14, 17]. |\n| **TypyBench** | LLM Evaluation | 50 Repositories | Repository | **TypeCheck** metric for consistency; **TypeSim** for semantic similarity [cite: 19, 21]. |\n| **TypePY** | Variable Inference | 320k Files; 77M Annotations | Variable | Generated via PySonar2; Focus on local variable inference [cite: 12, 13]. |\n| **CrossDomain** | Domain Adaptation | ~7,900 Repos (Total) | Domain-specific | Split into Web vs. Scientific domains to test generalization [cite: 25, 26]. |\n\n---\n\n## 6. Challenges and Considerations in Dataset Usage\n\n### 6.1 The Duplication Problem\nA recurring theme in the literature is the adverse effect of code duplication. Early datasets like Py150 suffered from high duplication rates, leading to models that \"memorized\" code rather than learning inference rules. **ManyTypes4Py** explicitly addresses this via the CD4Py tool, and modern evaluations (like **TypyBench**) emphasize the use of unique, high-quality repositories to prevent data leakage [cite: 3, 6, 21].\n\n### 6.2 Ground Truth Reliability\nFor datasets derived from GitHub (ManyTypes4Py, Typilus), the \"ground truth\" consists of developer-written annotations. However, these annotations are not always correct or complete. Some studies have used static analyzers (like MyPy or Pyre) to validate these annotations before including them in the dataset, but \"clean\" subsets are often significantly smaller than \"complete\" ones [cite: 2, 27]. **TypeEvalPy** avoids this by using manually verified micro-benchmarks, ensuring absolute correctness of the ground truth [cite: 16].\n\n### 6.3 Metric Validity\nTraditional metrics like top-1 accuracy are increasingly viewed as insufficient. A prediction of `List[Any]` when the truth is `List[int]` might be technically incorrect but practically useful. **TypyBench**'s introduction of **TypeSim** attempts to quantify this utility, moving evaluation closer to how developers actually perceive type hints [cite: 19, 21].\n\n## 7. Conclusion\n\nThe ecosystem of publicly available datasets for Python type inference has matured significantly. Researchers now have access to **ManyTypes4Py** for training robust deep learning models, **TypeEvalPy** for precise comparative benchmarking of tools, and **TypyBench** for evaluating the next generation of LLM-based inference. The choice of dataset depends heavily on the specific research goal: training a neural network requires the scale of ManyTypes4Py, while validating a new static analysis algorithm is best served by the precision of TypeEvalPy. Future work in this domain is likely to focus on improving the semantic richness of these datasets and addressing the challenges of repository-level consistency and domain adaptation.",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# Comprehensive Analysis of Publicly Available Datasets for Evaluating Type Inference Systems in Python",
+      "header_level": 1,
+      "text": "# Comprehensive Analysis of Publicly Available Datasets for Evaluating Type Inference Systems in Python\n\n",
+      "start": 0,
+      "end": 105
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "### Key Points",
+      "header_level": 3,
+      "text": "### Key Points\n*   **Dichotomy of Datasets:** The landscape of Python type inference datasets is divided into two primary categories: large-scale corpora derived from open-source repositories (e.g., ManyTypes4Py, Typilus) used primarily for training and evaluating Machine Learning (ML) models, and curated micro-benchmarks (e.g., TypeEvalPy) designed to stress-test specific language features and static analysis tools.\n*   **The \"Gold Standard\" Corpus:** **ManyTypes4Py** is currently the most prominent and widely used large-scale dataset, offering over 5,000 de-duplicated projects with nearly 1 million type annotations, specifically structured to mitigate data leakage and duplication bias in ML training.\n*   **Emergence of LLM Benchmarks:** Recent developments have introduced **TypyBench**, a benchmark specifically designed to evaluate Large Language Models (LLMs) on repository-level type inference, introducing novel metrics for semantic similarity and consistency that traditional exact-match metrics miss.\n*   **Standardization Efforts:** **TypeEvalPy** represents a shift toward standardized, reproducible micro-benchmarking, allowing for the direct comparison of diverse tools (both static and ML-based) across specific Python features like recursion, dynamic attributes, and complex generics.\n*   **Domain-Specific Challenges:** Research into **CrossDomainTypes4Py** highlights the difficulty of generalizing type inference across different software domains (e.g., Web vs. Scientific), revealing that models trained on general corpora often fail when subjected to domain shifts.\n\n---\n\n",
+      "start": 105,
+      "end": 1707
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 1. Introduction",
+      "header_level": 2,
+      "text": "## 1. Introduction\n\nThe dynamic nature of Python, while offering flexibility and rapid prototyping capabilities, presents significant challenges for tooling, particularly in the realm of static analysis and error detection. The introduction of optional static typing via PEP 484 has catalyzed a surge in research regarding automated type inference\u2014the process of deducing type information from unannotated code. To evaluate the efficacy of these systems, whether they are based on traditional static analysis, probabilistic graphical models, or modern deep learning architectures, researchers rely on high-quality, publicly available datasets.\n\nThis report provides an exhaustive examination of the datasets currently available for evaluating Python type inference systems. These datasets range from massive collections of mined GitHub repositories intended for training neural networks to precision-engineered micro-benchmarks designed to expose edge cases in inference logic. The analysis categorizes these datasets by their primary utility (training vs. benchmarking), structural composition, and the specific evaluation metrics they support.\n\n",
+      "start": 1707,
+      "end": 2854
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 2. Large-Scale Corpora for Machine Learning-Based Inference",
+      "header_level": 2,
+      "text": "## 2. Large-Scale Corpora for Machine Learning-Based Inference\n\nThe dominant approach in modern type inference involves training machine learning models on vast amounts of code. Consequently, the largest available datasets are those constructed by mining open-source repositories, filtering for existing type annotations (often added by developers using MyPy or Pyre), and processing them into structured formats suitable for neural networks.\n\n",
+      "start": 2854,
+      "end": 3298
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 2.1 ManyTypes4Py",
+      "header_level": 3,
+      "text": "### 2.1 ManyTypes4Py\n**ManyTypes4Py** stands as the most comprehensive and rigorously constructed dataset for Python type inference currently available in the public domain. Developed to address the limitations of previous datasets regarding size and code duplication, it serves as the primary benchmark for training and evaluating deep learning models like Type4Py.\n\n*   **Composition and Scale:** The dataset comprises 5,382 Python projects sourced from GitHub. It contains approximately 869,000 type annotations in its base version. To augment this, the authors utilized the Pyre type checker to infer additional types, resulting in a \"complete\" version containing up to 3.3 million type annotations [cite: 1, 2].\n*   **Data Processing Pipeline:** A critical feature of ManyTypes4Py is its reliance on the **LibSA4Py** pipeline. This lightweight static analyzer extracts Abstract Syntax Trees (ASTs) and generates a JSON-formatted representation for each file. This representation includes 16 distinct \"type hints\" (natural language and contextual features) and a sequence-to-sequence (seq2seq) representation of the code, facilitating the training of various model architectures [cite: 3, 4].\n*   **De-duplication:** A pervasive issue in code corpora is duplication, which can lead to inflated performance metrics due to data leakage between training and test sets. ManyTypes4Py addresses this using **CD4Py**, a tool that identifies and removes duplicate files. The dataset is explicitly split into training, validation, and test sets by file to ensure rigorous evaluation [cite: 5, 6].\n*   **Availability:** The dataset is hosted on Zenodo, with the processing tools and extraction pipelines available on GitHub, ensuring reproducibility for subsequent research [cite: 1, 2].\n\n",
+      "start": 3298,
+      "end": 5081
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 2.2 The Typilus Dataset",
+      "header_level": 3,
+      "text": "### 2.2 The Typilus Dataset\nIntroduced at PLDI 2020, the **Typilus** dataset was designed for graph-based neural networks (GNNs). Unlike sequence-based datasets, Typilus focuses on representing code as a graph to capture data flow and semantic relationships, which are crucial for inferring types in complex contexts.\n\n*   **Composition:** The dataset consists of approximately 600 Python projects (some sources indicate a file count of roughly 118,000 files). It includes a total of nearly 6 million symbols, of which approximately 250,000 have non-`Any`, non-`None` type annotations [cite: 7, 8].\n*   **Structure:** The data is processed to support \"TypeSpace,\" a continuous relaxation of discrete types. This allows the evaluation of a model's ability to predict rare and user-defined types via nearest-neighbor search in an embedding space, rather than simple classification.\n*   **Evaluation Focus:** This dataset is particularly useful for evaluating **one-shot learning** and the prediction of open vocabularies. It highlights the \"long-tail\" distribution of types in Python, where a few types (int, str, bool) are ubiquitous, but the vast majority of types are user-defined classes that appear infrequently [cite: 9, 10].\n\n",
+      "start": 5081,
+      "end": 6312
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "### 2.3 Py150 (Python-150k)",
+      "header_level": 3,
+      "text": "### 2.3 Py150 (Python-150k)\nWhile originally created for code completion tasks by Raychev et al. (2016), the **Py150** dataset remains a foundational resource in the field. It contains 150,000 Python source files collected from GitHub.\n\n*   **Relevance to Type Inference:** Although Py150 was not built explicitly for type inference (many files lack annotations), it is frequently used as a pre-training corpus for models that learn code representations (embeddings) before being fine-tuned on annotated datasets like ManyTypes4Py. It serves as a baseline for understanding how well models grasp Python syntax and semantics independent of type labels [cite: 3, 11].\n*   **Limitations:** The dataset suffers from age (mostly Python 2.7 era code) and a lack of explicit de-duplication in its original form, though subsequent works have attempted to clean it. It is less suitable for evaluating modern type inference systems that rely on Python 3 syntax and type hinting standards [cite: 3, 11].\n\n",
+      "start": 6312,
+      "end": 7306
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### 2.4 TypePY and PyInfer Dataset",
+      "header_level": 3,
+      "text": "### 2.4 TypePY and PyInfer Dataset\nTo address the scarcity of human-labeled data, the authors of **PyInfer** created the **TypePY** dataset.\n\n*   **Methodology:** Rather than relying solely on developer-provided annotations, this dataset was constructed by running **PySonar2**, an advanced semantic indexer, on top-star GitHub repositories. This process generated a massive set of \"ground truth\" annotations based on static analysis.\n*   **Scale:** The dataset reportedly contains over 77 million annotations extracted from 320,402 source files. This scale allows for the evaluation of variable-level inference, a more granular task than the function-signature inference focused on by other datasets [cite: 12, 13].\n*   **Utility:** It is particularly valuable for evaluating systems that aim to annotate local variables within function bodies, a task where context is highly localized and often missing from function-header-only datasets [cite: 12].\n\n---\n\n",
+      "start": 7306,
+      "end": 8264
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "## 3. Micro-Benchmarks for Standardized Tool Evaluation",
+      "header_level": 2,
+      "text": "## 3. Micro-Benchmarks for Standardized Tool Evaluation\n\nWhile large corpora measure how well ML models generalize, they are often too noisy to pinpoint specific failures in reasoning. Micro-benchmarks provide controlled environments to test specific language features (e.g., recursion, inheritance, dynamic attributes).\n\n",
+      "start": 8264,
+      "end": 8586
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "### 3.1 TypeEvalPy",
+      "header_level": 3,
+      "text": "### 3.1 TypeEvalPy\n**TypeEvalPy** is the current state-of-the-art framework for micro-benchmarking Python type inference tools. It was developed to provide a standardized process for assessing performance, addressing the lack of a unified evaluation framework in the community.\n\n*   **Composition:** The benchmark contains 154 carefully crafted code snippets with 845 type annotations. These snippets are categorized into 18 distinct groups targeting specific Python features, such as classes, dynamic features, generators, and external libraries [cite: 14, 15, 16].\n*   **Infrastructure:** TypeEvalPy is not just a dataset but a full execution framework. It manages containerized versions of various tools (including Pyright, Pytype, Jedi, Scalpel, HiTyper, and Type4Py), runs them against the snippets, translates their output into a standardized format, and produces comparative metrics [cite: 16, 17].\n*   **Evaluation Metrics:** It measures precision, recall, and accuracy, but crucially, it allows for the analysis of \"mismatched types\"\u2014predictions that are semantically close but syntactically different from the ground truth. This framework is essential for developers of static analysis tools who need to verify compliance with Python's typing rules [cite: 16, 18].\n\n---\n\n",
+      "start": 8586,
+      "end": 9867
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "## 4. Repository-Level and LLM-Centric Benchmarks",
+      "header_level": 2,
+      "text": "## 4. Repository-Level and LLM-Centric Benchmarks\n\nThe advent of Large Language Models (LLMs) has shifted the focus from local inference (predicting a single variable's type) to repository-level inference (ensuring consistency across modules).\n\n",
+      "start": 9867,
+      "end": 10112
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "### 4.1 TypyBench",
+      "header_level": 3,
+      "text": "### 4.1 TypyBench\n**TypyBench** is a recently introduced benchmark (2025) designed specifically to evaluate LLMs on the task of inferring types for entire, real-world Python repositories.\n\n*   **Dataset Composition:** It consists of 50 high-quality, open-source Python repositories. These repositories were selected for their diversity in domains (data science, web development, systems) and type usage. The evaluation protocol involves stripping all original type annotations to create a \"blind\" inference scenario [cite: 19].\n*   **Novel Metrics:** TypyBench introduces two critical metrics:\n    1.  **TypeSim (Type Similarity):** Measures the semantic similarity between the inferred type and the ground truth, acknowledging that `Sequence[str]` and `List[str]` may be functionally equivalent in certain contexts.\n    2.  **TypeCheck:** Assesses the global consistency of the inferred types by running a static type checker (like MyPy) on the code with the inferred annotations. This measures whether the LLM's predictions actually result in valid, type-safe code [cite: 20, 21].\n*   **Significance:** This dataset addresses the \"hallucination\" problem in LLMs, where a model might predict a type that looks correct locally but causes conflicts when imported elsewhere in the project [cite: 22, 23].\n\n",
+      "start": 10112,
+      "end": 11416
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "### 4.2 CrossDomainTypes4Py",
+      "header_level": 3,
+      "text": "### 4.2 CrossDomainTypes4Py\nTo evaluate the robustness of inference systems against domain shifts, researchers introduced **CrossDomainTypes4Py**.\n\n*   **Motivation:** Most ML models are trained on generic codebases. This dataset tests whether a model trained on web development code can accurately infer types in scientific calculation code, and vice versa.\n*   **Structure:** It contains two distinct subsets of repositories: one from the **Web Development** domain and one from the **Scientific Calculation** domain. The dataset includes over 1 million type annotations.\n*   **Findings:** Evaluations using this dataset have shown that \"dataset shift\" significantly degrades performance, highlighting the need for domain-adaptation techniques in type inference research [cite: 24, 25, 26].\n\n---\n\n",
+      "start": 11416,
+      "end": 12215
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "## 5. Comparative Analysis of Datasets",
+      "header_level": 2,
+      "text": "## 5. Comparative Analysis of Datasets\n\nThe following table summarizes the key characteristics of the primary datasets discussed.\n\n",
+      "start": 12215,
+      "end": 12346
+    },
+    {
+      "idx": 14,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Dataset | Primary Use Case | Scale | Granularity | Key Features |\n| :--- | :--- | :--- | :--- | :--- |\n| **ManyTypes4Py** | ML Model Training | 5,382 Projects; ~1M Annotations | File/Function | De-duplicated; AST-processed; JSON format; Standard for Deep Learning [cite: 1, 3]. |\n| **Typilus** | GNN Training | ~600 Projects | Symbol/Graph | Graph-based representation; Focus on \"TypeSpace\" and rare types [cite: 7, 10]. |\n| **TypeEvalPy** | Tool Benchmarking | 154 Snippets; 845 Annotations | Micro-benchmark | Covers 18 language features; Containerized runner; Standardized metrics [cite: 14, 17]. |\n| **TypyBench** | LLM Evaluation | 50 Repositories | Repository | **TypeCheck** metric for consistency; **TypeSim** for semantic similarity [cite: 19, 21]. |\n| **TypePY** | Variable Inference | 320k Files; 77M Annotations | Variable | Generated via PySonar2; Focus on local variable inference [cite: 12, 13]. |\n| **CrossDomain** | Domain Adaptation | ~7,900 Repos (Total) | Domain-specific | Split into Web vs. Scientific domains to test generalization [cite: 25, 26]. |",
+      "start": 12346,
+      "end": 13421
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "\n---\n\n",
+      "start": 13421,
+      "end": 13427
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "## 6. Challenges and Considerations in Dataset Usage",
+      "header_level": 2,
+      "text": "## 6. Challenges and Considerations in Dataset Usage\n\n",
+      "start": 13427,
+      "end": 13481
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "### 6.1 The Duplication Problem",
+      "header_level": 3,
+      "text": "### 6.1 The Duplication Problem\nA recurring theme in the literature is the adverse effect of code duplication. Early datasets like Py150 suffered from high duplication rates, leading to models that \"memorized\" code rather than learning inference rules. **ManyTypes4Py** explicitly addresses this via the CD4Py tool, and modern evaluations (like **TypyBench**) emphasize the use of unique, high-quality repositories to prevent data leakage [cite: 3, 6, 21].\n\n",
+      "start": 13481,
+      "end": 13939
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "### 6.2 Ground Truth Reliability",
+      "header_level": 3,
+      "text": "### 6.2 Ground Truth Reliability\nFor datasets derived from GitHub (ManyTypes4Py, Typilus), the \"ground truth\" consists of developer-written annotations. However, these annotations are not always correct or complete. Some studies have used static analyzers (like MyPy or Pyre) to validate these annotations before including them in the dataset, but \"clean\" subsets are often significantly smaller than \"complete\" ones [cite: 2, 27]. **TypeEvalPy** avoids this by using manually verified micro-benchmarks, ensuring absolute correctness of the ground truth [cite: 16].\n\n",
+      "start": 13939,
+      "end": 14506
+    },
+    {
+      "idx": 19,
+      "section_type": "text",
+      "header": "### 6.3 Metric Validity",
+      "header_level": 3,
+      "text": "### 6.3 Metric Validity\nTraditional metrics like top-1 accuracy are increasingly viewed as insufficient. A prediction of `List[Any]` when the truth is `List[int]` might be technically incorrect but practically useful. **TypyBench**'s introduction of **TypeSim** attempts to quantify this utility, moving evaluation closer to how developers actually perceive type hints [cite: 19, 21].\n\n",
+      "start": 14506,
+      "end": 14892
+    },
+    {
+      "idx": 20,
+      "section_type": "text",
+      "header": "## 7. Conclusion",
+      "header_level": 2,
+      "text": "## 7. Conclusion\n\nThe ecosystem of publicly available datasets for Python type inference has matured significantly. Researchers now have access to **ManyTypes4Py** for training robust deep learning models, **TypeEvalPy** for precise comparative benchmarking of tools, and **TypyBench** for evaluating the next generation of LLM-based inference. The choice of dataset depends heavily on the specific research goal: training a neural network requires the scale of ManyTypes4Py, while validating a new static analysis algorithm is best served by the precision of TypeEvalPy. Future work in this domain is likely to focus on improving the semantic richness of these datasets and addressing the challenges of repository-level consistency and domain adaptation.",
+      "start": 14892,
+      "end": 15647
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# Comprehensive Analysis of Publicly Available Datasets for Evaluating Type Inference Systems in Python",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "## 4. Repository-Level and LLM-Centric Benchmarks",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "The advent of Large Language Models (LLMs) has shifted the focus from local inference (predicting a single variable's type) to repository-level inference (ensuring consistency across modules).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "### 4.1 TypyBench",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "**TypyBench** is a recently introduced benchmark (2025) designed specifically to evaluate LLMs on the task of inferring types for entire, real-world Python repositories.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "*  **Dataset Composition:** It consists of 50 high-quality, open-source Python repositories.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjpxZkwF0SyuoYGT1BM3KwNLuNTsx1JzQ1XKeNUxWWuyHgsm_wCr3ixYbV1QESOzQzmkd9ErGtSRV46uVAz7ymi95I8oivP38u9EuizCQpccQqJpYxxAKqSXf8p8qJoGzEaYs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "These repositories were selected for their diversity in domains (data science, web development, systems) and type usage.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjpxZkwF0SyuoYGT1BM3KwNLuNTsx1JzQ1XKeNUxWWuyHgsm_wCr3ixYbV1QESOzQzmkd9ErGtSRV46uVAz7ymi95I8oivP38u9EuizCQpccQqJpYxxAKqSXf8p8qJoGzEaYs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "The evaluation protocol involves stripping all original type annotations to create a \"blind\" inference scenario.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjpxZkwF0SyuoYGT1BM3KwNLuNTsx1JzQ1XKeNUxWWuyHgsm_wCr3ixYbV1QESOzQzmkd9ErGtSRV46uVAz7ymi95I8oivP38u9EuizCQpccQqJpYxxAKqSXf8p8qJoGzEaYs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "*  **Novel Metrics:** TypyBench introduces two critical metrics:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "text": "1. **TypeSim (Type Similarity):** Measures the semantic similarity between the inferred type and the ground truth, acknowledging that `Sequence[str]` and `List[str]` may be functionally equivalent in certain contexts.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_7",
+      "section_idx": 11,
+      "idx_in_section": 7,
+      "text": "2. **TypeCheck:** Assesses the global consistency of the inferred types by running a static type checker (like MyPy) on the code with the inferred annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHCoMKzQGt-zR5vKoHTgQmsI9FlS5eJkKNFmwarrvS95J3KaQ2l7hXRNsXwAjwz4BMZ8OkuzpMtOL_AZEMRN_JjAYl34N1TxPbwXWRp5AjyRyUmBOX3FOZuZ4pD6PB1MAj2UsFeNUGEkhciX2Mg20KJPNA="
+        ],
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHSap68yD2zDAdaagTUR2w8PQ61da66PrX0aJKy_dqXMHn-hzR8gmB3fw2QZCA6zRBA1w1siaU2JVdfx27bEG2icf1tq_KqVIrVI30WC4fFjoh63fG0u-mRwNOGaICo2vm_iUL5LA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_8",
+      "section_idx": 11,
+      "idx_in_section": 8,
+      "text": "This measures whether the LLM's predictions actually result in valid, type-safe code.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "icml.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGNGJ-mgixSrlZPCszevM-__AAt0tv9F4XhBMzZMXdEMcNsELGqmc3Hw57WGH6pO6jZ2rrg8nNzWlVUFeEsIklTAn2AMHdRxJ0rAqStO6XAlrUzVWqZJ9FroUL5xpNYDw=="
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_9",
+      "section_idx": 11,
+      "idx_in_section": 9,
+      "text": "*  **Significance:** This dataset addresses the \"hallucination\" problem in LLMs, where a model might predict a type that looks correct locally but causes conflicts when imported elsewhere in the project.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHCoMKzQGt-zR5vKoHTgQmsI9FlS5eJkKNFmwarrvS95J3KaQ2l7hXRNsXwAjwz4BMZ8OkuzpMtOL_AZEMRN_JjAYl34N1TxPbwXWRp5AjyRyUmBOX3FOZuZ4pD6PB1MAj2UsFeNUGEkhciX2Mg20KJPNA="
+        ],
+        [
+          "mlr.press",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHSap68yD2zDAdaagTUR2w8PQ61da66PrX0aJKy_dqXMHn-hzR8gmB3fw2QZCA6zRBA1w1siaU2JVdfx27bEG2icf1tq_KqVIrVI30WC4fFjoh63fG0u-mRwNOGaICo2vm_iUL5LA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "### 4.2 CrossDomainTypes4Py",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "To evaluate the robustness of inference systems against domain shifts, researchers introduced **CrossDomainTypes4Py**.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_2",
+      "section_idx": 12,
+      "idx_in_section": 2,
+      "text": "*  **Motivation:** Most ML models are trained on generic codebases.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_3",
+      "section_idx": 12,
+      "idx_in_section": 3,
+      "text": "This dataset tests whether a model trained on web development code can accurately infer types in scientific calculation code, and vice versa.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_4",
+      "section_idx": 12,
+      "idx_in_section": 4,
+      "text": "*  **Structure:** It contains two distinct subsets of repositories: one from the **Web Development** domain and one from the **Scientific Calculation** domain.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE7yQIUcap8ypC7OTJHo7XUtEz6LR_pE4BZKScGX_z8Vlikc3gTtdPqMiQEkfadZXDLeJStCS8s1zvjukzQqnGRglqOiRSA89IC_1iMtx1pe6tQ4DnAqsvWRcJRtLI1iXJ4vByRfkRoBBgjg91jgZo6zDg5ifQxZ0NhlD5DdPdQi1tRRQQUWfu_VxAwXRWzGtaIDghAnxr04cKZIFiVR0miCBY6FdOhgqratx0wpQBu5-I5RNo0c0cdZyTy"
+        ],
+        [
+          "dlr.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEgnkyBa9RCiemaO2DJq5O39ksVWLhf2LLst_cf8nQVxzFIWCSrGHsyAyBKoMes4kTaLO3OkIWqlfd1TxzCOmmGDbIM1qJ3D0_yL6a-IbT1FMHLmW5tHsMCWlFFh5-j55tZftz11d0wUV8R0g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHx8hYdrcoMGviuGSB7W98Sl0KpS6Oa3tzhy1kx5dfhdFJCU036NiT_3oE9frQ6uIWfFo2EK0AMlP0a4f5qA_Kq8MvB5LQuCWd5A282nOkw16hN5lp1dQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_5",
+      "section_idx": 12,
+      "idx_in_section": 5,
+      "text": "The dataset includes over 1 million type annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE7yQIUcap8ypC7OTJHo7XUtEz6LR_pE4BZKScGX_z8Vlikc3gTtdPqMiQEkfadZXDLeJStCS8s1zvjukzQqnGRglqOiRSA89IC_1iMtx1pe6tQ4DnAqsvWRcJRtLI1iXJ4vByRfkRoBBgjg91jgZo6zDg5ifQxZ0NhlD5DdPdQi1tRRQQUWfu_VxAwXRWzGtaIDghAnxr04cKZIFiVR0miCBY6FdOhgqratx0wpQBu5-I5RNo0c0cdZyTy"
+        ],
+        [
+          "dlr.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEgnkyBa9RCiemaO2DJq5O39ksVWLhf2LLst_cf8nQVxzFIWCSrGHsyAyBKoMes4kTaLO3OkIWqlfd1TxzCOmmGDbIM1qJ3D0_yL6a-IbT1FMHLmW5tHsMCWlFFh5-j55tZftz11d0wUV8R0g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHx8hYdrcoMGviuGSB7W98Sl0KpS6Oa3tzhy1kx5dfhdFJCU036NiT_3oE9frQ6uIWfFo2EK0AMlP0a4f5qA_Kq8MvB5LQuCWd5A282nOkw16hN5lp1dQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_6",
+      "section_idx": 12,
+      "idx_in_section": 6,
+      "text": "*  **Findings:** Evaluations using this dataset have shown that \"dataset shift\" significantly degrades performance, highlighting the need for domain-adaptation techniques in type inference research .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE7yQIUcap8ypC7OTJHo7XUtEz6LR_pE4BZKScGX_z8Vlikc3gTtdPqMiQEkfadZXDLeJStCS8s1zvjukzQqnGRglqOiRSA89IC_1iMtx1pe6tQ4DnAqsvWRcJRtLI1iXJ4vByRfkRoBBgjg91jgZo6zDg5ifQxZ0NhlD5DdPdQi1tRRQQUWfu_VxAwXRWzGtaIDghAnxr04cKZIFiVR0miCBY6FdOhgqratx0wpQBu5-I5RNo0c0cdZyTy"
+        ],
+        [
+          "dlr.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEgnkyBa9RCiemaO2DJq5O39ksVWLhf2LLst_cf8nQVxzFIWCSrGHsyAyBKoMes4kTaLO3OkIWqlfd1TxzCOmmGDbIM1qJ3D0_yL6a-IbT1FMHLmW5tHsMCWlFFh5-j55tZftz11d0wUV8R0g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHx8hYdrcoMGviuGSB7W98Sl0KpS6Oa3tzhy1kx5dfhdFJCU036NiT_3oE9frQ6uIWfFo2EK0AMlP0a4f5qA_Kq8MvB5LQuCWd5A282nOkw16hN5lp1dQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "## 5. Comparative Analysis of Datasets",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "The following table summarizes the key characteristics of the primary datasets discussed.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "## 6. Challenges and Considerations in Dataset Usage",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "### 6.1 The Duplication Problem",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzBpyLCxJ-Oe_I17tb33PtTQqyumKI8symATYXm2y6ENCEaNakp0zp-BCk9ES6uNEQzc5B_YlAj_FTyEwKjoMa82UFhl5bud9MXTiPmrz-JT4BHgrLjzHoThuScnpVhTFtwd0MLa_FGzDf-b1aLUSjRUUBNBh1qLM-iCM2bkhu2MhDLrOuc6Ss7oDmRlO4LU9flHvzM3_2IDXyVJiRtLdw-XUZ9ExxxaIfhfBXEgOus4Q31GtCzXtCRnjw"
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "A recurring theme in the literature is the adverse effect of code duplication.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzBpyLCxJ-Oe_I17tb33PtTQqyumKI8symATYXm2y6ENCEaNakp0zp-BCk9ES6uNEQzc5B_YlAj_FTyEwKjoMa82UFhl5bud9MXTiPmrz-JT4BHgrLjzHoThuScnpVhTFtwd0MLa_FGzDf-b1aLUSjRUUBNBh1qLM-iCM2bkhu2MhDLrOuc6Ss7oDmRlO4LU9flHvzM3_2IDXyVJiRtLdw-XUZ9ExxxaIfhfBXEgOus4Q31GtCzXtCRnjw"
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "Early datasets like Py150 suffered from high duplication rates, leading to models that \"memorized\" code rather than learning inference rules.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzBpyLCxJ-Oe_I17tb33PtTQqyumKI8symATYXm2y6ENCEaNakp0zp-BCk9ES6uNEQzc5B_YlAj_FTyEwKjoMa82UFhl5bud9MXTiPmrz-JT4BHgrLjzHoThuScnpVhTFtwd0MLa_FGzDf-b1aLUSjRUUBNBh1qLM-iCM2bkhu2MhDLrOuc6Ss7oDmRlO4LU9flHvzM3_2IDXyVJiRtLdw-XUZ9ExxxaIfhfBXEgOus4Q31GtCzXtCRnjw"
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_3",
+      "section_idx": 17,
+      "idx_in_section": 3,
+      "text": "**ManyTypes4Py** explicitly addresses this via the CD4Py tool, and modern evaluations (like **TypyBench**) emphasize the use of unique, high-quality repositories to prevent data leakage.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzBpyLCxJ-Oe_I17tb33PtTQqyumKI8symATYXm2y6ENCEaNakp0zp-BCk9ES6uNEQzc5B_YlAj_FTyEwKjoMa82UFhl5bud9MXTiPmrz-JT4BHgrLjzHoThuScnpVhTFtwd0MLa_FGzDf-b1aLUSjRUUBNBh1qLM-iCM2bkhu2MhDLrOuc6Ss7oDmRlO4LU9flHvzM3_2IDXyVJiRtLdw-XUZ9ExxxaIfhfBXEgOus4Q31GtCzXtCRnjw"
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "### 6.2 Ground Truth Reliability",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "For datasets derived from GitHub (ManyTypes4Py, Typilus), the \"ground truth\" consists of developer-written annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "However, these annotations are not always correct or complete.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_3",
+      "section_idx": 18,
+      "idx_in_section": 3,
+      "text": "Some studies have used static analyzers (like MyPy or Pyre) to validate these annotations before including them in the dataset, but \"clean\" subsets are often significantly smaller than \"complete\" ones.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGEUoq_4o1MlP0Luwr6275jeXMqNtgfFgI-kAN58BD5pERSVH8oL_cj3lbKQZAxcNPT5V9HQNNGsXKTeRB0i3u-gxBKcQ7Vd_QGXzFWTLC4vy1TKVHOCrfxiX2KHcie9Yr9SPtO6L5oaIL1A=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4su8IxeHig-lLJg6TPijyLTjmvNvmZemX4oCam8lY2TQ8SlVrvJEx16nZHok2PvJL1RP-pDXWnqLa9FVB3IYmf0uqaYFOc74P0dTyF9VACUaM0j7wjA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_4",
+      "section_idx": 18,
+      "idx_in_section": 4,
+      "text": "**TypeEvalPy** avoids this by using manually verified micro-benchmarks, ensuring absolute correctness of the ground truth.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_0",
+      "section_idx": 19,
+      "idx_in_section": 0,
+      "text": "### 6.3 Metric Validity",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjpxZkwF0SyuoYGT1BM3KwNLuNTsx1JzQ1XKeNUxWWuyHgsm_wCr3ixYbV1QESOzQzmkd9ErGtSRV46uVAz7ymi95I8oivP38u9EuizCQpccQqJpYxxAKqSXf8p8qJoGzEaYs="
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_1",
+      "section_idx": 19,
+      "idx_in_section": 1,
+      "text": "Traditional metrics like top-1 accuracy are increasingly viewed as insufficient.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjpxZkwF0SyuoYGT1BM3KwNLuNTsx1JzQ1XKeNUxWWuyHgsm_wCr3ixYbV1QESOzQzmkd9ErGtSRV46uVAz7ymi95I8oivP38u9EuizCQpccQqJpYxxAKqSXf8p8qJoGzEaYs="
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_2",
+      "section_idx": 19,
+      "idx_in_section": 2,
+      "text": "A prediction of `List[Any]` when the truth is `List[int]` might be technically incorrect but practically useful.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjpxZkwF0SyuoYGT1BM3KwNLuNTsx1JzQ1XKeNUxWWuyHgsm_wCr3ixYbV1QESOzQzmkd9ErGtSRV46uVAz7ymi95I8oivP38u9EuizCQpccQqJpYxxAKqSXf8p8qJoGzEaYs="
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_3",
+      "section_idx": 19,
+      "idx_in_section": 3,
+      "text": "**TypyBench**'s introduction of **TypeSim** attempts to quantify this utility, moving evaluation closer to how developers actually perceive type hints.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emergentmind.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjpxZkwF0SyuoYGT1BM3KwNLuNTsx1JzQ1XKeNUxWWuyHgsm_wCr3ixYbV1QESOzQzmkd9ErGtSRV46uVAz7ymi95I8oivP38u9EuizCQpccQqJpYxxAKqSXf8p8qJoGzEaYs="
+        ],
+        [
+          "toronto.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEviksGuYxFdGQljXkgvzcjxMY1POrQd6QbyfvBW0Bt-yftJVNJyIwkJGa_AoKxuLrCXfnD88862eAzj25jzoKmGzPTaI1k42VDuW3OJhuepqkCv6UA4u1vr_x-p5HqYPyjH7Mbzlg29aACcItx_5jjLQM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "### Key Points",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "*  **Dichotomy of Datasets:** The landscape of Python type inference datasets is divided into two primary categories: large-scale corpora derived from open-source repositories (e.g., ManyTypes4Py, Typilus) used primarily for training and evaluating Machine Learning (ML) models, and curated micro-benchmarks (e.g., TypeEvalPy) designed to stress-test specific language features and static analysis tools.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "*  **The \"Gold Standard\" Corpus:** **ManyTypes4Py** is currently the most prominent and widely used large-scale dataset, offering over 5,000 de-duplicated projects with nearly 1 million type annotations, specifically structured to mitigate data leakage and duplication bias in ML training.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "*  **Emergence of LLM Benchmarks:** Recent developments have introduced **TypyBench**, a benchmark specifically designed to evaluate Large Language Models (LLMs) on repository-level type inference, introducing novel metrics for semantic similarity and consistency that traditional exact-match metrics miss.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "*  **Standardization Efforts:** **TypeEvalPy** represents a shift toward standardized, reproducible micro-benchmarking, allowing for the direct comparison of diverse tools (both static and ML-based) across specific Python features like recursion, dynamic attributes, and complex generics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "*  **Domain-Specific Challenges:** Research into **CrossDomainTypes4Py** highlights the difficulty of generalizing type inference across different software domains (e.g., Web vs. Scientific), revealing that models trained on general corpora often fail when subjected to domain shifts.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_0",
+      "section_idx": 20,
+      "idx_in_section": 0,
+      "text": "## 7. Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_1",
+      "section_idx": 20,
+      "idx_in_section": 1,
+      "text": "The ecosystem of publicly available datasets for Python type inference has matured significantly.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_2",
+      "section_idx": 20,
+      "idx_in_section": 2,
+      "text": "Researchers now have access to **ManyTypes4Py** for training robust deep learning models, **TypeEvalPy** for precise comparative benchmarking of tools, and **TypyBench** for evaluating the next generation of LLM-based inference.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_3",
+      "section_idx": 20,
+      "idx_in_section": 3,
+      "text": "The choice of dataset depends heavily on the specific research goal: training a neural network requires the scale of ManyTypes4Py, while validating a new static analysis algorithm is best served by the precision of TypeEvalPy.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_4",
+      "section_idx": 20,
+      "idx_in_section": 4,
+      "text": "Future work in this domain is likely to focus on improving the semantic richness of these datasets and addressing the challenges of repository-level consistency and domain adaptation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 1. Introduction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "The dynamic nature of Python, while offering flexibility and rapid prototyping capabilities, presents significant challenges for tooling, particularly in the realm of static analysis and error detection.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "The introduction of optional static typing via PEP 484 has catalyzed a surge in research regarding automated type inference\u2014the process of deducing type information from unannotated code.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "To evaluate the efficacy of these systems, whether they are based on traditional static analysis, probabilistic graphical models, or modern deep learning architectures, researchers rely on high-quality, publicly available datasets.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "This report provides an exhaustive examination of the datasets currently available for evaluating Python type inference systems.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "These datasets range from massive collections of mined GitHub repositories intended for training neural networks to precision-engineered micro-benchmarks designed to expose edge cases in inference logic.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "The analysis categorizes these datasets by their primary utility (training vs. benchmarking), structural composition, and the specific evaluation metrics they support.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 2. Large-Scale Corpora for Machine Learning-Based Inference",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "The dominant approach in modern type inference involves training machine learning models on vast amounts of code.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "Consequently, the largest available datasets are those constructed by mining open-source repositories, filtering for existing type annotations (often added by developers using MyPy or Pyre), and processing them into structured formats suitable for neural networks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 2.1 ManyTypes4Py",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "**ManyTypes4Py** stands as the most comprehensive and rigorously constructed dataset for Python type inference currently available in the public domain.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_10",
+      "section_idx": 4,
+      "idx_in_section": 10,
+      "text": "ManyTypes4Py addresses this using **CD4Py**, a tool that identifies and removes duplicate files.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEAAwj55EJxxEOm_giZgBsecnU6ehUpVu6QQhbBH0ZgESLFsv4O4LX2dJD-3uXmXIQiK2dWSm7XZIO4uroCmcsIlbDVN2qnByxndceT1p7SMbAAmeojdEwOUfpG"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGEUoq_4o1MlP0Luwr6275jeXMqNtgfFgI-kAN58BD5pERSVH8oL_cj3lbKQZAxcNPT5V9HQNNGsXKTeRB0i3u-gxBKcQ7Vd_QGXzFWTLC4vy1TKVHOCrfxiX2KHcie9Yr9SPtO6L5oaIL1A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_11",
+      "section_idx": 4,
+      "idx_in_section": 11,
+      "text": "The dataset is explicitly split into training, validation, and test sets by file to ensure rigorous evaluation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mirblog.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXzkKsEvy78GjatBLwA-uyzBtJm0t0ZaTtP6i-_ldrbcqh4HmPTnnRwrHnXubF8XSfbcFivh39p9UCqyiN1C1PplqWT95eaQSR2pq3KH4stzAea14Xj0BGP4RwloHM5J4e3i2kNDPs7IrQqu2pkN4bk-CmiOxOovU4vgJ4h4ybO66id3BqC4l331PaqkF3rkemkm1qKI2fficMnCZ4aLzQbghXe23IO88IR2KLMOQudbhgqZBBSx_UkGg="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzBpyLCxJ-Oe_I17tb33PtTQqyumKI8symATYXm2y6ENCEaNakp0zp-BCk9ES6uNEQzc5B_YlAj_FTyEwKjoMa82UFhl5bud9MXTiPmrz-JT4BHgrLjzHoThuScnpVhTFtwd0MLa_FGzDf-b1aLUSjRUUBNBh1qLM-iCM2bkhu2MhDLrOuc6Ss7oDmRlO4LU9flHvzM3_2IDXyVJiRtLdw-XUZ9ExxxaIfhfBXEgOus4Q31GtCzXtCRnjw"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_12",
+      "section_idx": 4,
+      "idx_in_section": 12,
+      "text": "*  **Availability:** The dataset is hosted on Zenodo, with the processing tools and extraction pipelines available on GitHub, ensuring reproducibility for subsequent research.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEAAwj55EJxxEOm_giZgBsecnU6ehUpVu6QQhbBH0ZgESLFsv4O4LX2dJD-3uXmXIQiK2dWSm7XZIO4uroCmcsIlbDVN2qnByxndceT1p7SMbAAmeojdEwOUfpG"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGEUoq_4o1MlP0Luwr6275jeXMqNtgfFgI-kAN58BD5pERSVH8oL_cj3lbKQZAxcNPT5V9HQNNGsXKTeRB0i3u-gxBKcQ7Vd_QGXzFWTLC4vy1TKVHOCrfxiX2KHcie9Yr9SPtO6L5oaIL1A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "Developed to address the limitations of previous datasets regarding size and code duplication, it serves as the primary benchmark for training and evaluating deep learning models like Type4Py.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "*  **Composition and Scale:** The dataset comprises 5,382 Python projects sourced from GitHub.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEAAwj55EJxxEOm_giZgBsecnU6ehUpVu6QQhbBH0ZgESLFsv4O4LX2dJD-3uXmXIQiK2dWSm7XZIO4uroCmcsIlbDVN2qnByxndceT1p7SMbAAmeojdEwOUfpG"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGEUoq_4o1MlP0Luwr6275jeXMqNtgfFgI-kAN58BD5pERSVH8oL_cj3lbKQZAxcNPT5V9HQNNGsXKTeRB0i3u-gxBKcQ7Vd_QGXzFWTLC4vy1TKVHOCrfxiX2KHcie9Yr9SPtO6L5oaIL1A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "It contains approximately 869,000 type annotations in its base version.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEAAwj55EJxxEOm_giZgBsecnU6ehUpVu6QQhbBH0ZgESLFsv4O4LX2dJD-3uXmXIQiK2dWSm7XZIO4uroCmcsIlbDVN2qnByxndceT1p7SMbAAmeojdEwOUfpG"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGEUoq_4o1MlP0Luwr6275jeXMqNtgfFgI-kAN58BD5pERSVH8oL_cj3lbKQZAxcNPT5V9HQNNGsXKTeRB0i3u-gxBKcQ7Vd_QGXzFWTLC4vy1TKVHOCrfxiX2KHcie9Yr9SPtO6L5oaIL1A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "To augment this, the authors utilized the Pyre type checker to infer additional types, resulting in a \"complete\" version containing up to 3.3 million type annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEAAwj55EJxxEOm_giZgBsecnU6ehUpVu6QQhbBH0ZgESLFsv4O4LX2dJD-3uXmXIQiK2dWSm7XZIO4uroCmcsIlbDVN2qnByxndceT1p7SMbAAmeojdEwOUfpG"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGEUoq_4o1MlP0Luwr6275jeXMqNtgfFgI-kAN58BD5pERSVH8oL_cj3lbKQZAxcNPT5V9HQNNGsXKTeRB0i3u-gxBKcQ7Vd_QGXzFWTLC4vy1TKVHOCrfxiX2KHcie9Yr9SPtO6L5oaIL1A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": "*  **Data Processing Pipeline:** A critical feature of ManyTypes4Py is its reliance on the **LibSA4Py** pipeline.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGrZwNbcsVOVDalkFg9hDqp98iOY-SRUTMswgWnEmlqQRCMV8-dRlKRGOijRMSAjt1sTDpgDNwqa3rgMlmLelTWfDxD_PEgODeIlZyPywXKjSFe3ms44w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "This lightweight static analyzer extracts Abstract Syntax Trees (ASTs) and generates a JSON-formatted representation for each file.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGrZwNbcsVOVDalkFg9hDqp98iOY-SRUTMswgWnEmlqQRCMV8-dRlKRGOijRMSAjt1sTDpgDNwqa3rgMlmLelTWfDxD_PEgODeIlZyPywXKjSFe3ms44w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "text": "This representation includes 16 distinct \"type hints\" (natural language and contextual features) and a sequence-to-sequence (seq2seq) representation of the code, facilitating the training of various model architectures.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGrZwNbcsVOVDalkFg9hDqp98iOY-SRUTMswgWnEmlqQRCMV8-dRlKRGOijRMSAjt1sTDpgDNwqa3rgMlmLelTWfDxD_PEgODeIlZyPywXKjSFe3ms44w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_9",
+      "section_idx": 4,
+      "idx_in_section": 9,
+      "text": "*  **De-duplication:** A pervasive issue in code corpora is duplication, which can lead to inflated performance metrics due to data leakage between training and test sets.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEAAwj55EJxxEOm_giZgBsecnU6ehUpVu6QQhbBH0ZgESLFsv4O4LX2dJD-3uXmXIQiK2dWSm7XZIO4uroCmcsIlbDVN2qnByxndceT1p7SMbAAmeojdEwOUfpG"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGEUoq_4o1MlP0Luwr6275jeXMqNtgfFgI-kAN58BD5pERSVH8oL_cj3lbKQZAxcNPT5V9HQNNGsXKTeRB0i3u-gxBKcQ7Vd_QGXzFWTLC4vy1TKVHOCrfxiX2KHcie9Yr9SPtO6L5oaIL1A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 2.2 The Typilus Dataset",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "Introduced at PLDI 2020, the **Typilus** dataset was designed for graph-based neural networks (GNNs).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "Unlike sequence-based datasets, Typilus focuses on representing code as a graph to capture data flow and semantic relationships, which are crucial for inferring types in complex contexts.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "*  **Composition:** The dataset consists of approximately 600 Python projects (some sources indicate a file count of roughly 118,000 files).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ucl.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrvYMoqTXUO9p6vQF_fauXZsE4CUBTklKhpDbni-iLgAqecRSjUqxHTohr7f3JJhcNveH6kZU7KryxoQwyunTsaF3YVeQB9YUT7Fgk6942diY-RH_lVbPgmrQNg8kVCwkCPWzvo8UhWQ=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzlJn3Yf9F-lR3mlK_OIQsVbdy5tc_0oqg2IElj0odHgg28DBNTvdelzXbCJQxk1nLrDaieNMlOyJ9n0LlQXvAbGOze0bTrSDh9RoLsJxuyh_JhWuMT_5NT2DcNim8J31h1C55u1gDZM1vwZ7mgeQp7ObGwryJG77t-93EBbjm8S-bpdcccAgAxLVvZtbHiiMid5pZ69ZLtD2wSSjp7mLGcJbW62MEW0q0VFVsyfKzjg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "It includes a total of nearly 6 million symbols, of which approximately 250,000 have non-`Any`, non-`None` type annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ucl.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrvYMoqTXUO9p6vQF_fauXZsE4CUBTklKhpDbni-iLgAqecRSjUqxHTohr7f3JJhcNveH6kZU7KryxoQwyunTsaF3YVeQB9YUT7Fgk6942diY-RH_lVbPgmrQNg8kVCwkCPWzvo8UhWQ=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzlJn3Yf9F-lR3mlK_OIQsVbdy5tc_0oqg2IElj0odHgg28DBNTvdelzXbCJQxk1nLrDaieNMlOyJ9n0LlQXvAbGOze0bTrSDh9RoLsJxuyh_JhWuMT_5NT2DcNim8J31h1C55u1gDZM1vwZ7mgeQp7ObGwryJG77t-93EBbjm8S-bpdcccAgAxLVvZtbHiiMid5pZ69ZLtD2wSSjp7mLGcJbW62MEW0q0VFVsyfKzjg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "*  **Structure:** The data is processed to support \"TypeSpace,\" a continuous relaxation of discrete types.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_6",
+      "section_idx": 5,
+      "idx_in_section": 6,
+      "text": "This allows the evaluation of a model's ability to predict rare and user-defined types via nearest-neighbor search in an embedding space, rather than simple classification.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_7",
+      "section_idx": 5,
+      "idx_in_section": 7,
+      "text": "*  **Evaluation Focus:** This dataset is particularly useful for evaluating **one-shot learning** and the prediction of open vocabularies.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "allamanis.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGaaDNetmT1gJwQT36iaJequ5q4BXCWmOaL1gAR1BdELlWBQD_Gnv4urCzvRLGvoOyCy47HRJXDKPYqjV1Pr_943KtHQEpMJsSW9tLsTgILK97cHlHUhYxkWfO9x9kO1lXOUeoiPwaY8hv67z4B4Es2lu_8LX3f6XYrBUzbf70igsNlr7pnMTpIbm0Lq7PDr0m1"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGSLBDT3ofZaWL4_zpFmmlfTOK_O9FN-a7VInU6lbafFx_n14drUNtan8OXz-R_pXKsZ0_tZhHlo6epZKEa4P4UngD2zzGu6utz29piPdc6GUPu0CdFHA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_8",
+      "section_idx": 5,
+      "idx_in_section": 8,
+      "text": "It highlights the \"long-tail\" distribution of types in Python, where a few types (int, str, bool) are ubiquitous, but the vast majority of types are user-defined classes that appear infrequently.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "allamanis.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGaaDNetmT1gJwQT36iaJequ5q4BXCWmOaL1gAR1BdELlWBQD_Gnv4urCzvRLGvoOyCy47HRJXDKPYqjV1Pr_943KtHQEpMJsSW9tLsTgILK97cHlHUhYxkWfO9x9kO1lXOUeoiPwaY8hv67z4B4Es2lu_8LX3f6XYrBUzbf70igsNlr7pnMTpIbm0Lq7PDr0m1"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGSLBDT3ofZaWL4_zpFmmlfTOK_O9FN-a7VInU6lbafFx_n14drUNtan8OXz-R_pXKsZ0_tZhHlo6epZKEa4P4UngD2zzGu6utz29piPdc6GUPu0CdFHA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "### 2.3 Py150 (Python-150k)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "While originally created for code completion tasks by Raychev et al. (2016), the **Py150** dataset remains a foundational resource in the field.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "It contains 150,000 Python source files collected from GitHub.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "*  **Relevance to Type Inference:** Although Py150 was not built explicitly for type inference (many files lack annotations), it is frequently used as a pre-training corpus for models that learn code representations (embeddings) before being fine-tuned on annotated datasets like ManyTypes4Py.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxmslVoWBjquwjZ_eRWcsfB4zAPUhki0fotBBUDVFfr4BedjqY-kLY3gy472V08qB3nj-ErUnYdjy-Wjx6pCq_AtwXc5y_xiLeB31qGID0vbi99mts6YHhGbFHcxdbW2HCTLtbZnKcetU6QAck-BOfjFNDPJHEpw4m0yidYqSE"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "It serves as a baseline for understanding how well models grasp Python syntax and semantics independent of type labels.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxmslVoWBjquwjZ_eRWcsfB4zAPUhki0fotBBUDVFfr4BedjqY-kLY3gy472V08qB3nj-ErUnYdjy-Wjx6pCq_AtwXc5y_xiLeB31qGID0vbi99mts6YHhGbFHcxdbW2HCTLtbZnKcetU6QAck-BOfjFNDPJHEpw4m0yidYqSE"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "text": "*  **Limitations:** The dataset suffers from age (mostly Python 2.7 era code) and a lack of explicit de-duplication in its original form, though subsequent works have attempted to clean it.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxmslVoWBjquwjZ_eRWcsfB4zAPUhki0fotBBUDVFfr4BedjqY-kLY3gy472V08qB3nj-ErUnYdjy-Wjx6pCq_AtwXc5y_xiLeB31qGID0vbi99mts6YHhGbFHcxdbW2HCTLtbZnKcetU6QAck-BOfjFNDPJHEpw4m0yidYqSE"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_6",
+      "section_idx": 6,
+      "idx_in_section": 6,
+      "text": "It is less suitable for evaluating modern type inference systems that rely on Python 3 syntax and type hinting standards.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "computer.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFaSolsyR15qQ4yMO972mR4cmmeLWfRcwqi1rEbcsfB28y41o7jdH5Ent4RMQ3afyXa9YZdc6FFAS_U2eTafPetx0yJjepVOfQJmLL0PA6gAvAPfX3K1RhCZCWAJnDdhgZLBzW7WU2AG2LZEeg9TBFZgWvX0tFRNnTg3XGyR0PbAK_Nx4k7zC4="
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxmslVoWBjquwjZ_eRWcsfB4zAPUhki0fotBBUDVFfr4BedjqY-kLY3gy472V08qB3nj-ErUnYdjy-Wjx6pCq_AtwXc5y_xiLeB31qGID0vbi99mts6YHhGbFHcxdbW2HCTLtbZnKcetU6QAck-BOfjFNDPJHEpw4m0yidYqSE"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### 2.4 TypePY and PyInfer Dataset",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "To address the scarcity of human-labeled data, the authors of **PyInfer** created the **TypePY** dataset.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "*  **Methodology:** Rather than relying solely on developer-provided annotations, this dataset was constructed by running **PySonar2**, an advanced semantic indexer, on top-star GitHub repositories.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "This process generated a massive set of \"ground truth\" annotations based on static analysis.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_4",
+      "section_idx": 7,
+      "idx_in_section": 4,
+      "text": "*  **Scale:** The dataset reportedly contains over 77 million annotations extracted from 320,402 source files.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXe-QfONCgeq-ijMwPJyLp9aBUOJnhsvv4orgOEywbcO6L1tyOIEZeeerMNhUdjul1EnkxSoupf98hMH7rKXp_kICZcmU2b17LbyCyu7wJomi70lGanQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_5",
+      "section_idx": 7,
+      "idx_in_section": 5,
+      "text": "This scale allows for the evaluation of variable-level inference, a more granular task than the function-signature inference focused on by other datasets.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXe-QfONCgeq-ijMwPJyLp9aBUOJnhsvv4orgOEywbcO6L1tyOIEZeeerMNhUdjul1EnkxSoupf98hMH7rKXp_kICZcmU2b17LbyCyu7wJomi70lGanQ=="
+        ],
+        [
+          "tamu.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHDK8GH_nLz7GnAsthTLDISQN9Xw7kmQavUw7xASPwrM2GmtKmST-Ij-42G533qyJsItt_UzBrA03zsx2vWr2tqCNtNQPXkaDco4v8ZcqWPh_2oq48FV63f0q1nA1AoCkUj_qxwmS9nCoO25Q2jEKA_Aw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_6",
+      "section_idx": 7,
+      "idx_in_section": 6,
+      "text": "*  **Utility:** It is particularly valuable for evaluating systems that aim to annotate local variables within function bodies, a task where context is highly localized and often missing from function-header-only datasets .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXe-QfONCgeq-ijMwPJyLp9aBUOJnhsvv4orgOEywbcO6L1tyOIEZeeerMNhUdjul1EnkxSoupf98hMH7rKXp_kICZcmU2b17LbyCyu7wJomi70lGanQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "## 3. Micro-Benchmarks for Standardized Tool Evaluation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "While large corpora measure how well ML models generalize, they are often too noisy to pinpoint specific failures in reasoning.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "Micro-benchmarks provide controlled environments to test specific language features (e.g., recursion, inheritance, dynamic attributes).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "### 3.1 TypeEvalPy",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "**TypeEvalPy** is the current state-of-the-art framework for micro-benchmarking Python type inference tools.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "It was developed to provide a standardized process for assessing performance, addressing the lack of a unified evaluation framework in the community.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "*  **Composition:** The benchmark contains 154 carefully crafted code snippets with 845 type annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGIKl3Q61C7R3bv-TQumOPkjsdqJz7sYRxxe3z6DBGi-_ZnIcmMoaAFnbZXjJi1V5KBKVw3jo0zITWcrbx02pNHGqToJq6Pj_RLfYidWOJcsrxE3t-yGOvhZ0scLsBcHXDSMp50GIG85h-jTcyLOBGy6rP1rRAOEzVXWHJ4KaCI84YGzTdiYaPo4P-ITO5eCchg7sJaVRF9Xx2HB0gBEREWZk2Bb02JVN5WRGSaPQ5anlRQJ7PyjMRE8yVG5aRWFL-eWCHqyZp7t6q"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMTB09GtF7-XAJ7elbn7GPvQP4M8equvSlh3ok4oH8Lu-ULPk-7uz7U_932kn0h6n6kSNnhsDEK-z1vgriNbZz609pH5Uz-Xo9KvLFHKIxEZDtnDcOpA=="
+        ],
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_4",
+      "section_idx": 9,
+      "idx_in_section": 4,
+      "text": "These snippets are categorized into 18 distinct groups targeting specific Python features, such as classes, dynamic features, generators, and external libraries.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGGIKl3Q61C7R3bv-TQumOPkjsdqJz7sYRxxe3z6DBGi-_ZnIcmMoaAFnbZXjJi1V5KBKVw3jo0zITWcrbx02pNHGqToJq6Pj_RLfYidWOJcsrxE3t-yGOvhZ0scLsBcHXDSMp50GIG85h-jTcyLOBGy6rP1rRAOEzVXWHJ4KaCI84YGzTdiYaPo4P-ITO5eCchg7sJaVRF9Xx2HB0gBEREWZk2Bb02JVN5WRGSaPQ5anlRQJ7PyjMRE8yVG5aRWFL-eWCHqyZp7t6q"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMTB09GtF7-XAJ7elbn7GPvQP4M8equvSlh3ok4oH8Lu-ULPk-7uz7U_932kn0h6n6kSNnhsDEK-z1vgriNbZz609pH5Uz-Xo9KvLFHKIxEZDtnDcOpA=="
+        ],
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_5",
+      "section_idx": 9,
+      "idx_in_section": 5,
+      "text": "*  **Infrastructure:** TypeEvalPy is not just a dataset but a full execution framework.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5CFAP74BppJXSlTT4LqJ6aEPIfCZgwCiAIBqErcuHvUqEmba2HDBbEa5LSAQNfBeB_lrwsQeBTMmjkzVshoDKuVfnphz0CWfi_-7PYDnL0kdYAwA5yXK5Vgc8suuGdPI72be-NUGIjb8nz1FnTsw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_6",
+      "section_idx": 9,
+      "idx_in_section": 6,
+      "text": "It manages containerized versions of various tools (including Pyright, Pytype, Jedi, Scalpel, HiTyper, and Type4Py), runs them against the snippets, translates their output into a standardized format, and produces comparative metrics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5CFAP74BppJXSlTT4LqJ6aEPIfCZgwCiAIBqErcuHvUqEmba2HDBbEa5LSAQNfBeB_lrwsQeBTMmjkzVshoDKuVfnphz0CWfi_-7PYDnL0kdYAwA5yXK5Vgc8suuGdPI72be-NUGIjb8nz1FnTsw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_7",
+      "section_idx": 9,
+      "idx_in_section": 7,
+      "text": "*  **Evaluation Metrics:** It measures precision, recall, and accuracy, but crucially, it allows for the analysis of \"mismatched types\"\u2014predictions that are semantically close but syntactically different from the ground truth.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFEtMqR79Or8eX_7MkJBQGVFTQjjKxn917fdlb85kYXC7iELopZY4CI92WauNYQOs3g46mfibXYhDqvxJLTW2iyN6ArIEw0SOogeltQTE7pu5V7-f2LdIqRlA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_8",
+      "section_idx": 9,
+      "idx_in_section": 8,
+      "text": "This framework is essential for developers of static analysis tools who need to verify compliance with Python's typing rules .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "bodden.de",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4Q9glTTXTTiy32oHXIB3ZsJBJc5E5_q_ZvEQNBCEWVOIKvms0eEvcPICrbBbm-KbVajATegpf2nufesvyxmIpZFX27u0nRu64FBkCTmZZ0LNBivOpaFQtMB0nMJwYyuNs"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFEtMqR79Or8eX_7MkJBQGVFTQjjKxn917fdlb85kYXC7iELopZY4CI92WauNYQOs3g46mfibXYhDqvxJLTW2iyN6ArIEw0SOogeltQTE7pu5V7-f2LdIqRlA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

@@ -1,0 +1,1718 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "7",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat data preprocessing steps are most important for point cloud datasets before performing surface reconstruction?",
+  "answer": "# Comprehensive Analysis of Point Cloud Preprocessing for Surface Reconstruction\n\n### Key Points\n*   **Normal Estimation and Orientation:** The most critical preprocessing step for implicit surface reconstruction methods (e.g., Poisson) is the computation of surface normals and, crucially, ensuring their global orientation consistency.\n*   **Outlier Removal:** Statistical and radius-based filtering are essential to remove sensor noise and artifacts that would otherwise create topological errors or non-manifold geometry in the final mesh.\n*   **Density Management:** Point clouds often require downsampling (e.g., voxel grid) to manage computational load or upsampling (e.g., deep learning-based) to fill sparse regions and ensure watertight reconstruction.\n*   **Algorithm-Specific Requirements:** Different reconstruction algorithms impose unique demands; Poisson reconstruction requires oriented normals and produces watertight surfaces, while the Ball Pivoting Algorithm is sensitive to sampling density and existing holes.\n\n### Introduction\nThe reconstruction of continuous 3D surfaces from discrete point cloud data is a fundamental problem in computer vision, computer graphics, and remote sensing. Point clouds, typically acquired via LiDAR, RGB-D cameras, or photogrammetry, are inherently unordered, sparse, and subject to noise and non-uniform sampling [cite: 1, 2]. These characteristics make raw point clouds unsuitable for direct rendering or geometric analysis in many applications. Consequently, a robust preprocessing pipeline is required to transform raw sensor data into a clean, structured dataset capable of supporting high-fidelity surface reconstruction algorithms.\n\nThe quality of the final 3D mesh is heavily dependent on the preprocessing stage. Errors introduced or ignored at this phase\u2014such as inverted normals, high-frequency noise, or outliers\u2014propagate through the reconstruction pipeline, leading to artifacts such as holes, inverted faces, or spurious geometric features [cite: 3, 4]. This report provides a detailed analysis of the critical preprocessing steps: outlier removal, normal estimation and orientation, density management (downsampling and upsampling), and smoothing.\n\n## Data Cleaning and Outlier Removal\n\nRaw point cloud data invariably contains noise and outliers due to sensor imperfections, surface properties (e.g., reflectivity), and environmental factors. Removing these artifacts is the first critical step in the pipeline, as outliers can severely distort the implicit functions used in reconstruction algorithms like Poisson Surface Reconstruction [cite: 5, 6].\n\n### Statistical and Radius-Based Filtering\nTwo of the most prevalent methods for cleaning point clouds are Statistical Outlier Removal (SOR) and Radius Outlier Removal (ROR).\n\n**Statistical Outlier Removal (SOR):** This method assumes that the distances between a point and its nearest neighbors follow a Gaussian distribution. The algorithm iterates through the point cloud, calculating the mean distance of each point to its $k$ nearest neighbors. Points that fall outside a defined threshold (typically expressed as a standard deviation multiplier, or Z-score) are classified as outliers and removed [cite: 7, 8]. This approach is particularly effective at removing measurement noise and \"ghost\" points that do not belong to the underlying surface structure [cite: 7].\n\n**Radius Outlier Removal (ROR):** This technique filters points based on the number of neighbors within a specified radius $r$. If a point has fewer than $k$ neighbors within this sphere, it is considered isolated and removed [cite: 9]. This is useful for removing stray points that are spatially disconnected from the main object, often caused by dust or sensor errors.\n\n### Advanced and Domain-Specific Filtering\nBeyond standard statistical methods, more specialized algorithms address specific noise characteristics:\n*   **Social Circle Algorithm:** A method proposed for microscopic topography reconstruction uses a \"social circle\" concept, iteratively expanding a search window based on voting values from a Gaussian kernel to identify and remove outliers [cite: 10].\n*   **Image-Consistency Filtering:** For point clouds generated via Multi-View Stereo (MVS) or photogrammetry, noise often arises from matching ambiguities. Algorithms that leverage the original input images and depth maps can remove points that are geometrically or photometrically inconsistent with the colored surface implied by the input [cite: 5]. This allows subsequent reconstruction steps to apply less aggressive smoothing, thereby preserving more high-frequency details.\n\n## Normal Estimation and Orientation\n\nPerhaps the most pivotal preprocessing task for surface reconstruction is the estimation of surface normals. Many reconstruction algorithms, particularly implicit methods like Poisson Surface Reconstruction, do not operate directly on point positions but rather on the vector field defined by the point normals [cite: 1, 11].\n\n### Local Normal Estimation\nThe standard approach to estimating a normal vector for a point $p$ involves analyzing the local neighborhood of $p$ (usually defined by $k$ nearest neighbors). The problem is typically formulated as a least-squares plane fitting problem, often solved using Principal Component Analysis (PCA) or Singular Value Decomposition (SVD) of the covariance matrix of the neighborhood [cite: 12, 13]. The normal is approximated as the eigenvector corresponding to the smallest eigenvalue of this covariance matrix [cite: 2, 14].\n\nWhile PCA is computationally efficient, it is susceptible to noise and sharp features. In the presence of sharp edges, PCA tends to smooth the normal field, losing geometric detail. To address this, variations such as Moving Least Squares (MLS) and truncated Taylor expansion fitting (n-jet) have been proposed to provide more robust estimation in noisy environments [cite: 1].\n\n### The Orientation Problem\nMathematically, the eigenvector computation provides the line on which the normal lies but not its direction (sign). This results in the \"sign ambiguity\" problem, where normals may randomly point inward or outward [cite: 12, 14]. For surface reconstruction, **globally consistent orientation** is mandatory. If normals are inconsistent, the reconstruction algorithm cannot distinguish the interior of the object from the exterior, leading to topological failures [cite: 11, 15].\n\n**Propagation Methods:** Traditional methods, such as those by Hoppe et al., construct a Minimum Spacing Tree (MST) or a Riemann graph over the point cloud. The orientation of a seed point is propagated to its neighbors based on the assumption that adjacent points should have similar normal directions [cite: 16, 17]. However, these propagation methods often fail near sharp features or in the presence of noise, where the \"similarity\" assumption breaks down [cite: 17].\n\n**Global Optimization and Isovalue Constraints:** More recent approaches formulate orientation as a global optimization problem. For instance, incorporating isovalue constraints into the Poisson equation allows for the simultaneous optimization of normals and the implicit function [cite: 4, 16]. This method posits that the implicit function values at sample points should be close to the isovalue of the surface. By solving for a globally consistent orientation, these methods show high performance even with non-uniform and noisy data [cite: 4, 18].\n\n### Deep Learning for Normal Estimation\nDeep learning frameworks have emerged to address the limitations of geometric fitting. Networks like Nesti-Net or PCPNet take local patches as input and regress the normal vector directly, often learning to preserve sharp features better than PCA [cite: 1, 3]. Recent advancements integrate global information and attention mechanisms to weight the importance of neighboring points, enhancing robustness against noise and density variations [cite: 1].\n\n## Density Management: Downsampling and Upsampling\n\nPoint clouds derived from scanning often exhibit significant variations in density\u2014extremely dense near the scanner and sparse in distant or occluded areas. Surface reconstruction algorithms generally perform best with uniform sampling.\n\n### Downsampling\nDownsampling reduces the number of points to improve computational efficiency and normalize density.\n*   **Voxel Grid Filtering:** This is the most common technique. The 3D space is divided into a grid of cubic voxels. All points falling within a voxel are approximated by their centroid (or geometric center) [cite: 19, 20]. This method is computationally fast and effectively creates a uniform distribution. However, it acts as a low-pass filter and can blur fine details if the voxel size is too large [cite: 20, 21].\n*   **Farthest Point Sampling (FPS):** FPS iteratively selects the point that is farthest from the set of already selected points. This ensures excellent coverage and preserves the global structure but is computationally expensive compared to voxel grid methods [cite: 22].\n*   **Feature-Preserving Sampling:** Advanced methods attempt to retain points in high-curvature regions (edges) while downsampling planar regions more aggressively. This can be achieved through curvature-based sampling or optimization problems that balance uniformity with feature retention [cite: 23].\n\n### Upsampling (Densification)\nConversely, sparse point clouds (common in LiDAR or mobile scanning) may lack sufficient data to define a continuous surface. Upsampling is the process of generating new points to fill gaps and increase density.\n*   **Deep Learning Upsampling:** Networks like PU-Net, PU-GAN, and Surf-PU are designed to upsample point clouds while preserving surface details [cite: 24, 25]. These models learn local geometric structures to generate new points that lie on the underlying surface, rather than just interpolating linearly.\n*   **Joint Normal Estimation and Upsampling:** Recent research suggests that estimating normals and upsampling points simultaneously yields better results. By using a compound loss function that encourages points to lie on the surface and normals to predict orientation accurately, these networks produce smoother and more complete point clouds suitable for reconstruction [cite: 3, 26, 27].\n\n## Smoothing and Denoising\n\nEven after outlier removal, measurement noise (jitter) can remain. Smoothing algorithms adjust the positions of points to reduce high-frequency variations without removing the points themselves.\n*   **Moving Least Squares (MLS):** MLS projects points onto a locally fitted polynomial surface. This effectively smooths the surface and can also be used to re-compute more accurate normals [cite: 23, 28].\n*   **Bilateral Filtering:** Adapted from image processing, bilateral filtering smooths point positions based on both spatial distance and normal similarity, allowing for noise reduction while preserving sharp edges [cite: 10].\n\n## Algorithm-Specific Preprocessing Requirements\n\nThe choice of preprocessing steps must align with the intended reconstruction algorithm.\n\n### Poisson Surface Reconstruction\nPoisson reconstruction is an implicit method that solves for an indicator function whose gradient matches the input normals.\n*   **Requirement:** It strictly requires **oriented normals** [cite: 11, 29].\n*   **Robustness:** It is generally robust to noise and non-uniform sampling because it solves a global optimization problem [cite: 30, 31].\n*   **Output:** It always produces a closed (watertight) surface. If the object is an open surface (e.g., a terrain patch), the algorithm may artificially close it unless specific boundary constraints are applied [cite: 29].\n\n### Ball Pivoting Algorithm (BPA)\nBPA simulates a ball rolling over the point cloud to form triangles.\n*   **Requirement:** It requires normals to ensure consistent triangle orientation [cite: 32].\n*   **Sensitivity:** It is highly sensitive to **sampling density**. If the gap between points is larger than the ball radius, holes will appear in the mesh. Therefore, uniform upsampling or careful radius selection is a critical preprocessing step for BPA [cite: 33, 34].\n\n### Delaunay / Advancing Front\nThese methods interpolate input points to form a mesh.\n*   **Requirement:** They do not strictly require normals but benefit significantly from them for feature preservation.\n*   **Sensitivity:** Because they interpolate points directly, they are very sensitive to **outliers and noise**. Rigorous outlier removal and smoothing (e.g., MLS) are mandatory preprocessing steps to prevent the mesh from appearing jagged or chaotic [cite: 29].\n\n## Conclusion\n\nData preprocessing is not merely a preliminary step but a determinant factor in the success of 3D surface reconstruction. A typical workflow involves a sequence of operations: first, **outlier removal** (SOR/ROR) cleans the data of gross errors; second, **smoothing** (MLS) reduces sensor noise; third, **density management** (voxel grid downsampling or deep upsampling) ensures uniform coverage; and finally, **normal estimation and orientation** provide the necessary geometric context for reconstruction algorithms. Among these, the consistent orientation of normals stands out as the most mathematically critical prerequisite for implicit reconstruction methods like Poisson, while density uniformity is paramount for explicit methods like Ball Pivoting.",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# Comprehensive Analysis of Point Cloud Preprocessing for Surface Reconstruction",
+      "header_level": 1,
+      "text": "# Comprehensive Analysis of Point Cloud Preprocessing for Surface Reconstruction\n\n",
+      "start": 0,
+      "end": 82
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "### Key Points",
+      "header_level": 3,
+      "text": "### Key Points\n*   **Normal Estimation and Orientation:** The most critical preprocessing step for implicit surface reconstruction methods (e.g., Poisson) is the computation of surface normals and, crucially, ensuring their global orientation consistency.\n*   **Outlier Removal:** Statistical and radius-based filtering are essential to remove sensor noise and artifacts that would otherwise create topological errors or non-manifold geometry in the final mesh.\n*   **Density Management:** Point clouds often require downsampling (e.g., voxel grid) to manage computational load or upsampling (e.g., deep learning-based) to fill sparse regions and ensure watertight reconstruction.\n*   **Algorithm-Specific Requirements:** Different reconstruction algorithms impose unique demands; Poisson reconstruction requires oriented normals and produces watertight surfaces, while the Ball Pivoting Algorithm is sensitive to sampling density and existing holes.\n\n",
+      "start": 82,
+      "end": 1034
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "### Introduction",
+      "header_level": 3,
+      "text": "### Introduction\nThe reconstruction of continuous 3D surfaces from discrete point cloud data is a fundamental problem in computer vision, computer graphics, and remote sensing. Point clouds, typically acquired via LiDAR, RGB-D cameras, or photogrammetry, are inherently unordered, sparse, and subject to noise and non-uniform sampling [cite: 1, 2]. These characteristics make raw point clouds unsuitable for direct rendering or geometric analysis in many applications. Consequently, a robust preprocessing pipeline is required to transform raw sensor data into a clean, structured dataset capable of supporting high-fidelity surface reconstruction algorithms.\n\nThe quality of the final 3D mesh is heavily dependent on the preprocessing stage. Errors introduced or ignored at this phase\u2014such as inverted normals, high-frequency noise, or outliers\u2014propagate through the reconstruction pipeline, leading to artifacts such as holes, inverted faces, or spurious geometric features [cite: 3, 4]. This report provides a detailed analysis of the critical preprocessing steps: outlier removal, normal estimation and orientation, density management (downsampling and upsampling), and smoothing.\n\n",
+      "start": 1034,
+      "end": 2220
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## Data Cleaning and Outlier Removal",
+      "header_level": 2,
+      "text": "## Data Cleaning and Outlier Removal\n\nRaw point cloud data invariably contains noise and outliers due to sensor imperfections, surface properties (e.g., reflectivity), and environmental factors. Removing these artifacts is the first critical step in the pipeline, as outliers can severely distort the implicit functions used in reconstruction algorithms like Poisson Surface Reconstruction [cite: 5, 6].\n\n",
+      "start": 2220,
+      "end": 2625
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### Statistical and Radius-Based Filtering",
+      "header_level": 3,
+      "text": "### Statistical and Radius-Based Filtering\nTwo of the most prevalent methods for cleaning point clouds are Statistical Outlier Removal (SOR) and Radius Outlier Removal (ROR).\n\n**Statistical Outlier Removal (SOR):** This method assumes that the distances between a point and its nearest neighbors follow a Gaussian distribution. The algorithm iterates through the point cloud, calculating the mean distance of each point to its $k$ nearest neighbors. Points that fall outside a defined threshold (typically expressed as a standard deviation multiplier, or Z-score) are classified as outliers and removed [cite: 7, 8]. This approach is particularly effective at removing measurement noise and \"ghost\" points that do not belong to the underlying surface structure [cite: 7].\n\n**Radius Outlier Removal (ROR):** This technique filters points based on the number of neighbors within a specified radius $r$. If a point has fewer than $k$ neighbors within this sphere, it is considered isolated and removed [cite: 9]. This is useful for removing stray points that are spatially disconnected from the main object, often caused by dust or sensor errors.\n\n",
+      "start": 2625,
+      "end": 3770
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### Advanced and Domain-Specific Filtering",
+      "header_level": 3,
+      "text": "### Advanced and Domain-Specific Filtering\nBeyond standard statistical methods, more specialized algorithms address specific noise characteristics:\n*   **Social Circle Algorithm:** A method proposed for microscopic topography reconstruction uses a \"social circle\" concept, iteratively expanding a search window based on voting values from a Gaussian kernel to identify and remove outliers [cite: 10].\n*   **Image-Consistency Filtering:** For point clouds generated via Multi-View Stereo (MVS) or photogrammetry, noise often arises from matching ambiguities. Algorithms that leverage the original input images and depth maps can remove points that are geometrically or photometrically inconsistent with the colored surface implied by the input [cite: 5]. This allows subsequent reconstruction steps to apply less aggressive smoothing, thereby preserving more high-frequency details.\n\n",
+      "start": 3770,
+      "end": 4653
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## Normal Estimation and Orientation",
+      "header_level": 2,
+      "text": "## Normal Estimation and Orientation\n\nPerhaps the most pivotal preprocessing task for surface reconstruction is the estimation of surface normals. Many reconstruction algorithms, particularly implicit methods like Poisson Surface Reconstruction, do not operate directly on point positions but rather on the vector field defined by the point normals [cite: 1, 11].\n\n",
+      "start": 4653,
+      "end": 5018
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### Local Normal Estimation",
+      "header_level": 3,
+      "text": "### Local Normal Estimation\nThe standard approach to estimating a normal vector for a point $p$ involves analyzing the local neighborhood of $p$ (usually defined by $k$ nearest neighbors). The problem is typically formulated as a least-squares plane fitting problem, often solved using Principal Component Analysis (PCA) or Singular Value Decomposition (SVD) of the covariance matrix of the neighborhood [cite: 12, 13]. The normal is approximated as the eigenvector corresponding to the smallest eigenvalue of this covariance matrix [cite: 2, 14].\n\nWhile PCA is computationally efficient, it is susceptible to noise and sharp features. In the presence of sharp edges, PCA tends to smooth the normal field, losing geometric detail. To address this, variations such as Moving Least Squares (MLS) and truncated Taylor expansion fitting (n-jet) have been proposed to provide more robust estimation in noisy environments [cite: 1].\n\n",
+      "start": 5018,
+      "end": 5946
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "### The Orientation Problem",
+      "header_level": 3,
+      "text": "### The Orientation Problem\nMathematically, the eigenvector computation provides the line on which the normal lies but not its direction (sign). This results in the \"sign ambiguity\" problem, where normals may randomly point inward or outward [cite: 12, 14]. For surface reconstruction, **globally consistent orientation** is mandatory. If normals are inconsistent, the reconstruction algorithm cannot distinguish the interior of the object from the exterior, leading to topological failures [cite: 11, 15].\n\n**Propagation Methods:** Traditional methods, such as those by Hoppe et al., construct a Minimum Spacing Tree (MST) or a Riemann graph over the point cloud. The orientation of a seed point is propagated to its neighbors based on the assumption that adjacent points should have similar normal directions [cite: 16, 17]. However, these propagation methods often fail near sharp features or in the presence of noise, where the \"similarity\" assumption breaks down [cite: 17].\n\n**Global Optimization and Isovalue Constraints:** More recent approaches formulate orientation as a global optimization problem. For instance, incorporating isovalue constraints into the Poisson equation allows for the simultaneous optimization of normals and the implicit function [cite: 4, 16]. This method posits that the implicit function values at sample points should be close to the isovalue of the surface. By solving for a globally consistent orientation, these methods show high performance even with non-uniform and noisy data [cite: 4, 18].\n\n",
+      "start": 5946,
+      "end": 7481
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "### Deep Learning for Normal Estimation",
+      "header_level": 3,
+      "text": "### Deep Learning for Normal Estimation\nDeep learning frameworks have emerged to address the limitations of geometric fitting. Networks like Nesti-Net or PCPNet take local patches as input and regress the normal vector directly, often learning to preserve sharp features better than PCA [cite: 1, 3]. Recent advancements integrate global information and attention mechanisms to weight the importance of neighboring points, enhancing robustness against noise and density variations [cite: 1].\n\n",
+      "start": 7481,
+      "end": 7974
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "## Density Management: Downsampling and Upsampling",
+      "header_level": 2,
+      "text": "## Density Management: Downsampling and Upsampling\n\nPoint clouds derived from scanning often exhibit significant variations in density\u2014extremely dense near the scanner and sparse in distant or occluded areas. Surface reconstruction algorithms generally perform best with uniform sampling.\n\n",
+      "start": 7974,
+      "end": 8264
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "### Downsampling",
+      "header_level": 3,
+      "text": "### Downsampling\nDownsampling reduces the number of points to improve computational efficiency and normalize density.\n*   **Voxel Grid Filtering:** This is the most common technique. The 3D space is divided into a grid of cubic voxels. All points falling within a voxel are approximated by their centroid (or geometric center) [cite: 19, 20]. This method is computationally fast and effectively creates a uniform distribution. However, it acts as a low-pass filter and can blur fine details if the voxel size is too large [cite: 20, 21].\n*   **Farthest Point Sampling (FPS):** FPS iteratively selects the point that is farthest from the set of already selected points. This ensures excellent coverage and preserves the global structure but is computationally expensive compared to voxel grid methods [cite: 22].\n*   **Feature-Preserving Sampling:** Advanced methods attempt to retain points in high-curvature regions (edges) while downsampling planar regions more aggressively. This can be achieved through curvature-based sampling or optimization problems that balance uniformity with feature retention [cite: 23].\n\n",
+      "start": 8264,
+      "end": 9381
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "### Upsampling (Densification)",
+      "header_level": 3,
+      "text": "### Upsampling (Densification)\nConversely, sparse point clouds (common in LiDAR or mobile scanning) may lack sufficient data to define a continuous surface. Upsampling is the process of generating new points to fill gaps and increase density.\n*   **Deep Learning Upsampling:** Networks like PU-Net, PU-GAN, and Surf-PU are designed to upsample point clouds while preserving surface details [cite: 24, 25]. These models learn local geometric structures to generate new points that lie on the underlying surface, rather than just interpolating linearly.\n*   **Joint Normal Estimation and Upsampling:** Recent research suggests that estimating normals and upsampling points simultaneously yields better results. By using a compound loss function that encourages points to lie on the surface and normals to predict orientation accurately, these networks produce smoother and more complete point clouds suitable for reconstruction [cite: 3, 26, 27].\n\n",
+      "start": 9381,
+      "end": 10327
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "## Smoothing and Denoising",
+      "header_level": 2,
+      "text": "## Smoothing and Denoising\n\nEven after outlier removal, measurement noise (jitter) can remain. Smoothing algorithms adjust the positions of points to reduce high-frequency variations without removing the points themselves.\n*   **Moving Least Squares (MLS):** MLS projects points onto a locally fitted polynomial surface. This effectively smooths the surface and can also be used to re-compute more accurate normals [cite: 23, 28].\n*   **Bilateral Filtering:** Adapted from image processing, bilateral filtering smooths point positions based on both spatial distance and normal similarity, allowing for noise reduction while preserving sharp edges [cite: 10].\n\n",
+      "start": 10327,
+      "end": 10987
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "## Algorithm-Specific Preprocessing Requirements",
+      "header_level": 2,
+      "text": "## Algorithm-Specific Preprocessing Requirements\n\nThe choice of preprocessing steps must align with the intended reconstruction algorithm.\n\n",
+      "start": 10987,
+      "end": 11127
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "### Poisson Surface Reconstruction",
+      "header_level": 3,
+      "text": "### Poisson Surface Reconstruction\nPoisson reconstruction is an implicit method that solves for an indicator function whose gradient matches the input normals.\n*   **Requirement:** It strictly requires **oriented normals** [cite: 11, 29].\n*   **Robustness:** It is generally robust to noise and non-uniform sampling because it solves a global optimization problem [cite: 30, 31].\n*   **Output:** It always produces a closed (watertight) surface. If the object is an open surface (e.g., a terrain patch), the algorithm may artificially close it unless specific boundary constraints are applied [cite: 29].\n\n",
+      "start": 11127,
+      "end": 11733
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "### Ball Pivoting Algorithm (BPA)",
+      "header_level": 3,
+      "text": "### Ball Pivoting Algorithm (BPA)\nBPA simulates a ball rolling over the point cloud to form triangles.\n*   **Requirement:** It requires normals to ensure consistent triangle orientation [cite: 32].\n*   **Sensitivity:** It is highly sensitive to **sampling density**. If the gap between points is larger than the ball radius, holes will appear in the mesh. Therefore, uniform upsampling or careful radius selection is a critical preprocessing step for BPA [cite: 33, 34].\n\n",
+      "start": 11733,
+      "end": 12205
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "### Delaunay / Advancing Front",
+      "header_level": 3,
+      "text": "### Delaunay / Advancing Front\nThese methods interpolate input points to form a mesh.\n*   **Requirement:** They do not strictly require normals but benefit significantly from them for feature preservation.\n*   **Sensitivity:** Because they interpolate points directly, they are very sensitive to **outliers and noise**. Rigorous outlier removal and smoothing (e.g., MLS) are mandatory preprocessing steps to prevent the mesh from appearing jagged or chaotic [cite: 29].\n\n",
+      "start": 12205,
+      "end": 12676
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "## Conclusion",
+      "header_level": 2,
+      "text": "## Conclusion\n\nData preprocessing is not merely a preliminary step but a determinant factor in the success of 3D surface reconstruction. A typical workflow involves a sequence of operations: first, **outlier removal** (SOR/ROR) cleans the data of gross errors; second, **smoothing** (MLS) reduces sensor noise; third, **density management** (voxel grid downsampling or deep upsampling) ensures uniform coverage; and finally, **normal estimation and orientation** provide the necessary geometric context for reconstruction algorithms. Among these, the consistent orientation of normals stands out as the most mathematically critical prerequisite for implicit reconstruction methods like Poisson, while density uniformity is paramount for explicit methods like Ball Pivoting.",
+      "start": 12676,
+      "end": 13449
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# Comprehensive Analysis of Point Cloud Preprocessing for Surface Reconstruction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "## Density Management: Downsampling and Upsampling",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "Point clouds derived from scanning often exhibit significant variations in density\u2014extremely dense near the scanner and sparse in distant or occluded areas.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "Surface reconstruction algorithms generally perform best with uniform sampling.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "### Downsampling",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "Downsampling reduces the number of points to improve computational efficiency and normalize density.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_10",
+      "section_idx": 11,
+      "idx_in_section": 10,
+      "text": "This can be achieved through curvature-based sampling or optimization problems that balance uniformity with feature retention.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYiJBMUPYMxHLOqUAkms1uMBZy9jGrRO3iwHoqkkQwaKF547TU-qjC5JYYIbE1Uov2MmJrq-tzXvU-1l7ch5cz5nv1zB-6MLqDSJUhCLiqf8B3AX_04YNuLj8svlYC"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "*  **Voxel Grid Filtering:** This is the most common technique.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHcZ9JCE9QOlrT12v1aR1be-KKyBthnRUZYfAXkoL_6Xak8jdwT1vMG6jZ95tksbWqjHnKb41nTQ8oLFkaOZzFkB_QqZvRZQpyXYGLU5G0F2MhFoeq9ihRYWyM6smOT"
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEhiuT1l7-JPZQ7AU3hGYWAAYu7t_Ad1nenT-XYi3v516CcWuSSZAMeNnAC3p3v-ve6-BKna9dmYP4xuSZmA129yjbyzRkvkg27SYQV_x2z_RbKY8ABZoGHCZrDwnnPlhBc4KZcIBvYIOfLqf58ROc6Gg94cE0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "The 3D space is divided into a grid of cubic voxels.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHcZ9JCE9QOlrT12v1aR1be-KKyBthnRUZYfAXkoL_6Xak8jdwT1vMG6jZ95tksbWqjHnKb41nTQ8oLFkaOZzFkB_QqZvRZQpyXYGLU5G0F2MhFoeq9ihRYWyM6smOT"
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEhiuT1l7-JPZQ7AU3hGYWAAYu7t_Ad1nenT-XYi3v516CcWuSSZAMeNnAC3p3v-ve6-BKna9dmYP4xuSZmA129yjbyzRkvkg27SYQV_x2z_RbKY8ABZoGHCZrDwnnPlhBc4KZcIBvYIOfLqf58ROc6Gg94cE0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "All points falling within a voxel are approximated by their centroid (or geometric center).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "thesai.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF2Jxw7cJduqsvBpYho4AHgli1qrJhFceTmyG5mFnmWsUxzeOCZrk0eIb5mFwbKOdcHE6NPg4p117VGjeO6gh2eYNpdUUljqvndK5XyaaQfkXR4Bt3Quy0SKqlAyB8USpmajbVKJ6nNKEclnhD72PmeQG06tS58PiZ6ecr_JXUD8Vsto0NoqPSrqv9KREix2JYFlFABMSxHHopPLA=="
+        ],
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHcZ9JCE9QOlrT12v1aR1be-KKyBthnRUZYfAXkoL_6Xak8jdwT1vMG6jZ95tksbWqjHnKb41nTQ8oLFkaOZzFkB_QqZvRZQpyXYGLU5G0F2MhFoeq9ihRYWyM6smOT"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "This method is computationally fast and effectively creates a uniform distribution.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHcZ9JCE9QOlrT12v1aR1be-KKyBthnRUZYfAXkoL_6Xak8jdwT1vMG6jZ95tksbWqjHnKb41nTQ8oLFkaOZzFkB_QqZvRZQpyXYGLU5G0F2MhFoeq9ihRYWyM6smOT"
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEhiuT1l7-JPZQ7AU3hGYWAAYu7t_Ad1nenT-XYi3v516CcWuSSZAMeNnAC3p3v-ve6-BKna9dmYP4xuSZmA129yjbyzRkvkg27SYQV_x2z_RbKY8ABZoGHCZrDwnnPlhBc4KZcIBvYIOfLqf58ROc6Gg94cE0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "text": "However, it acts as a low-pass filter and can blur fine details if the voxel size is too large.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHcZ9JCE9QOlrT12v1aR1be-KKyBthnRUZYfAXkoL_6Xak8jdwT1vMG6jZ95tksbWqjHnKb41nTQ8oLFkaOZzFkB_QqZvRZQpyXYGLU5G0F2MhFoeq9ihRYWyM6smOT"
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEhiuT1l7-JPZQ7AU3hGYWAAYu7t_Ad1nenT-XYi3v516CcWuSSZAMeNnAC3p3v-ve6-BKna9dmYP4xuSZmA129yjbyzRkvkg27SYQV_x2z_RbKY8ABZoGHCZrDwnnPlhBc4KZcIBvYIOfLqf58ROc6Gg94cE0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_7",
+      "section_idx": 11,
+      "idx_in_section": 7,
+      "text": "*  **Farthest Point Sampling (FPS):** FPS iteratively selects the point that is farthest from the set of already selected points.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFq24zOzTmDlgCfxedZAa1zBe6nuvtzusCuYhv9aZbP1eKfbBJAbKC4XEesqMTnMySJA0oroROpa-43nHdY_O1vHD09ghCJu9KX0bLyr2UFWsoXHZIB4pptzw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_8",
+      "section_idx": 11,
+      "idx_in_section": 8,
+      "text": "This ensures excellent coverage and preserves the global structure but is computationally expensive compared to voxel grid methods.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFq24zOzTmDlgCfxedZAa1zBe6nuvtzusCuYhv9aZbP1eKfbBJAbKC4XEesqMTnMySJA0oroROpa-43nHdY_O1vHD09ghCJu9KX0bLyr2UFWsoXHZIB4pptzw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_9",
+      "section_idx": 11,
+      "idx_in_section": 9,
+      "text": "*  **Feature-Preserving Sampling:** Advanced methods attempt to retain points in high-curvature regions (edges) while downsampling planar regions more aggressively.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYiJBMUPYMxHLOqUAkms1uMBZy9jGrRO3iwHoqkkQwaKF547TU-qjC5JYYIbE1Uov2MmJrq-tzXvU-1l7ch5cz5nv1zB-6MLqDSJUhCLiqf8B3AX_04YNuLj8svlYC"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "### Upsampling (Densification)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "Conversely, sparse point clouds (common in LiDAR or mobile scanning) may lack sufficient data to define a continuous surface.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_2",
+      "section_idx": 12,
+      "idx_in_section": 2,
+      "text": "Upsampling is the process of generating new points to fill gaps and increase density.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_3",
+      "section_idx": 12,
+      "idx_in_section": 3,
+      "text": "*  **Deep Learning Upsampling:** Networks like PU-Net, PU-GAN, and Surf-PU are designed to upsample point clouds while preserving surface details.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "scitepress.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHCB1TQ-MnTDA_eeX_vI_QbQl01GZEHi-QLwSads0tAoU6djYkGeC5IoDEhU5vj0rdNwkADNj49gWSAyx2n3AM5PJ-MRc5K77JvSO6gdzIaLtuNs-WAxE3ejT1Zvmy0QV3u3-popx2AAryX5KndYg=="
+        ],
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHI67F3C-Xr9LBObQhgEcCRoqaisohZ5CaLTvfOGqya94967pySme6-XV8rYqu1QOp_3tRZpzH1D4CFOjlvZL2X3F1u01oIibORwMgtMsUEpi_dO0A8-1jV3gQv0TXQHOvPjS8F45_aL73uEtxqgroa9zsreQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_4",
+      "section_idx": 12,
+      "idx_in_section": 4,
+      "text": "These models learn local geometric structures to generate new points that lie on the underlying surface, rather than just interpolating linearly.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_5",
+      "section_idx": 12,
+      "idx_in_section": 5,
+      "text": "*  **Joint Normal Estimation and Upsampling:** Recent research suggests that estimating normals and upsampling points simultaneously yields better results.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFg3AUjWrra4PompD5qOnhJawD-dEFQ9aa2GxfpkuJ07WTDinIRgJokYcwkAX79XhgIjAo19kht4yfGnwexZTJhqMqmjQvYCHeKEtjhePpYeup4PAuM8z430Ni951bYMHohNkxkvxY9r9u2oAI3q2wdMjTfmVFjUvyXAcpaLBZi1wlwDnu6oIBBGIS3ZFx-DDUiqKYvJVbdy7zSUyar9MDBqgjhfyqo6fWe_j2vNWbVeVznY-b8zeblZgIO509_4UOD1ck_6DXsQDZh-ME="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG6PsGu6eu6xGV9q93ljZ46RhObg7JkxQvHbaJZUK4Bssq8r4h1Hy3EzDfIv_VvFDXCLyMpp_YD0dvwn-i76uCuLTgwaNWTP638-BEpoEy3kLbwt-LN8ZGveKeSTkNj-MIJAZSWldIXy-c-AbpoMRGWfy5tYn0nep6NihEWv5yhjcYIsbnFe_Pt-n7cc6ZKxzTV7pyEmNguXp1h22ILSkduhoqxwEjgheNon5hFve-ju6obvHGpRstkMwXXtLm9EqZuSXfmE0tCxA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxERm50uGp4aTcS2ON4qj3ORbL6DwUbhsSejAbIRFJA43uKD662zItZjz1kN28PqsGp234lxL_cUW7_CpftTz5XReP42Lp-HoxXRL2p75pCkv8LbDEgw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_6",
+      "section_idx": 12,
+      "idx_in_section": 6,
+      "text": "By using a compound loss function that encourages points to lie on the surface and normals to predict orientation accurately, these networks produce smoother and more complete point clouds suitable for reconstruction.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFg3AUjWrra4PompD5qOnhJawD-dEFQ9aa2GxfpkuJ07WTDinIRgJokYcwkAX79XhgIjAo19kht4yfGnwexZTJhqMqmjQvYCHeKEtjhePpYeup4PAuM8z430Ni951bYMHohNkxkvxY9r9u2oAI3q2wdMjTfmVFjUvyXAcpaLBZi1wlwDnu6oIBBGIS3ZFx-DDUiqKYvJVbdy7zSUyar9MDBqgjhfyqo6fWe_j2vNWbVeVznY-b8zeblZgIO509_4UOD1ck_6DXsQDZh-ME="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG6PsGu6eu6xGV9q93ljZ46RhObg7JkxQvHbaJZUK4Bssq8r4h1Hy3EzDfIv_VvFDXCLyMpp_YD0dvwn-i76uCuLTgwaNWTP638-BEpoEy3kLbwt-LN8ZGveKeSTkNj-MIJAZSWldIXy-c-AbpoMRGWfy5tYn0nep6NihEWv5yhjcYIsbnFe_Pt-n7cc6ZKxzTV7pyEmNguXp1h22ILSkduhoqxwEjgheNon5hFve-ju6obvHGpRstkMwXXtLm9EqZuSXfmE0tCxA=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxERm50uGp4aTcS2ON4qj3ORbL6DwUbhsSejAbIRFJA43uKD662zItZjz1kN28PqsGp234lxL_cUW7_CpftTz5XReP42Lp-HoxXRL2p75pCkv8LbDEgw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "## Smoothing and Denoising",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "Even after outlier removal, measurement noise (jitter) can remain.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_2",
+      "section_idx": 13,
+      "idx_in_section": 2,
+      "text": "Smoothing algorithms adjust the positions of points to reduce high-frequency variations without removing the points themselves.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_3",
+      "section_idx": 13,
+      "idx_in_section": 3,
+      "text": "*  **Moving Least Squares (MLS):** MLS projects points onto a locally fitted polynomial surface.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aimspress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUQPeRj0kGPCDH1TrFCCPvjQ1kK6VIIsw0sS3njClCm45sTGym8vnnsfXtWQigT4HrYg5fsfqNXgtTEsiCCoE8t5JqckB0I9JjgJ82DWiAalz4_2d1AKQ8L7vaC69W26efAc7XVt317LnpGa26PJocJeSo61dpdQLYwDBK1g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_4",
+      "section_idx": 13,
+      "idx_in_section": 4,
+      "text": "This effectively smooths the surface and can also be used to re-compute more accurate normals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYiJBMUPYMxHLOqUAkms1uMBZy9jGrRO3iwHoqkkQwaKF547TU-qjC5JYYIbE1Uov2MmJrq-tzXvU-1l7ch5cz5nv1zB-6MLqDSJUhCLiqf8B3AX_04YNuLj8svlYC"
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHCS1v3680EQxYaN3r5ROxDoJA6X-UrAenAtBH5JHduKq2YQ8HXIwp24EKCxxm-wMJsm7mDiJCiNSaLtMnI2Qbe9H3evMED5hx3zUGsNWJEhNhAD6WSy0pOriVCNKURNHbFmkFUfMpQHU5W3dbUllA="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_5",
+      "section_idx": 13,
+      "idx_in_section": 5,
+      "text": "*  **Bilateral Filtering:** Adapted from image processing, bilateral filtering smooths point positions based on both spatial distance and normal similarity, allowing for noise reduction while preserving sharp edges.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aimspress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUQPeRj0kGPCDH1TrFCCPvjQ1kK6VIIsw0sS3njClCm45sTGym8vnnsfXtWQigT4HrYg5fsfqNXgtTEsiCCoE8t5JqckB0I9JjgJ82DWiAalz4_2d1AKQ8L7vaC69W26efAc7XVt317LnpGa26PJocJeSo61dpdQLYwDBK1g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "## Algorithm-Specific Preprocessing Requirements",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "The choice of preprocessing steps must align with the intended reconstruction algorithm.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "### Poisson Surface Reconstruction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "Poisson reconstruction is an implicit method that solves for an indicator function whose gradient matches the input normals.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_2",
+      "section_idx": 15,
+      "idx_in_section": 2,
+      "text": "*  **Requirement:** It strictly requires **oriented normals**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEzCGSbwM7CzM2tY4L62lUJ6LRc2X2poFrcXrusoCPI1iZr_D6L2xSLrx73Hw4mtn8rBp6-o-Ux69weSBDkuenj1xDuFysjs26lC-WioIqG9MYFnVHZ3b3W8QnNNRGAwFZxV_ldvvjqrATJOW17ltj4KlmEjwgiDawum_A9wg=="
+        ],
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH38xtNLGlA9oVilJcfwVyTPZwnmp0K4RurjvYAzispMqWi94h3wsGz6C-Ef9yGqXtaPEc1uFAniZIEwdFpsUR29WmJtSMw-hpo40Djtkh3WuHysbuOtCLat-xOHez-bMZzKzF3iInd8Bkp4rP-rUP3bg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_3",
+      "section_idx": 15,
+      "idx_in_section": 3,
+      "text": "*  **Robustness:** It is generally robust to noise and non-uniform sampling because it solves a global optimization problem.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "adamtech.com.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFfFPDxc-yYuCFY4wolvXxG47IYE9SfrqsNFzxnoAKwrNqRGW5nCm7V4XKrgOlf_zLBIslIHWgnY40zp6VBXHnTKbqEE_861SOJyuVl__fnmcApIuoMHOizerrkAu26DA=="
+        ],
+        [
+          "tudelft.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGuOe016Ky3vN-5xOfBkZWcQLTRP8U-fiurv8CynUXS53nC07f9k1RZlAO8sz2LowJo8BS3Jsfo2eKKUi9KG3j13XZL32cELkKJ2rKSTLnrEorR1Ln86uNAhYn7QXPVMzSnIdo4uSVPWIVU0dy6NHFldL3Uf9yJUH5g3UYD8Y4T1yHKqrihMvz8zOOMBGfjXD-p"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_4",
+      "section_idx": 15,
+      "idx_in_section": 4,
+      "text": "*  **Output:** It always produces a closed (watertight) surface.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH38xtNLGlA9oVilJcfwVyTPZwnmp0K4RurjvYAzispMqWi94h3wsGz6C-Ef9yGqXtaPEc1uFAniZIEwdFpsUR29WmJtSMw-hpo40Djtkh3WuHysbuOtCLat-xOHez-bMZzKzF3iInd8Bkp4rP-rUP3bg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_5",
+      "section_idx": 15,
+      "idx_in_section": 5,
+      "text": "If the object is an open surface (e.g., a terrain patch), the algorithm may artificially close it unless specific boundary constraints are applied.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH38xtNLGlA9oVilJcfwVyTPZwnmp0K4RurjvYAzispMqWi94h3wsGz6C-Ef9yGqXtaPEc1uFAniZIEwdFpsUR29WmJtSMw-hpo40Djtkh3WuHysbuOtCLat-xOHez-bMZzKzF3iInd8Bkp4rP-rUP3bg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "### Ball Pivoting Algorithm (BPA)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "BPA simulates a ball rolling over the point cloud to form triangles.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "*  **Requirement:** It requires normals to ensure consistent triangle orientation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdjfFr9JgECiqyE64OWf8lz614FAW95OO5nUEn032JzFHnJG8GD3MrtfowAz3DHjx0-uROo4wWtgUTsQcYDLSTb3U1_SGBmQIgFbF4VIarGbklPbu4zNUVLOT0UgCrVX2FBcZWl7_rNp3TEEBePQ44SWTnz3InnRMAYS0x1youKsE3O5lkD5Ad-fLo"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_3",
+      "section_idx": 16,
+      "idx_in_section": 3,
+      "text": "*  **Sensitivity:** It is highly sensitive to **sampling density**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cuny.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGStE6LnrNDP0uOnLP7GrTVS7el36QZsdHp95mIFUW1tuFEFYRVhnWj_oA0cNraD0pGjKomydJQOVe5IsWmCRgLUHdDkkd73k0LkjSZPlbdBZ_2aJrqhRZ26PEzpfG0cnsNeRYANBdoaXi8TrOjBpk="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE3ZDyHFBiFtobwkEQSSJXlJU2HHndcpluTHAC8NDVsPm65r5OrzlOjwpUu103VjQj3ZNASGyO_9mhaOgCAghaVCwV1CAy7rZYEIUMPUbe_GYy8bJg1q7i4EWBZCT4kUb-6tm7ZALThLk-JQpoMWR8A1lUIIWBfxZ3mxA5SNDIvU977XQnJdOdgrHgkZHPTinpwydimbapSzIb9rsr2"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_4",
+      "section_idx": 16,
+      "idx_in_section": 4,
+      "text": "If the gap between points is larger than the ball radius, holes will appear in the mesh.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cuny.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGStE6LnrNDP0uOnLP7GrTVS7el36QZsdHp95mIFUW1tuFEFYRVhnWj_oA0cNraD0pGjKomydJQOVe5IsWmCRgLUHdDkkd73k0LkjSZPlbdBZ_2aJrqhRZ26PEzpfG0cnsNeRYANBdoaXi8TrOjBpk="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE3ZDyHFBiFtobwkEQSSJXlJU2HHndcpluTHAC8NDVsPm65r5OrzlOjwpUu103VjQj3ZNASGyO_9mhaOgCAghaVCwV1CAy7rZYEIUMPUbe_GYy8bJg1q7i4EWBZCT4kUb-6tm7ZALThLk-JQpoMWR8A1lUIIWBfxZ3mxA5SNDIvU977XQnJdOdgrHgkZHPTinpwydimbapSzIb9rsr2"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_5",
+      "section_idx": 16,
+      "idx_in_section": 5,
+      "text": "Therefore, uniform upsampling or careful radius selection is a critical preprocessing step for BPA.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cuny.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGStE6LnrNDP0uOnLP7GrTVS7el36QZsdHp95mIFUW1tuFEFYRVhnWj_oA0cNraD0pGjKomydJQOVe5IsWmCRgLUHdDkkd73k0LkjSZPlbdBZ_2aJrqhRZ26PEzpfG0cnsNeRYANBdoaXi8TrOjBpk="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE3ZDyHFBiFtobwkEQSSJXlJU2HHndcpluTHAC8NDVsPm65r5OrzlOjwpUu103VjQj3ZNASGyO_9mhaOgCAghaVCwV1CAy7rZYEIUMPUbe_GYy8bJg1q7i4EWBZCT4kUb-6tm7ZALThLk-JQpoMWR8A1lUIIWBfxZ3mxA5SNDIvU977XQnJdOdgrHgkZHPTinpwydimbapSzIb9rsr2"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "### Delaunay / Advancing Front",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "These methods interpolate input points to form a mesh.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "*  **Requirement:** They do not strictly require normals but benefit significantly from them for feature preservation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_3",
+      "section_idx": 17,
+      "idx_in_section": 3,
+      "text": "*  **Sensitivity:** Because they interpolate points directly, they are very sensitive to **outliers and noise**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH38xtNLGlA9oVilJcfwVyTPZwnmp0K4RurjvYAzispMqWi94h3wsGz6C-Ef9yGqXtaPEc1uFAniZIEwdFpsUR29WmJtSMw-hpo40Djtkh3WuHysbuOtCLat-xOHez-bMZzKzF3iInd8Bkp4rP-rUP3bg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_4",
+      "section_idx": 17,
+      "idx_in_section": 4,
+      "text": "Rigorous outlier removal and smoothing (e.g., MLS) are mandatory preprocessing steps to prevent the mesh from appearing jagged or chaotic.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH38xtNLGlA9oVilJcfwVyTPZwnmp0K4RurjvYAzispMqWi94h3wsGz6C-Ef9yGqXtaPEc1uFAniZIEwdFpsUR29WmJtSMw-hpo40Djtkh3WuHysbuOtCLat-xOHez-bMZzKzF3iInd8Bkp4rP-rUP3bg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "## Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "Data preprocessing is not merely a preliminary step but a determinant factor in the success of 3D surface reconstruction.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "A typical workflow involves a sequence of operations: first, **outlier removal** (SOR/ROR) cleans the data of gross errors; second, **smoothing** (MLS) reduces sensor noise; third, **density management** (voxel grid downsampling or deep upsampling) ensures uniform coverage; and finally, **normal estimation and orientation** provide the necessary geometric context for reconstruction algorithms.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_3",
+      "section_idx": 18,
+      "idx_in_section": 3,
+      "text": "Among these, the consistent orientation of normals stands out as the most mathematically critical prerequisite for implicit reconstruction methods like Poisson, while density uniformity is paramount for explicit methods like Ball Pivoting.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "### Key Points",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "*  **Normal Estimation and Orientation:** The most critical preprocessing step for implicit surface reconstruction methods (e.g., Poisson) is the computation of surface normals and, crucially, ensuring their global orientation consistency.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "*  **Outlier Removal:** Statistical and radius-based filtering are essential to remove sensor noise and artifacts that would otherwise create topological errors or non-manifold geometry in the final mesh.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "*  **Density Management:** Point clouds often require downsampling (e.g., voxel grid) to manage computational load or upsampling (e.g., deep learning-based) to fill sparse regions and ensure watertight reconstruction.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "*  **Algorithm-Specific Requirements:** Different reconstruction algorithms impose unique demands; Poisson reconstruction requires oriented normals and produces watertight surfaces, while the Ball Pivoting Algorithm is sensitive to sampling density and existing holes.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "### Introduction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "The reconstruction of continuous 3D surfaces from discrete point cloud data is a fundamental problem in computer vision, computer graphics, and remote sensing.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "Point clouds, typically acquired via LiDAR, RGB-D cameras, or photogrammetry, are inherently unordered, sparse, and subject to noise and non-uniform sampling.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ],
+        [
+          "uzh.ch",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGsllBMA1jdD_XdNhp8o-q1T8AhczmmzAgXlK0a1CNlcMwKrAJrLvTsb-t8hufVpZvSeUBj32nkPDeya75k4_XG0PNvloUYcEw6gf1Hkauk-pZHijguIjVa_aoYw-C4-pKiTyNwsEMD0KPHUdPpqcDAObBbIiGSbm2CARYRJRrmKroay-R5y62BAdz7WNwYgTIcRcKi"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "These characteristics make raw point clouds unsuitable for direct rendering or geometric analysis in many applications.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "Consequently, a robust preprocessing pipeline is required to transform raw sensor data into a clean, structured dataset capable of supporting high-fidelity surface reconstruction algorithms.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "The quality of the final 3D mesh is heavily dependent on the preprocessing stage.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "Errors introduced or ignored at this phase\u2014such as inverted normals, high-frequency noise, or outliers\u2014propagate through the reconstruction pipeline, leading to artifacts such as holes, inverted faces, or spurious geometric features.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFg3AUjWrra4PompD5qOnhJawD-dEFQ9aa2GxfpkuJ07WTDinIRgJokYcwkAX79XhgIjAo19kht4yfGnwexZTJhqMqmjQvYCHeKEtjhePpYeup4PAuM8z430Ni951bYMHohNkxkvxY9r9u2oAI3q2wdMjTfmVFjUvyXAcpaLBZi1wlwDnu6oIBBGIS3ZFx-DDUiqKYvJVbdy7zSUyar9MDBqgjhfyqo6fWe_j2vNWbVeVznY-b8zeblZgIO509_4UOD1ck_6DXsQDZh-ME="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2APRrK5cegoOQw_kg5t3GBbR8n1FwgezmV9oPoY_AmJRLxOAVvLqW8plPYT71K2a6SbqQlWARr7yxruoAZLCs7pIYNo3xEjKiGzOsccN5UK-rW34Myio-6nuukKDPRyf8ElUgIyd6SVfqxtTDwc05ME48dNmfpqTCEXHP148EMzjZaAHCJceja6w9thkpMrMkLhHO2p1Gw7Ut0BDbMAZijbnlFtbMhdVxhaWEUPyQiLxmN8AzNXXFuH2hZFoQVSNnMDWLffc_Zb6wRu56of-ns02akCm3lw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_7",
+      "section_idx": 2,
+      "idx_in_section": 7,
+      "text": "This report provides a detailed analysis of the critical preprocessing steps: outlier removal, normal estimation and orientation, density management (downsampling and upsampling), and smoothing.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## Data Cleaning and Outlier Removal",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "Raw point cloud data invariably contains noise and outliers due to sensor imperfections, surface properties (e.g., reflectivity), and environmental factors.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "disneyresearch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPjzwyjb66rgxlKyNcXa4sqWcg4E7LVXeIrW7U2ad2DiOBuGYi40Cma_POzFj97ZA7Q83ECl_rB6LhsSCMe7dIMdXcroKtMK_oVmAsH9WjIVoQCYs5oWmcetx0HN0qSXfhXBxVLpA4KhPUmCCuAPTgDKfJk2If2s8ZJxmviLy3xNYkpYbDaeXdYWUiYriHOSoIO4zlLLdVrphgeBdQaGHKJVpoJU9ug53-61Ly3KqVlwCUB1k_dqKovw=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEVCGX4Jp_pAvxBMU97ceXSePRKuwogbKvsSbA9XWj7ReO0mHR73PLQZMG2O1Tu83Uh3b0dWI8AEqgxno6OTQNypb6dHvi0blt2CuH0PTIehJAM6Kx9QF2Oap7FPTuFKSmwu42-NfLyk0mfHzTtUZfEOM28hE8jkJy71PeUqjiler6jTOyk57LgsLX9e2td8amo0TXeyhNnA_jRV-UA7QVNpGuI0xZ7E57g6T4uyQDiYEUjGHhvFntUutJqig=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "Removing these artifacts is the first critical step in the pipeline, as outliers can severely distort the implicit functions used in reconstruction algorithms like Poisson Surface Reconstruction.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "disneyresearch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPjzwyjb66rgxlKyNcXa4sqWcg4E7LVXeIrW7U2ad2DiOBuGYi40Cma_POzFj97ZA7Q83ECl_rB6LhsSCMe7dIMdXcroKtMK_oVmAsH9WjIVoQCYs5oWmcetx0HN0qSXfhXBxVLpA4KhPUmCCuAPTgDKfJk2If2s8ZJxmviLy3xNYkpYbDaeXdYWUiYriHOSoIO4zlLLdVrphgeBdQaGHKJVpoJU9ug53-61Ly3KqVlwCUB1k_dqKovw=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEVCGX4Jp_pAvxBMU97ceXSePRKuwogbKvsSbA9XWj7ReO0mHR73PLQZMG2O1Tu83Uh3b0dWI8AEqgxno6OTQNypb6dHvi0blt2CuH0PTIehJAM6Kx9QF2Oap7FPTuFKSmwu42-NfLyk0mfHzTtUZfEOM28hE8jkJy71PeUqjiler6jTOyk57LgsLX9e2td8amo0TXeyhNnA_jRV-UA7QVNpGuI0xZ7E57g6T4uyQDiYEUjGHhvFntUutJqig=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### Statistical and Radius-Based Filtering",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "Two of the most prevalent methods for cleaning point clouds are Statistical Outlier Removal (SOR) and Radius Outlier Removal (ROR).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "**Statistical Outlier Removal (SOR):** This method assumes that the distances between a point and its nearest neighbors follow a Gaussian distribution.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "patsnap.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDswZC1uXfpSiG58OAXi6jYhksWI8yy5gZngPvsV_DkSkkvVewjRxbxO7EURq2a2glVn7YSqJYZY4TcuMyeatn9Ol8CHoPg-rTspBWEGdCh18-SePPWo8OCjoPcUMXzCHWWcODXs3hOQuXfzw4AwyfP9q7kO9V2hNzv15JN1uy1_pxm4uMB7ha03JgORr8ZhpRJl-sVybwyvfY0GYB"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "The algorithm iterates through the point cloud, calculating the mean distance of each point to its $k$ nearest neighbors.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "patsnap.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDswZC1uXfpSiG58OAXi6jYhksWI8yy5gZngPvsV_DkSkkvVewjRxbxO7EURq2a2glVn7YSqJYZY4TcuMyeatn9Ol8CHoPg-rTspBWEGdCh18-SePPWo8OCjoPcUMXzCHWWcODXs3hOQuXfzw4AwyfP9q7kO9V2hNzv15JN1uy1_pxm4uMB7ha03JgORr8ZhpRJl-sVybwyvfY0GYB"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "Points that fall outside a defined threshold (typically expressed as a standard deviation multiplier, or Z-score) are classified as outliers and removed.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "patsnap.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDswZC1uXfpSiG58OAXi6jYhksWI8yy5gZngPvsV_DkSkkvVewjRxbxO7EURq2a2glVn7YSqJYZY4TcuMyeatn9Ol8CHoPg-rTspBWEGdCh18-SePPWo8OCjoPcUMXzCHWWcODXs3hOQuXfzw4AwyfP9q7kO9V2hNzv15JN1uy1_pxm4uMB7ha03JgORr8ZhpRJl-sVybwyvfY0GYB"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFHQLKhHj1raDuLPNN5UHO_Gs7KuttibVSuLFdp45T8fk0shB8NlxQanLw4tCF4-S-NYOrEuhwkTvwkJO_3MER-1Z8-_LiKagdM_ZpwU2Gd15x_FsKKc_le0iiEa-Grys4HsHI0veqHKntKV9RdjTLpTokHK793D7UnLbLXc4pSVxOM1ZjZQJfXX5RPaMJv0UDJUaxvM1UOvePPf5KbvV3f7R7ksLYTShxkDdvj-eDOlhm_"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "This approach is particularly effective at removing measurement noise and \"ghost\" points that do not belong to the underlying surface structure.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "patsnap.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFDswZC1uXfpSiG58OAXi6jYhksWI8yy5gZngPvsV_DkSkkvVewjRxbxO7EURq2a2glVn7YSqJYZY4TcuMyeatn9Ol8CHoPg-rTspBWEGdCh18-SePPWo8OCjoPcUMXzCHWWcODXs3hOQuXfzw4AwyfP9q7kO9V2hNzv15JN1uy1_pxm4uMB7ha03JgORr8ZhpRJl-sVybwyvfY0GYB"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": "**Radius Outlier Removal (ROR):** This technique filters points based on the number of neighbors within a specified radius $r$.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "If a point has fewer than $k$ neighbors within this sphere, it is considered isolated and removed.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEgN6wdyXN57UtVDWsP9Ay9zQDDWbVXGf892EZ1ptI5ZrJv6BXZhc4Zeq8CuB_zQPjsfb7pFwySnkjepp92zpog027JC77rgLZ7ajrmuwOaB8IZW5MPan1KEpkYDigHV7cuyQChWSnR4C2ZgdWJGYvS_isGTA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "text": "This is useful for removing stray points that are spatially disconnected from the main object, often caused by dust or sensor errors.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### Advanced and Domain-Specific Filtering",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "Beyond standard statistical methods, more specialized algorithms address specific noise characteristics:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "*  **Social Circle Algorithm:** A method proposed for microscopic topography reconstruction uses a \"social circle\" concept, iteratively expanding a search window based on voting values from a Gaussian kernel to identify and remove outliers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "aimspress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUQPeRj0kGPCDH1TrFCCPvjQ1kK6VIIsw0sS3njClCm45sTGym8vnnsfXtWQigT4HrYg5fsfqNXgtTEsiCCoE8t5JqckB0I9JjgJ82DWiAalz4_2d1AKQ8L7vaC69W26efAc7XVt317LnpGa26PJocJeSo61dpdQLYwDBK1g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "*  **Image-Consistency Filtering:** For point clouds generated via Multi-View Stereo (MVS) or photogrammetry, noise often arises from matching ambiguities.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "Algorithms that leverage the original input images and depth maps can remove points that are geometrically or photometrically inconsistent with the colored surface implied by the input.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "disneyresearch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPjzwyjb66rgxlKyNcXa4sqWcg4E7LVXeIrW7U2ad2DiOBuGYi40Cma_POzFj97ZA7Q83ECl_rB6LhsSCMe7dIMdXcroKtMK_oVmAsH9WjIVoQCYs5oWmcetx0HN0qSXfhXBxVLpA4KhPUmCCuAPTgDKfJk2If2s8ZJxmviLy3xNYkpYbDaeXdYWUiYriHOSoIO4zlLLdVrphgeBdQaGHKJVpoJU9ug53-61Ly3KqVlwCUB1k_dqKovw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "This allows subsequent reconstruction steps to apply less aggressive smoothing, thereby preserving more high-frequency details.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## Normal Estimation and Orientation",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "Perhaps the most pivotal preprocessing task for surface reconstruction is the estimation of surface normals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ],
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEzCGSbwM7CzM2tY4L62lUJ6LRc2X2poFrcXrusoCPI1iZr_D6L2xSLrx73Hw4mtn8rBp6-o-Ux69weSBDkuenj1xDuFysjs26lC-WioIqG9MYFnVHZ3b3W8QnNNRGAwFZxV_ldvvjqrATJOW17ltj4KlmEjwgiDawum_A9wg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "Many reconstruction algorithms, particularly implicit methods like Poisson Surface Reconstruction, do not operate directly on point positions but rather on the vector field defined by the point normals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ],
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEzCGSbwM7CzM2tY4L62lUJ6LRc2X2poFrcXrusoCPI1iZr_D6L2xSLrx73Hw4mtn8rBp6-o-Ux69weSBDkuenj1xDuFysjs26lC-WioIqG9MYFnVHZ3b3W8QnNNRGAwFZxV_ldvvjqrATJOW17ltj4KlmEjwgiDawum_A9wg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### Local Normal Estimation",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uzh.ch",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGsllBMA1jdD_XdNhp8o-q1T8AhczmmzAgXlK0a1CNlcMwKrAJrLvTsb-t8hufVpZvSeUBj32nkPDeya75k4_XG0PNvloUYcEw6gf1Hkauk-pZHijguIjVa_aoYw-C4-pKiTyNwsEMD0KPHUdPpqcDAObBbIiGSbm2CARYRJRrmKroay-R5y62BAdz7WNwYgTIcRcKi"
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEki0wjuJ-VMUlR4HapTylINVbUuxDaESC_nLSkFW6hXchTW-Hr2c1DjiO8A2DlMR63gUNbEj4LmPB_-8RCX320ajRRjyu5ewK2MVXTpKDvHbiuFBEIl5yR1puzLC74st3VtUPu3y_CUiHYGbsqlVNXJKPImk-TQFe0WiIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "The standard approach to estimating a normal vector for a point $p$ involves analyzing the local neighborhood of $p$ (usually defined by $k$ nearest neighbors).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uzh.ch",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGsllBMA1jdD_XdNhp8o-q1T8AhczmmzAgXlK0a1CNlcMwKrAJrLvTsb-t8hufVpZvSeUBj32nkPDeya75k4_XG0PNvloUYcEw6gf1Hkauk-pZHijguIjVa_aoYw-C4-pKiTyNwsEMD0KPHUdPpqcDAObBbIiGSbm2CARYRJRrmKroay-R5y62BAdz7WNwYgTIcRcKi"
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEki0wjuJ-VMUlR4HapTylINVbUuxDaESC_nLSkFW6hXchTW-Hr2c1DjiO8A2DlMR63gUNbEj4LmPB_-8RCX320ajRRjyu5ewK2MVXTpKDvHbiuFBEIl5yR1puzLC74st3VtUPu3y_CUiHYGbsqlVNXJKPImk-TQFe0WiIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "The problem is typically formulated as a least-squares plane fitting problem, often solved using Principal Component Analysis (PCA) or Singular Value Decomposition (SVD) of the covariance matrix of the neighborhood.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTcR-yHo4_3GOzFJ2_pzkNMxnIHBGL7HapZQjNu85lnCf58X-yX95O62_LyhBRNBkeqG-ZoBk5Q953BYq9K517EdSTF7p_rUr6u0y-LDO9UTRbqmvQLsjn4cS1TpxpD2RasGBI1VgiWLY9BA7wa8ockOq5WdwoQ-YbIrReipBa6SAoApU="
+        ],
+        [
+          "neurips.cc",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFi0Rveh55CkEctjc2gzNLW5vOBkjBcwNXJJ7ekAndA_M7k3GWWlIILuWukYp1D3EaVoD59nl3-zY3hG0uO9jysNOOMw1NCewY7foC8M_ytr9lrdJ3btSO23Q0KqKfpyhTYMO8K6WFGQXkQLDCnOVJeQWwMblaCbCIAFAD3cRbZ1JXMMdi3PTKE2KVZC8GQsms9JawPzuL__UJOFe8Xd41jHgBm140R"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "The normal is approximated as the eigenvector corresponding to the smallest eigenvalue of this covariance matrix.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uzh.ch",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGsllBMA1jdD_XdNhp8o-q1T8AhczmmzAgXlK0a1CNlcMwKrAJrLvTsb-t8hufVpZvSeUBj32nkPDeya75k4_XG0PNvloUYcEw6gf1Hkauk-pZHijguIjVa_aoYw-C4-pKiTyNwsEMD0KPHUdPpqcDAObBbIiGSbm2CARYRJRrmKroay-R5y62BAdz7WNwYgTIcRcKi"
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEki0wjuJ-VMUlR4HapTylINVbUuxDaESC_nLSkFW6hXchTW-Hr2c1DjiO8A2DlMR63gUNbEj4LmPB_-8RCX320ajRRjyu5ewK2MVXTpKDvHbiuFBEIl5yR1puzLC74st3VtUPu3y_CUiHYGbsqlVNXJKPImk-TQFe0WiIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_4",
+      "section_idx": 7,
+      "idx_in_section": 4,
+      "text": "While PCA is computationally efficient, it is susceptible to noise and sharp features.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_5",
+      "section_idx": 7,
+      "idx_in_section": 5,
+      "text": "In the presence of sharp edges, PCA tends to smooth the normal field, losing geometric detail.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_6",
+      "section_idx": 7,
+      "idx_in_section": 6,
+      "text": "To address this, variations such as Moving Least Squares (MLS) and truncated Taylor expansion fitting (n-jet) have been proposed to provide more robust estimation in noisy environments.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "### The Orientation Problem",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEzCGSbwM7CzM2tY4L62lUJ6LRc2X2poFrcXrusoCPI1iZr_D6L2xSLrx73Hw4mtn8rBp6-o-Ux69weSBDkuenj1xDuFysjs26lC-WioIqG9MYFnVHZ3b3W8QnNNRGAwFZxV_ldvvjqrATJOW17ltj4KlmEjwgiDawum_A9wg=="
+        ],
+        [
+          "unimelb.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAbcGVwvqDeMYnsdks3AJ8q-STRjXMhYDYQ30GsPfsg9h-1odZtxJNHMlkOOZDiIDnmF1TQRqxH2l3LgMq8OgL_Zy1cco-D9h25fvV-Auoaow3Wn2hE90Lt6s40ProbBuDoy_ASi2mxeULuxv_lNyhRTD4JmKeUd1fBPq9w2Zjq7HmwB3zGaY0N6ZtM9Uvqm-xNTqoIayT5W5MyNqep3dgwe-8"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "Mathematically, the eigenvector computation provides the line on which the normal lies but not its direction (sign).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEzCGSbwM7CzM2tY4L62lUJ6LRc2X2poFrcXrusoCPI1iZr_D6L2xSLrx73Hw4mtn8rBp6-o-Ux69weSBDkuenj1xDuFysjs26lC-WioIqG9MYFnVHZ3b3W8QnNNRGAwFZxV_ldvvjqrATJOW17ltj4KlmEjwgiDawum_A9wg=="
+        ],
+        [
+          "unimelb.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAbcGVwvqDeMYnsdks3AJ8q-STRjXMhYDYQ30GsPfsg9h-1odZtxJNHMlkOOZDiIDnmF1TQRqxH2l3LgMq8OgL_Zy1cco-D9h25fvV-Auoaow3Wn2hE90Lt6s40ProbBuDoy_ASi2mxeULuxv_lNyhRTD4JmKeUd1fBPq9w2Zjq7HmwB3zGaY0N6ZtM9Uvqm-xNTqoIayT5W5MyNqep3dgwe-8"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_10",
+      "section_idx": 8,
+      "idx_in_section": 10,
+      "text": "This method posits that the implicit function values at sample points should be close to the isovalue of the surface.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2APRrK5cegoOQw_kg5t3GBbR8n1FwgezmV9oPoY_AmJRLxOAVvLqW8plPYT71K2a6SbqQlWARr7yxruoAZLCs7pIYNo3xEjKiGzOsccN5UK-rW34Myio-6nuukKDPRyf8ElUgIyd6SVfqxtTDwc05ME48dNmfpqTCEXHP148EMzjZaAHCJceja6w9thkpMrMkLhHO2p1Gw7Ut0BDbMAZijbnlFtbMhdVxhaWEUPyQiLxmN8AzNXXFuH2hZFoQVSNnMDWLffc_Zb6wRu56of-ns02akCm3lw=="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxRCTm7Fxb13rjBY6gNjRLVw8RxLmiDKG5UE9ClbYCdxwp0licsMMXH1p-uYVCS0baVsZ0pJN6XRzXXXg5QYN3CjyNCyrx-GGOvJ3kLEKlbw0zPiineovRwmRyDhmqgEvTGerf_UMc6xe5woK1jzZARg_l_OT7oZVQbWvz37nUjgIGqbfboJOu5F-47I-J3MD1Qw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_11",
+      "section_idx": 8,
+      "idx_in_section": 11,
+      "text": "By solving for a globally consistent orientation, these methods show high performance even with non-uniform and noisy data.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2APRrK5cegoOQw_kg5t3GBbR8n1FwgezmV9oPoY_AmJRLxOAVvLqW8plPYT71K2a6SbqQlWARr7yxruoAZLCs7pIYNo3xEjKiGzOsccN5UK-rW34Myio-6nuukKDPRyf8ElUgIyd6SVfqxtTDwc05ME48dNmfpqTCEXHP148EMzjZaAHCJceja6w9thkpMrMkLhHO2p1Gw7Ut0BDbMAZijbnlFtbMhdVxhaWEUPyQiLxmN8AzNXXFuH2hZFoQVSNnMDWLffc_Zb6wRu56of-ns02akCm3lw=="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxRCTm7Fxb13rjBY6gNjRLVw8RxLmiDKG5UE9ClbYCdxwp0licsMMXH1p-uYVCS0baVsZ0pJN6XRzXXXg5QYN3CjyNCyrx-GGOvJ3kLEKlbw0zPiineovRwmRyDhmqgEvTGerf_UMc6xe5woK1jzZARg_l_OT7oZVQbWvz37nUjgIGqbfboJOu5F-47I-J3MD1Qw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "This results in the \"sign ambiguity\" problem, where normals may randomly point inward or outward.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "readthedocs.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTcR-yHo4_3GOzFJ2_pzkNMxnIHBGL7HapZQjNu85lnCf58X-yX95O62_LyhBRNBkeqG-ZoBk5Q953BYq9K517EdSTF7p_rUr6u0y-LDO9UTRbqmvQLsjn4cS1TpxpD2RasGBI1VgiWLY9BA7wa8ockOq5WdwoQ-YbIrReipBa6SAoApU="
+        ],
+        [
+          "pointclouds.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEki0wjuJ-VMUlR4HapTylINVbUuxDaESC_nLSkFW6hXchTW-Hr2c1DjiO8A2DlMR63gUNbEj4LmPB_-8RCX320ajRRjyu5ewK2MVXTpKDvHbiuFBEIl5yR1puzLC74st3VtUPu3y_CUiHYGbsqlVNXJKPImk-TQFe0WiIG"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_3",
+      "section_idx": 8,
+      "idx_in_section": 3,
+      "text": "For surface reconstruction, **globally consistent orientation** is mandatory.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEzCGSbwM7CzM2tY4L62lUJ6LRc2X2poFrcXrusoCPI1iZr_D6L2xSLrx73Hw4mtn8rBp6-o-Ux69weSBDkuenj1xDuFysjs26lC-WioIqG9MYFnVHZ3b3W8QnNNRGAwFZxV_ldvvjqrATJOW17ltj4KlmEjwgiDawum_A9wg=="
+        ],
+        [
+          "unimelb.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAbcGVwvqDeMYnsdks3AJ8q-STRjXMhYDYQ30GsPfsg9h-1odZtxJNHMlkOOZDiIDnmF1TQRqxH2l3LgMq8OgL_Zy1cco-D9h25fvV-Auoaow3Wn2hE90Lt6s40ProbBuDoy_ASi2mxeULuxv_lNyhRTD4JmKeUd1fBPq9w2Zjq7HmwB3zGaY0N6ZtM9Uvqm-xNTqoIayT5W5MyNqep3dgwe-8"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_4",
+      "section_idx": 8,
+      "idx_in_section": 4,
+      "text": "If normals are inconsistent, the reconstruction algorithm cannot distinguish the interior of the object from the exterior, leading to topological failures.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cgal.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEzCGSbwM7CzM2tY4L62lUJ6LRc2X2poFrcXrusoCPI1iZr_D6L2xSLrx73Hw4mtn8rBp6-o-Ux69weSBDkuenj1xDuFysjs26lC-WioIqG9MYFnVHZ3b3W8QnNNRGAwFZxV_ldvvjqrATJOW17ltj4KlmEjwgiDawum_A9wg=="
+        ],
+        [
+          "unimelb.edu.au",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAbcGVwvqDeMYnsdks3AJ8q-STRjXMhYDYQ30GsPfsg9h-1odZtxJNHMlkOOZDiIDnmF1TQRqxH2l3LgMq8OgL_Zy1cco-D9h25fvV-Auoaow3Wn2hE90Lt6s40ProbBuDoy_ASi2mxeULuxv_lNyhRTD4JmKeUd1fBPq9w2Zjq7HmwB3zGaY0N6ZtM9Uvqm-xNTqoIayT5W5MyNqep3dgwe-8"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_5",
+      "section_idx": 8,
+      "idx_in_section": 5,
+      "text": "**Propagation Methods:** Traditional methods, such as those by Hoppe et al., construct a Minimum Spacing Tree (MST) or a Riemann graph over the point cloud.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHtsrFEMY8GKCgRNISfZoJ76N_quYKmVHw42eXvBsxzvOz4wFL6YdxYEc73o-mlQ-tcA8xmN8WCy0i6EywRu9Gnhv16HQx_QuJl3S4XsWVfxrtZaup2bN2uhHuRSZD0Ps_5UJrKy-8NLX8FfIslPxqq_DPgYVCMeOEJd6pbDpjLbefaDT599jfdNAnMSiijl2BOiKFMt_kyJ5FliBLdpJ6kHWkjBVmM"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_6",
+      "section_idx": 8,
+      "idx_in_section": 6,
+      "text": "The orientation of a seed point is propagated to its neighbors based on the assumption that adjacent points should have similar normal directions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cardiff.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHJf9nzcHv52CCtCh-9luiP6tpCS7Ex_v9FfFLEq8-uagxg3TWvuwSHk5QcMyUII8VMgO9xM9BVfrfhwCjDnnnne3NUI2J53OiCQZJUQTfAwJCnhvZ7BUPA6E8ASzYsY2z-dx1kyXEDDUq76rGK"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHtsrFEMY8GKCgRNISfZoJ76N_quYKmVHw42eXvBsxzvOz4wFL6YdxYEc73o-mlQ-tcA8xmN8WCy0i6EywRu9Gnhv16HQx_QuJl3S4XsWVfxrtZaup2bN2uhHuRSZD0Ps_5UJrKy-8NLX8FfIslPxqq_DPgYVCMeOEJd6pbDpjLbefaDT599jfdNAnMSiijl2BOiKFMt_kyJ5FliBLdpJ6kHWkjBVmM"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_7",
+      "section_idx": 8,
+      "idx_in_section": 7,
+      "text": "However, these propagation methods often fail near sharp features or in the presence of noise, where the \"similarity\" assumption breaks down.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHtsrFEMY8GKCgRNISfZoJ76N_quYKmVHw42eXvBsxzvOz4wFL6YdxYEc73o-mlQ-tcA8xmN8WCy0i6EywRu9Gnhv16HQx_QuJl3S4XsWVfxrtZaup2bN2uhHuRSZD0Ps_5UJrKy-8NLX8FfIslPxqq_DPgYVCMeOEJd6pbDpjLbefaDT599jfdNAnMSiijl2BOiKFMt_kyJ5FliBLdpJ6kHWkjBVmM"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_8",
+      "section_idx": 8,
+      "idx_in_section": 8,
+      "text": "**Global Optimization and Isovalue Constraints:** More recent approaches formulate orientation as a global optimization problem.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2APRrK5cegoOQw_kg5t3GBbR8n1FwgezmV9oPoY_AmJRLxOAVvLqW8plPYT71K2a6SbqQlWARr7yxruoAZLCs7pIYNo3xEjKiGzOsccN5UK-rW34Myio-6nuukKDPRyf8ElUgIyd6SVfqxtTDwc05ME48dNmfpqTCEXHP148EMzjZaAHCJceja6w9thkpMrMkLhHO2p1Gw7Ut0BDbMAZijbnlFtbMhdVxhaWEUPyQiLxmN8AzNXXFuH2hZFoQVSNnMDWLffc_Zb6wRu56of-ns02akCm3lw=="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxRCTm7Fxb13rjBY6gNjRLVw8RxLmiDKG5UE9ClbYCdxwp0licsMMXH1p-uYVCS0baVsZ0pJN6XRzXXXg5QYN3CjyNCyrx-GGOvJ3kLEKlbw0zPiineovRwmRyDhmqgEvTGerf_UMc6xe5woK1jzZARg_l_OT7oZVQbWvz37nUjgIGqbfboJOu5F-47I-J3MD1Qw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_9",
+      "section_idx": 8,
+      "idx_in_section": 9,
+      "text": "For instance, incorporating isovalue constraints into the Poisson equation allows for the simultaneous optimization of normals and the implicit function.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2APRrK5cegoOQw_kg5t3GBbR8n1FwgezmV9oPoY_AmJRLxOAVvLqW8plPYT71K2a6SbqQlWARr7yxruoAZLCs7pIYNo3xEjKiGzOsccN5UK-rW34Myio-6nuukKDPRyf8ElUgIyd6SVfqxtTDwc05ME48dNmfpqTCEXHP148EMzjZaAHCJceja6w9thkpMrMkLhHO2p1Gw7Ut0BDbMAZijbnlFtbMhdVxhaWEUPyQiLxmN8AzNXXFuH2hZFoQVSNnMDWLffc_Zb6wRu56of-ns02akCm3lw=="
+        ],
+        [
+          "cardiff.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHJf9nzcHv52CCtCh-9luiP6tpCS7Ex_v9FfFLEq8-uagxg3TWvuwSHk5QcMyUII8VMgO9xM9BVfrfhwCjDnnnne3NUI2J53OiCQZJUQTfAwJCnhvZ7BUPA6E8ASzYsY2z-dx1kyXEDDUq76rGK"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "### Deep Learning for Normal Estimation",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "Deep learning frameworks have emerged to address the limitations of geometric fitting.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "Networks like Nesti-Net or PCPNet take local patches as input and regress the normal vector directly, often learning to preserve sharp features better than PCA.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFg3AUjWrra4PompD5qOnhJawD-dEFQ9aa2GxfpkuJ07WTDinIRgJokYcwkAX79XhgIjAo19kht4yfGnwexZTJhqMqmjQvYCHeKEtjhePpYeup4PAuM8z430Ni951bYMHohNkxkvxY9r9u2oAI3q2wdMjTfmVFjUvyXAcpaLBZi1wlwDnu6oIBBGIS3ZFx-DDUiqKYvJVbdy7zSUyar9MDBqgjhfyqo6fWe_j2vNWbVeVznY-b8zeblZgIO509_4UOD1ck_6DXsQDZh-ME="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "Recent advancements integrate global information and attention mechanisms to weight the importance of neighboring points, enhancing robustness against noise and density variations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7mYbKUPF_YREO2dRztHWa4UQkkRiEwf5Z4emRrZRWc0AOfHnlfe5gR2yJyb__pb8U0FS8ujw066HG8zKHUpzJDY6t9TsLW0cI9_vpGb1WDr-wOgWGFkkKyA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

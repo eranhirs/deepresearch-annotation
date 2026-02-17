@@ -1,0 +1,874 @@
+{
+  "model_name": "gpt-5-search-api",
+  "example_id": "8",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat are advantages and disadvantages of top methods for picking the right number of topics in topic modeling?",
+  "answer": "Here is a detailed comparison of the major methods for selecting the number of topics (often denoted *K*) in topic modeling. I describe how each works, list advantages and disadvantages, and offer advice about when to use which. When choosing K, there is no one-size-fits-all\u2014trade-offs depend on your data, goals, and resources.\n\n---\n\n## Common methods for choosing *K*\n\nBelow are well-established approaches to selecting the number of topics, along with their pros and cons.\n\n| Method | How it works (key idea) | Advantages | Disadvantages |\n|---|---|---|---|\n| **Perplexity / held-out likelihood** | Fit models with different values of K (topics), compute how surprising (via likelihood) held-out documents are under each model. Often choose K that minimizes perplexity. ([bmcbioinformatics.biomedcentral.com](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-16-S13-S8?utm_source=openai)) | \u2022 Quantitative, predictive measure.<br> \u2022 Works well for probabilistic models like LDA.<br> \u2022 Comparisons are interpretable in probabilistic terms. | \u2022 Often, perplexity improves (decreases) monotonically as K increases, making the minimum at highest K (overfitting). ([bmcbioinformatics.biomedcentral.com](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-16-S13-S8?utm_source=openai)) <br> \u2022 Does not capture interpretability or semantic coherence of topics (many tiny or redundant topics). <br> \u2022 Sensitive to preprocessing and model hyperparameters. |\n| **Topic coherence** | Measures how strongly top words in each topic co-occur in the original corpus or reference corpora. Higher coherence means more human-interpretable topics. ([xenoss.io](https://xenoss.io/blog/topic-modeling-techniques-comparison?utm_source=openai)) | \u2022 Correlates reasonably with human judgments of topic quality. <br> \u2022 Helps avoid topics that have top words that don\u2019t \u201chang together.\u201d <br> \u2022 Good for interpretability. | \u2022 Can favor fewer topics (broad ones) since more overlap tends to hurt coherence. <br> \u2022 Different coherence measures exist; results vary. <br> \u2022 May conflict with predictive goodness (perplexity) \u2013 balancing two is tricky. |\n| **Stability / consistency analysis** | Fit the model multiple times (e.g. with different random seeds or data subsamples), then examine how consistent topic-word assignments are across runs. A K with high stability is often preferred. ([arxiv.org](https://arxiv.org/abs/1404.4606?utm_source=openai)) | \u2022 Helps avoid arbitrary or noise-driven topics. <br> \u2022 Provides robustness by ensuring topics are reproducible. <br> \u2022 Good check when interpretability matters. | \u2022 Computationally expensive (many runs). <br> \u2022 For larger K, instability is common even if topics are meaningful. <br> \u2022 May favor overly few topics to maximize agreement. |\n| **Divergence / isolation / exclusivity measures** (e.g. JS divergence, exclusivity) | Measures how distinct topics are from each other\u2014low overlap in word distributions between topics. Model choice trades off between topic overlap versus topic separateness. ([mdpi.com](https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai)) | \u2022 Helps avoid near-duplicate topics. <br> \u2022 Encourages topics to be distinct, which aids interpretability. <br> \u2022 Can be used in combination with coherence or perplexity to balance interpretability vs predictive power. | \u2022 As K grows, it\u2019s easier to separate topics artificially; risk of over-splitting. <br> \u2022 Always increasing separability may push to too many topics. <br> \u2022 Isolation doesn\u2019t ensure topics are meaningful or useful. |\n| **Nonparametric Bayesian methods** (e.g. Hierarchical Dirichlet Process, HDP; infinite topic models) | Rather than fixing K in advance, allow model to infer number of topics from data, typically with priors that favor fewer topics unless evidence supports more. ([en.wikipedia.org](https://en.wikipedia.org/wiki/Hierarchical_Dirichlet_process?utm_source=openai)) | \u2022 No need to pre-specify K. <br> \u2022 Flexibly adapts to data complexity\u2014if the data are simple, gets fewer topics; if rich, more. <br> \u2022 Theoretically principled Bayesian foundation. | \u2022 Practical inference can be complex and slow; hyperparameters (like concentration parameters) still affect results. <br> \u2022 May produce many trivial or tiny topics. <br> \u2022 Outcomes can still be sensitive to priors and initialization. |\n| **Elbow / \u201cchange-point\u201d methods** | Plot model metric(s) versus K (e.g. perplexity, coherence, inter-class distance) and look for \u201celbow\u201d or point where improvements taper off. Also change\u2010point methods look at rate-of-change to find where marginal gain drops. ([bmcbioinformatics.biomedcentral.com](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-16-S13-S8?utm_source=openai)) | \u2022 Intuitive graphical method. <br> \u2022 Helps find a \u201csweet\u2010spot\u201d where adding more topics yields diminishing returns. <br> \u2022 Especially helpful in exploratory work. | \u2022 \u201cElbow\u201d often ambiguous or multiple elbows. <br> \u2022 Decisions are subjective\u2014interpretation may vary. <br> \u2022 May not align with interpretability or domain relevance. |\n| **Combined / composite indices** | Use multiple metrics simultaneously: e.g. perplexity, coherence, isolation, stability, coincidence. Then pick K that balances them. ([mdpi.com](https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai)) | \u2022 Balances predictive power and interpretability. <br> \u2022 Helps avoid pitfalls of relying on just one metric. <br> \u2022 More aligned with what users care about (usefulness, clarity). | \u2022 More complex to compute. <br> \u2022 Conflicting signals\u2014different metrics may favor different K; need criteria or weighting. <br> \u2022 Increased computational burden. |\n| **Human evaluation / domain expert interpretability** | Fit models with several candidate K values, look at topic lists, example documents, then choose K based on domain relevance, clarity, and usefulness. ([bmcmedinformdecismak.biomedcentral.com](https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai)) | \u2022 Ultimately probably most important for many applications. <br> \u2022 Ensures topics are meaningful to stakeholders. <br> \u2022 Can catch issues automated metrics miss. | \u2022 Time consuming, subjective. <br> \u2022 Possible bias or inconsistency across evaluators. <br> \u2022 Hard to scale when many candidate models or large corpora. |\n\n---\n\n## Newer or less-common methods\n\nHere are a few methods that are emerging or less commonly used, with their pros/cons:\n\n- **Average Inter-Class Distance Change Rate (AICDR)**: Introduced in 2025; computes inter-topic distances (e.g. via hierarchical clustering) and looks where the \u201cchange rate\u201d in average inter-class distance is maximized. Helps find K where topic separation improves less beyond that. ([pmc.ncbi.nlm.nih.gov](https://pmc.ncbi.nlm.nih.gov/articles/PMC11888909/?utm_source=openai))  \n- **Parameter-free topic modeling**: Methods like nonparametric PLSA (nPLSA) attempt to eliminate K entirely or replace it with semantic notions like topic diversity or exemplar topics. ([arxiv.org](https://arxiv.org/abs/1409.2993?utm_source=openai))  \n- **Use of Large Language Models (LLMs) for evaluation**: Recent work shows that using LLMs to assess topic models (giving \u201chuman-like\u201d evaluation) can better correlate with human judgments; potentially useful for selecting K. ([arxiv.org](https://arxiv.org/abs/2305.12152?utm_source=openai))  \n\n---\n\n## Summary: Advantages vs Disadvantages\n\nHere is a distilled summary:\n\n- **Pros of automatic / quantitative metrics** (perplexity, coherence, isolation, etc.):\n  - Fast or scalable when you can fit many models.\n  - Help avoid purely ad hoc decisions.\n\n- **Cons of automatic methods**:\n  - Metrics often conflict.\n  - Some favor too many topics (overfitting), others too few.\n  - Interpretability and domain relevance sometimes weak or ignored.\n\n- **Pros of nonparametric methods**:\n  - Strong theoretical grounding.\n  - More adaptive to data scale and complexity.\n\n- **Cons of nonparametric methods**:\n  - Computationally heavier.\n  - Outcome still depends on priors and can generate many trivial latent topics.\n\n- **Human evaluation** is essential but expensive and subjective; best applied after narrowing to a few candidate models.\n\n---\n\n## Practical advice: how to pick *K* in real projects\n\nBased on what literature and practice suggest, here\u2019s how to proceed in practice:\n\n1. **Define your goals first**  \n   Are you exploring, summarizing, clustering, or feeding into downstream tasks? Do you need high interpretability or high predictive performance? The right K depends on these.\n\n2. **Preprocess carefully**  \n   Stop-word removal, stemming or lemmatization, vocabulary filtering\u2014all affect co-occurrence statistics, which feed into coherence, perplexity, etc.\n\n3. **Generate candidate models**  \n   Pick a range for K (e.g. 5 to 100, logarithmic or linear scale) and fit models. Use settings you intend to use in animation or deployment.\n\n4. **Compute multiple metrics**  \n   At least perplexity/held-out likelihood, coherence, topic exclusivity or isolation, stability. Possibly also divergence measures or cluster-based measures (such as AICDR or inter-class distance).  \n\n5. **Visualize metric curves**  \n   Plot metrics vs K. Look for ranges where improvements slow (\u201celbows\u201d), or where conflicting metrics converge on a range.\n\n6. **Domain expert evaluation**  \n   Inspect topic word lists, representative documents for candidate Ks. See which topics are clear, non-redundant, and useful.\n\n7. **Balance trade-offs**  \n   Sometimes fewer topics are better for clarity; sometimes more topics capture useful nuances. The \u201cbest\u201d K might be one in the middle of what different metrics and human judgment suggest.\n\n8. **Consider non-parametric or adaptive methods** when you don\u2019t have a good prior guess for K or if manual selection is onerous. But watch out for producing many minor or poorly supported topics.\n\n9. **Document your selection process**  \n   Report what metrics you used, what candidates you compared, and why you chose K. This transparency helps reproducibility and interpretability.\n\n---\n\n## Comparison: which method tends to favor more vs fewer topics\n\n| Metric / method | Tendency: favor **lower** K | Tendency: favor **higher** K |\n|---|---|---|\n| Coherence alone often favors lower K (broad topics with tightly co-occurring top words) | \u2714 |\n| Held-out likelihood / perplexity tends to favor higher K (improving likelihood as topics increase) | \u2714 |\n| Isolation / exclusivity measures generally increase with K (so push toward higher K) | \u2714 |\n| Stability tends to push more toward lower to mid Ks (because many topics become unstable) | \u2714 |\n| Composite indices or change-point/elbow methods tend to pick mid-range Ks | \u2714 |\n\n---\n\n## Concrete examples\n\n- A study on clinical notes (382,666 documents) compared many quality indices. They found:  \n  - Some indices (reconstruction error, coherence, Xie-Beni) favored **large** models (K \u2265 100),  \n  - Others (rank\u2010biased overlap, Kendall\u2019s tau) favored **small** models (K \u2248 5),  \n  - Human judgment preferred **mid-range** models (\u2248 25\u201375 topics). ([bmcmedinformdecismak.biomedcentral.com](https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai))  \n- In \u201cSelection of the Optimal Number of Topics \u2026 Patent Policy Analysis,\u201d researchers combined perplexity, isolation, stability, and coincidence, and found that this composite approach picked topic numbers more consistent with human judgment and fewer duplicate or fuzzy topics than individual metrics. ([mdpi.com](https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai))  \n\n---\n\n## Final thoughts\n\n- No method is perfect. Every metric captures a different aspect of \u201ctopic quality\u201d (predictive power, interpretability, distinctness, stability).  \n- The best practice is **combine**: run a range of Ks, evaluate on multiple metrics, validate with human judgment.  \n- Often selecting a **mid-range K**\u2014not the one that optimizes any single metric but balancing several\u2014is more practically useful.  \n- If resources allow, nonparametric methods or adaptive metrics like AICDR can reduce manual trial-and-error, but they still need interpretation.\n\nIf you'd like, I can walk you through a worked example (with real data) applying these methods, so you can see how the trade-offs play out in practice.",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "Here is a detailed comparison of the major methods for selecting the number of topics (often denoted *K*) in topic modeling. I describe how each works, list advantages and disadvantages, and offer advice about when to use which. When choosing K, there is no one-size-fits-all\u2014trade-offs depend on your data, goals, and resources.\n\n---\n\n",
+      "start": 0,
+      "end": 336
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## Common methods for choosing *K*",
+      "header_level": 2,
+      "text": "## Common methods for choosing *K*\n\nBelow are well-established approaches to selecting the number of topics, along with their pros and cons.\n\n",
+      "start": 336,
+      "end": 478
+    },
+    {
+      "idx": 2,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Method | How it works (key idea) | Advantages | Disadvantages |\n|---|---|---|---|\n| **Perplexity / held-out likelihood** | Fit models with different values of K (topics), compute how surprising (via likelihood) held-out documents are under each model. Often choose K that minimizes perplexity. ([bmcbioinformatics.biomedcentral.com](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-16-S13-S8?utm_source=openai)) | \u2022 Quantitative, predictive measure.<br> \u2022 Works well for probabilistic models like LDA.<br> \u2022 Comparisons are interpretable in probabilistic terms. | \u2022 Often, perplexity improves (decreases) monotonically as K increases, making the minimum at highest K (overfitting). ([bmcbioinformatics.biomedcentral.com](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-16-S13-S8?utm_source=openai)) <br> \u2022 Does not capture interpretability or semantic coherence of topics (many tiny or redundant topics). <br> \u2022 Sensitive to preprocessing and model hyperparameters. |\n| **Topic coherence** | Measures how strongly top words in each topic co-occur in the original corpus or reference corpora. Higher coherence means more human-interpretable topics. ([xenoss.io](https://xenoss.io/blog/topic-modeling-techniques-comparison?utm_source=openai)) | \u2022 Correlates reasonably with human judgments of topic quality. <br> \u2022 Helps avoid topics that have top words that don\u2019t \u201chang together.\u201d <br> \u2022 Good for interpretability. | \u2022 Can favor fewer topics (broad ones) since more overlap tends to hurt coherence. <br> \u2022 Different coherence measures exist; results vary. <br> \u2022 May conflict with predictive goodness (perplexity) \u2013 balancing two is tricky. |\n| **Stability / consistency analysis** | Fit the model multiple times (e.g. with different random seeds or data subsamples), then examine how consistent topic-word assignments are across runs. A K with high stability is often preferred. ([arxiv.org](https://arxiv.org/abs/1404.4606?utm_source=openai)) | \u2022 Helps avoid arbitrary or noise-driven topics. <br> \u2022 Provides robustness by ensuring topics are reproducible. <br> \u2022 Good check when interpretability matters. | \u2022 Computationally expensive (many runs). <br> \u2022 For larger K, instability is common even if topics are meaningful. <br> \u2022 May favor overly few topics to maximize agreement. |\n| **Divergence / isolation / exclusivity measures** (e.g. JS divergence, exclusivity) | Measures how distinct topics are from each other\u2014low overlap in word distributions between topics. Model choice trades off between topic overlap versus topic separateness. ([mdpi.com](https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai)) | \u2022 Helps avoid near-duplicate topics. <br> \u2022 Encourages topics to be distinct, which aids interpretability. <br> \u2022 Can be used in combination with coherence or perplexity to balance interpretability vs predictive power. | \u2022 As K grows, it\u2019s easier to separate topics artificially; risk of over-splitting. <br> \u2022 Always increasing separability may push to too many topics. <br> \u2022 Isolation doesn\u2019t ensure topics are meaningful or useful. |\n| **Nonparametric Bayesian methods** (e.g. Hierarchical Dirichlet Process, HDP; infinite topic models) | Rather than fixing K in advance, allow model to infer number of topics from data, typically with priors that favor fewer topics unless evidence supports more. ([en.wikipedia.org](https://en.wikipedia.org/wiki/Hierarchical_Dirichlet_process?utm_source=openai)) | \u2022 No need to pre-specify K. <br> \u2022 Flexibly adapts to data complexity\u2014if the data are simple, gets fewer topics; if rich, more. <br> \u2022 Theoretically principled Bayesian foundation. | \u2022 Practical inference can be complex and slow; hyperparameters (like concentration parameters) still affect results. <br> \u2022 May produce many trivial or tiny topics. <br> \u2022 Outcomes can still be sensitive to priors and initialization. |\n| **Elbow / \u201cchange-point\u201d methods** | Plot model metric(s) versus K (e.g. perplexity, coherence, inter-class distance) and look for \u201celbow\u201d or point where improvements taper off. Also change\u2010point methods look at rate-of-change to find where marginal gain drops. ([bmcbioinformatics.biomedcentral.com](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-16-S13-S8?utm_source=openai)) | \u2022 Intuitive graphical method. <br> \u2022 Helps find a \u201csweet\u2010spot\u201d where adding more topics yields diminishing returns. <br> \u2022 Especially helpful in exploratory work. | \u2022 \u201cElbow\u201d often ambiguous or multiple elbows. <br> \u2022 Decisions are subjective\u2014interpretation may vary. <br> \u2022 May not align with interpretability or domain relevance. |\n| **Combined / composite indices** | Use multiple metrics simultaneously: e.g. perplexity, coherence, isolation, stability, coincidence. Then pick K that balances them. ([mdpi.com](https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai)) | \u2022 Balances predictive power and interpretability. <br> \u2022 Helps avoid pitfalls of relying on just one metric. <br> \u2022 More aligned with what users care about (usefulness, clarity). | \u2022 More complex to compute. <br> \u2022 Conflicting signals\u2014different metrics may favor different K; need criteria or weighting. <br> \u2022 Increased computational burden. |\n| **Human evaluation / domain expert interpretability** | Fit models with several candidate K values, look at topic lists, example documents, then choose K based on domain relevance, clarity, and usefulness. ([bmcmedinformdecismak.biomedcentral.com](https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai)) | \u2022 Ultimately probably most important for many applications. <br> \u2022 Ensures topics are meaningful to stakeholders. <br> \u2022 Can catch issues automated metrics miss. | \u2022 Time consuming, subjective. <br> \u2022 Possible bias or inconsistency across evaluators. <br> \u2022 Hard to scale when many candidate models or large corpora. |",
+      "start": 478,
+      "end": 6373
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "\n---\n\n",
+      "start": 6373,
+      "end": 6379
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "## Newer or less-common methods",
+      "header_level": 2,
+      "text": "## Newer or less-common methods\n\nHere are a few methods that are emerging or less commonly used, with their pros/cons:\n\n- **Average Inter-Class Distance Change Rate (AICDR)**: Introduced in 2025; computes inter-topic distances (e.g. via hierarchical clustering) and looks where the \u201cchange rate\u201d in average inter-class distance is maximized. Helps find K where topic separation improves less beyond that. ([pmc.ncbi.nlm.nih.gov](https://pmc.ncbi.nlm.nih.gov/articles/PMC11888909/?utm_source=openai))  \n- **Parameter-free topic modeling**: Methods like nonparametric PLSA (nPLSA) attempt to eliminate K entirely or replace it with semantic notions like topic diversity or exemplar topics. ([arxiv.org](https://arxiv.org/abs/1409.2993?utm_source=openai))  \n- **Use of Large Language Models (LLMs) for evaluation**: Recent work shows that using LLMs to assess topic models (giving \u201chuman-like\u201d evaluation) can better correlate with human judgments; potentially useful for selecting K. ([arxiv.org](https://arxiv.org/abs/2305.12152?utm_source=openai))  \n\n---\n\n",
+      "start": 6379,
+      "end": 7435
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "## Summary: Advantages vs Disadvantages",
+      "header_level": 2,
+      "text": "## Summary: Advantages vs Disadvantages\n\nHere is a distilled summary:\n\n- **Pros of automatic / quantitative metrics** (perplexity, coherence, isolation, etc.):\n  - Fast or scalable when you can fit many models.\n  - Help avoid purely ad hoc decisions.\n\n- **Cons of automatic methods**:\n  - Metrics often conflict.\n  - Some favor too many topics (overfitting), others too few.\n  - Interpretability and domain relevance sometimes weak or ignored.\n\n- **Pros of nonparametric methods**:\n  - Strong theoretical grounding.\n  - More adaptive to data scale and complexity.\n\n- **Cons of nonparametric methods**:\n  - Computationally heavier.\n  - Outcome still depends on priors and can generate many trivial latent topics.\n\n- **Human evaluation** is essential but expensive and subjective; best applied after narrowing to a few candidate models.\n\n---\n\n",
+      "start": 7435,
+      "end": 8276
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## Practical advice: how to pick *K* in real projects",
+      "header_level": 2,
+      "text": "## Practical advice: how to pick *K* in real projects\n\nBased on what literature and practice suggest, here\u2019s how to proceed in practice:\n\n1. **Define your goals first**  \n   Are you exploring, summarizing, clustering, or feeding into downstream tasks? Do you need high interpretability or high predictive performance? The right K depends on these.\n\n2. **Preprocess carefully**  \n   Stop-word removal, stemming or lemmatization, vocabulary filtering\u2014all affect co-occurrence statistics, which feed into coherence, perplexity, etc.\n\n3. **Generate candidate models**  \n   Pick a range for K (e.g. 5 to 100, logarithmic or linear scale) and fit models. Use settings you intend to use in animation or deployment.\n\n4. **Compute multiple metrics**  \n   At least perplexity/held-out likelihood, coherence, topic exclusivity or isolation, stability. Possibly also divergence measures or cluster-based measures (such as AICDR or inter-class distance).  \n\n5. **Visualize metric curves**  \n   Plot metrics vs K. Look for ranges where improvements slow (\u201celbows\u201d), or where conflicting metrics converge on a range.\n\n6. **Domain expert evaluation**  \n   Inspect topic word lists, representative documents for candidate Ks. See which topics are clear, non-redundant, and useful.\n\n7. **Balance trade-offs**  \n   Sometimes fewer topics are better for clarity; sometimes more topics capture useful nuances. The \u201cbest\u201d K might be one in the middle of what different metrics and human judgment suggest.\n\n8. **Consider non-parametric or adaptive methods** when you don\u2019t have a good prior guess for K or if manual selection is onerous. But watch out for producing many minor or poorly supported topics.\n\n9. **Document your selection process**  \n   Report what metrics you used, what candidates you compared, and why you chose K. This transparency helps reproducibility and interpretability.\n\n---\n\n",
+      "start": 8276,
+      "end": 10152
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "## Comparison: which method tends to favor more vs fewer topics",
+      "header_level": 2,
+      "text": "## Comparison: which method tends to favor more vs fewer topics\n\n",
+      "start": 10152,
+      "end": 10217
+    },
+    {
+      "idx": 8,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Metric / method | Tendency: favor **lower** K | Tendency: favor **higher** K |\n|---|---|---|\n| Coherence alone often favors lower K (broad topics with tightly co-occurring top words) | \u2714 |\n| Held-out likelihood / perplexity tends to favor higher K (improving likelihood as topics increase) | \u2714 |\n| Isolation / exclusivity measures generally increase with K (so push toward higher K) | \u2714 |\n| Stability tends to push more toward lower to mid Ks (because many topics become unstable) | \u2714 |\n| Composite indices or change-point/elbow methods tend to pick mid-range Ks | \u2714 |",
+      "start": 10217,
+      "end": 10788
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "\n---\n\n",
+      "start": 10788,
+      "end": 10794
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "## Concrete examples",
+      "header_level": 2,
+      "text": "## Concrete examples\n\n- A study on clinical notes (382,666 documents) compared many quality indices. They found:  \n  - Some indices (reconstruction error, coherence, Xie-Beni) favored **large** models (K \u2265 100),  \n  - Others (rank\u2010biased overlap, Kendall\u2019s tau) favored **small** models (K \u2248 5),  \n  - Human judgment preferred **mid-range** models (\u2248 25\u201375 topics). ([bmcmedinformdecismak.biomedcentral.com](https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai))  \n- In \u201cSelection of the Optimal Number of Topics \u2026 Patent Policy Analysis,\u201d researchers combined perplexity, isolation, stability, and coincidence, and found that this composite approach picked topic numbers more consistent with human judgment and fewer duplicate or fuzzy topics than individual metrics. ([mdpi.com](https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai))  \n\n---\n\n",
+      "start": 10794,
+      "end": 11693
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "## Final thoughts",
+      "header_level": 2,
+      "text": "## Final thoughts\n\n- No method is perfect. Every metric captures a different aspect of \u201ctopic quality\u201d (predictive power, interpretability, distinctness, stability).  \n- The best practice is **combine**: run a range of Ks, evaluate on multiple metrics, validate with human judgment.  \n- Often selecting a **mid-range K**\u2014not the one that optimizes any single metric but balancing several\u2014is more practically useful.  \n- If resources allow, nonparametric methods or adaptive metrics like AICDR can reduce manual trial-and-error, but they still need interpretation.\n\nIf you'd like, I can walk you through a worked example (with real data) applying these methods, so you can see how the trade-offs play out in practice.",
+      "start": 11693,
+      "end": 12409
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "Here is a detailed comparison of the major methods for selecting the number of topics (often denoted *K*) in topic modeling.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "I describe how each works, list advantages and disadvantages, and offer advice about when to use which.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "text": "When choosing K, there is no one-size-fits-all\u2014trade-offs depend on your data, goals, and resources.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "## Concrete examples",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "- A study on clinical notes (382,666 documents) compared many quality indices.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Quality indices for topic model selection and evaluation: a literature review and case study | BMC Medical Informatics and Decision Making | Full Text",
+          "https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai"
+        ],
+        [
+          "Selection of the Optimal Number of Topics for LDA Topic Model\u2014Taking Patent Policy Analysis as an Example",
+          "https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "They found:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Quality indices for topic model selection and evaluation: a literature review and case study | BMC Medical Informatics and Decision Making | Full Text",
+          "https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai"
+        ],
+        [
+          "Selection of the Optimal Number of Topics for LDA Topic Model\u2014Taking Patent Policy Analysis as an Example",
+          "https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "- Some indices (reconstruction error, coherence, Xie-Beni) favored **large** models (K \u2265 100),",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Quality indices for topic model selection and evaluation: a literature review and case study | BMC Medical Informatics and Decision Making | Full Text",
+          "https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai"
+        ],
+        [
+          "Selection of the Optimal Number of Topics for LDA Topic Model\u2014Taking Patent Policy Analysis as an Example",
+          "https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_4",
+      "section_idx": 10,
+      "idx_in_section": 4,
+      "text": "- Others (rank\u2010biased overlap, Kendall\u2019s tau) favored **small** models (K \u2248 5),",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Quality indices for topic model selection and evaluation: a literature review and case study | BMC Medical Informatics and Decision Making | Full Text",
+          "https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai"
+        ],
+        [
+          "Selection of the Optimal Number of Topics for LDA Topic Model\u2014Taking Patent Policy Analysis as an Example",
+          "https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_5",
+      "section_idx": 10,
+      "idx_in_section": 5,
+      "text": "- Human judgment preferred **mid-range** models (\u2248 25\u201375 topics).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Quality indices for topic model selection and evaluation: a literature review and case study | BMC Medical Informatics and Decision Making | Full Text",
+          "https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai"
+        ],
+        [
+          "Selection of the Optimal Number of Topics for LDA Topic Model\u2014Taking Patent Policy Analysis as an Example",
+          "https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_6",
+      "section_idx": 10,
+      "idx_in_section": 6,
+      "text": "- In \u201cSelection of the Optimal Number of Topics \u2026 Patent Policy Analysis,\u201d researchers combined perplexity, isolation, stability, and coincidence, and found that this composite approach picked topic numbers more consistent with human judgment and fewer duplicate or fuzzy topics than individual metrics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Quality indices for topic model selection and evaluation: a literature review and case study | BMC Medical Informatics and Decision Making | Full Text",
+          "https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-023-02216-1?utm_source=openai"
+        ],
+        [
+          "Selection of the Optimal Number of Topics for LDA Topic Model\u2014Taking Patent Policy Analysis as an Example",
+          "https://www.mdpi.com/1099-4300/23/10/1301?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_7",
+      "section_idx": 10,
+      "idx_in_section": 7,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "## Final thoughts",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "- No method is perfect.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "Every metric captures a different aspect of \u201ctopic quality\u201d (predictive power, interpretability, distinctness, stability).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "- The best practice is **combine**: run a range of Ks, evaluate on multiple metrics, validate with human judgment.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "- Often selecting a **mid-range K**\u2014not the one that optimizes any single metric but balancing several\u2014is more practically useful.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "- If resources allow, nonparametric methods or adaptive metrics like AICDR can reduce manual trial-and-error, but they still need interpretation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "text": "If you'd like, I can walk you through a worked example (with real data) applying these methods, so you can see how the trade-offs play out in practice.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "## Common methods for choosing *K*",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "Below are well-established approaches to selecting the number of topics, along with their pros and cons.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "## Newer or less-common methods",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "Here are a few methods that are emerging or less commonly used, with their pros/cons:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "- **Average Inter-Class Distance Change Rate (AICDR)**: Introduced in 2025; computes inter-topic distances (e.g. via hierarchical clustering) and looks where the \u201cchange rate\u201d in average inter-class distance is maximized.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "An adaptive method for determining the optimal number of topics in topic modeling - PMC",
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC11888909/?utm_source=openai"
+        ],
+        [
+          "\"Look Ma, No Hands!\" A Parameter-Free Topic Model",
+          "https://arxiv.org/abs/1409.2993?utm_source=openai"
+        ],
+        [
+          "Revisiting Automated Topic Model Evaluation with Large Language Models",
+          "https://arxiv.org/abs/2305.12152?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "Helps find K where topic separation improves less beyond that.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "An adaptive method for determining the optimal number of topics in topic modeling - PMC",
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC11888909/?utm_source=openai"
+        ],
+        [
+          "\"Look Ma, No Hands!\" A Parameter-Free Topic Model",
+          "https://arxiv.org/abs/1409.2993?utm_source=openai"
+        ],
+        [
+          "Revisiting Automated Topic Model Evaluation with Large Language Models",
+          "https://arxiv.org/abs/2305.12152?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "- **Parameter-free topic modeling**: Methods like nonparametric PLSA (nPLSA) attempt to eliminate K entirely or replace it with semantic notions like topic diversity or exemplar topics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "An adaptive method for determining the optimal number of topics in topic modeling - PMC",
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC11888909/?utm_source=openai"
+        ],
+        [
+          "\"Look Ma, No Hands!\" A Parameter-Free Topic Model",
+          "https://arxiv.org/abs/1409.2993?utm_source=openai"
+        ],
+        [
+          "Revisiting Automated Topic Model Evaluation with Large Language Models",
+          "https://arxiv.org/abs/2305.12152?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "- **Use of Large Language Models (LLMs) for evaluation**: Recent work shows that using LLMs to assess topic models (giving \u201chuman-like\u201d evaluation) can better correlate with human judgments; potentially useful for selecting K.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "An adaptive method for determining the optimal number of topics in topic modeling - PMC",
+          "https://pmc.ncbi.nlm.nih.gov/articles/PMC11888909/?utm_source=openai"
+        ],
+        [
+          "\"Look Ma, No Hands!\" A Parameter-Free Topic Model",
+          "https://arxiv.org/abs/1409.2993?utm_source=openai"
+        ],
+        [
+          "Revisiting Automated Topic Model Evaluation with Large Language Models",
+          "https://arxiv.org/abs/2305.12152?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "## Summary: Advantages vs Disadvantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "Here is a distilled summary:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_10",
+      "section_idx": 5,
+      "idx_in_section": 10,
+      "text": "- Strong theoretical grounding.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_11",
+      "section_idx": 5,
+      "idx_in_section": 11,
+      "text": "- More adaptive to data scale and complexity.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_12",
+      "section_idx": 5,
+      "idx_in_section": 12,
+      "text": "- **Cons of nonparametric methods**:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_13",
+      "section_idx": 5,
+      "idx_in_section": 13,
+      "text": "- Computationally heavier.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_14",
+      "section_idx": 5,
+      "idx_in_section": 14,
+      "text": "- Outcome still depends on priors and can generate many trivial latent topics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_15",
+      "section_idx": 5,
+      "idx_in_section": 15,
+      "text": "- **Human evaluation** is essential but expensive and subjective; best applied after narrowing to a few candidate models.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "- **Pros of automatic / quantitative metrics** (perplexity, coherence, isolation, etc.):",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "- Fast or scalable when you can fit many models.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "- Help avoid purely ad hoc decisions.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "- **Cons of automatic methods**:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_6",
+      "section_idx": 5,
+      "idx_in_section": 6,
+      "text": "- Metrics often conflict.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_7",
+      "section_idx": 5,
+      "idx_in_section": 7,
+      "text": "- Some favor too many topics (overfitting), others too few.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_8",
+      "section_idx": 5,
+      "idx_in_section": 8,
+      "text": "- Interpretability and domain relevance sometimes weak or ignored.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_9",
+      "section_idx": 5,
+      "idx_in_section": 9,
+      "text": "- **Pros of nonparametric methods**:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## Practical advice: how to pick *K* in real projects",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "Based on what literature and practice suggest, here\u2019s how to proceed in practice:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_10",
+      "section_idx": 6,
+      "idx_in_section": 10,
+      "text": "5. **Visualize metric curves**  \n   Plot metrics vs K.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_11",
+      "section_idx": 6,
+      "idx_in_section": 11,
+      "text": "Look for ranges where improvements slow (\u201celbows\u201d), or where conflicting metrics converge on a range.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_12",
+      "section_idx": 6,
+      "idx_in_section": 12,
+      "text": "6. **Domain expert evaluation**  \n   Inspect topic word lists, representative documents for candidate Ks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_13",
+      "section_idx": 6,
+      "idx_in_section": 13,
+      "text": "See which topics are clear, non-redundant, and useful.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_14",
+      "section_idx": 6,
+      "idx_in_section": 14,
+      "text": "7. **Balance trade-offs**  \n   Sometimes fewer topics are better for clarity; sometimes more topics capture useful nuances.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_15",
+      "section_idx": 6,
+      "idx_in_section": 15,
+      "text": "The \u201cbest\u201d K might be one in the middle of what different metrics and human judgment suggest.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_16",
+      "section_idx": 6,
+      "idx_in_section": 16,
+      "text": "8. **Consider non-parametric or adaptive methods** when you don\u2019t have a good prior guess for K or if manual selection is onerous.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_17",
+      "section_idx": 6,
+      "idx_in_section": 17,
+      "text": "But watch out for producing many minor or poorly supported topics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_18",
+      "section_idx": 6,
+      "idx_in_section": 18,
+      "text": "9. **Document your selection process**  \n   Report what metrics you used, what candidates you compared, and why you chose K.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_19",
+      "section_idx": 6,
+      "idx_in_section": 19,
+      "text": "This transparency helps reproducibility and interpretability.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "1. **Define your goals first**  \n   Are you exploring, summarizing, clustering, or feeding into downstream tasks?",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "Do you need high interpretability or high predictive performance?",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "The right K depends on these.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "text": "2. **Preprocess carefully**  \n   Stop-word removal, stemming or lemmatization, vocabulary filtering\u2014all affect co-occurrence statistics, which feed into coherence, perplexity, etc.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_6",
+      "section_idx": 6,
+      "idx_in_section": 6,
+      "text": "3. **Generate candidate models**  \n   Pick a range for K (e.g. 5 to 100, logarithmic or linear scale) and fit models.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_7",
+      "section_idx": 6,
+      "idx_in_section": 7,
+      "text": "Use settings you intend to use in animation or deployment.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_8",
+      "section_idx": 6,
+      "idx_in_section": 8,
+      "text": "4. **Compute multiple metrics**  \n   At least perplexity/held-out likelihood, coherence, topic exclusivity or isolation, stability.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_9",
+      "section_idx": 6,
+      "idx_in_section": 9,
+      "text": "Possibly also divergence measures or cluster-based measures (such as AICDR or inter-class distance).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "## Comparison: which method tends to favor more vs fewer topics",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    }
+  ]
+}

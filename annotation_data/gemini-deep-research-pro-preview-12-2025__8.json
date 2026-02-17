@@ -1,0 +1,2242 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "8",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat are advantages and disadvantages of top methods for picking the right number of topics in topic modeling?",
+  "answer": "# Comprehensive Evaluation of Methods for Determining the Optimal Number of Topics in Topic Modeling\n\n### Key Points\n*   **No Single \"Ground Truth\":** There is no universally correct metric for determining the number of topics ($k$); the choice depends heavily on whether the goal is predictive accuracy (perplexity) or human interpretability (coherence).\n*   **Perplexity vs. Interpretability:** Traditional probabilistic metrics like **Perplexity** often negatively correlate with human judgment. While they measure how well the model fits the data, they frequently select a $k$ that produces incoherent or granular topics.\n*   **Coherence is the Modern Standard:** **Topic Coherence** (specifically $C_v$ and $C_{NPMI}$) is currently the preferred metric for exploratory analysis, as it approximates human semantic validation. However, metrics like $C_v$ have recently faced scrutiny regarding their reliability compared to simpler co-occurrence measures like $C_{UMass}$.\n*   **Specialized Statistical Metrics:** Methods by **Arun et al.** (minimize KL divergence), **Cao Juan et al.** (minimize cosine similarity), and **Deveaud et al.** (maximize information divergence) offer robust alternatives that analyze the structural properties of the document-topic matrices.\n*   **Non-Parametric Alternatives:** **Hierarchical Dirichlet Processes (HDP)** avoid the selection of $k$ entirely by inferring it from the data, though often at the cost of increased computational complexity and reduced control over topic granularity.\n\n---\n\n## 1. Introduction\n\nTopic modeling, particularly Latent Dirichlet Allocation (LDA), is a powerful unsupervised machine learning technique used to uncover latent thematic structures within large text corpora. A critical challenge in applying LDA is that it requires the number of topics, denoted as $k$, to be specified *a priori* as a hyperparameter. The selection of $k$ is a \"Goldilocks problem\": too few topics result in overly broad, generic categories (underfitting), while too many topics lead to uninterpretable, fragmented, or redundant themes (overfitting) [cite: 1, 2].\n\nThe academic and practitioner communities have developed numerous methods to estimate the optimal $k$. These range from intrinsic probabilistic measurements to semantic coherence scores that attempt to mimic human cognition. This report provides a detailed analysis of the advantages and disadvantages of the top methods used in the field.\n\n---\n\n## 2. Probabilistic and Information-Theoretic Criteria\n\nThese methods evaluate the model based on its statistical fit to the data. They are intrinsic to the generative process of LDA and are grounded in information theory.\n\n### 2.1 Perplexity and Log-Likelihood\n\nPerplexity is the classical standard for evaluating probabilistic models. It measures the inverse log-likelihood of a held-out test set. Intuitively, it assesses how \"surprised\" the model is by new data; a lower perplexity indicates a better predictive model [cite: 3, 4, 5].\n\n#### Advantages\n*   **Statistical Rigor:** Perplexity is mathematically derived directly from the probabilistic foundation of LDA. It provides a standardized measure of generalization performance [cite: 4, 6].\n*   **Standardization:** It is a built-in metric in almost all major topic modeling libraries (e.g., Gensim, Scikit-learn, Mallet), making it easy to compute without external reference corpora [cite: 7].\n*   **Predictive Utility:** If the downstream task is document classification or information retrieval, perplexity is often a reliable indicator of performance [cite: 8].\n\n#### Disadvantages\n*   **Anti-Correlation with Interpretability:** The most significant drawback is that perplexity often does not correlate with human judgment. Research by Chang et al. (2009) demonstrated that models with lower perplexity (better statistical fit) often produce topics that humans find less semantically coherent [cite: 5, 9, 10].\n*   **Monotonic Decrease:** In many datasets, perplexity continues to decrease as $k$ increases, often stabilizing only at very high values of $k$ (e.g., hundreds of topics). This makes identifying a clear \"elbow\" or optimal point difficult and can lead to severe overfitting [cite: 6].\n*   **Instability:** Perplexity scores can be unstable across different random initializations of the model, varying significantly based on the seed used [cite: 11, 12].\n\n### 2.2 Rate of Perplexity Change (RPC)\n\nProposed by Zhao et al. (2015), this heuristic calculates the rate of change (first derivative) of the perplexity curve to identify an \"elbow\" point where the gain in model fit diminishes [cite: 13, 14].\n\n#### Advantages\n*   **Clearer Selection Criteria:** Unlike raw perplexity, which may not show a minimum, RPC helps identify the point of diminishing returns, offering a more definitive suggestion for $k$ [cite: 13, 15].\n*   **Stability:** Empirical studies suggest RPC is more stable across different datasets and initializations compared to raw perplexity [cite: 12].\n\n#### Disadvantages\n*   **Heuristic Nature:** It remains a heuristic approach based on perplexity and inherits the fundamental flaw of perplexity: optimizing for predictive likelihood rather than semantic quality [cite: 12].\n\n### 2.3 Information Criteria (AIC and BIC)\n\nThe Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) attempt to balance model fit (log-likelihood) with model complexity (penalty for the number of parameters) [cite: 1, 16].\n\n#### Advantages\n*   **Complexity Penalty:** Unlike perplexity, AIC and BIC explicitly penalize overfitting. BIC imposes a stricter penalty for model complexity ($k \\ln(n)$) compared to AIC ($2k$), which helps prevent the selection of excessively large $k$ [cite: 16, 17].\n*   **Simplicity:** Recent experiments (2024) suggest that simple metrics like AIC and BIC can sometimes outperform complex coherence metrics in identifying the true number of topics in synthetic datasets [cite: 1].\n\n#### Disadvantages\n*   **Oversimplification:** In large text corpora, the number of parameters in LDA is vast. Standard BIC/AIC calculations can be dominated by the likelihood term or the penalty term depending on vocabulary size, sometimes leading to the selection of very few topics or failing to capture subtle semantic structures [cite: 1, 18].\n*   **Lack of Semantic Awareness:** Like perplexity, these metrics do not account for the actual meaning of the words in the topics [cite: 1].\n\n---\n\n## 3. Semantic Interpretability Metrics (Topic Coherence)\n\nTopic coherence measures have emerged as the preferred method for exploratory topic modeling. They evaluate the quality of a topic by measuring the semantic similarity between the top-$N$ words within that topic. The assumption is that words in a coherent topic should co-occur frequently in the corpus [cite: 9, 19, 20].\n\n### 3.1 $C_v$ Coherence\n\n$C_v$ is currently the most popular coherence metric. It combines a sliding window, normalized pointwise mutual information (NPMI), and cosine similarity to score topics [cite: 20, 21].\n\n#### Advantages\n*   **Human Correlation:** Historically, $C_v$ was found to have the strongest correlation with human ratings of topic quality in the seminal paper by R\u00f6der et al. (2015) [cite: 20].\n*   **Range:** It outputs a score between 0 and 1, making it easy to interpret and compare across models [cite: 22].\n\n#### Disadvantages\n*   **Computational Cost:** $C_v$ is computationally expensive because it requires calculating co-occurrence statistics over a sliding window across the entire corpus [cite: 2].\n*   **Reliability Concerns:** Recent critiques suggest $C_v$ may be unreliable. It creates content vectors that can sometimes inflate scores for topics that are not actually semantically related. Some researchers now recommend against it in favor of simpler metrics like $C_{UMass}$ or $C_{NPMI}$ [cite: 21].\n\n### 3.2 $C_{UMass}$ Coherence\n\n$C_{UMass}$ is an intrinsic metric based on document co-occurrence counts. It calculates the log-conditional probability of a word given a preceding word [cite: 3, 21].\n\n#### Advantages\n*   **Efficiency:** It is computationally faster than $C_v$ because it uses document-level co-occurrences rather than a sliding window [cite: 21].\n*   **Penalizes Common Words:** It naturally penalizes topics dominated by ubiquitous words (stopwords) that appear in every document, as these do not provide high conditional probability information [cite: 23].\n\n#### Disadvantages\n*   **Interpretability:** The scores are negative (ranging from $-\\infty$ to 0), which can be less intuitive for stakeholders than the 0-to-1 range of $C_v$ [cite: 3, 22].\n*   **Performance:** In some benchmarks, it correlates slightly less with human judgment than NPMI-based measures [cite: 23].\n\n### 3.3 $C_{NPMI}$ (Normalized Pointwise Mutual Information)\n\n$C_{NPMI}$ measures the co-occurrence of word pairs relative to their individual independence probabilities, normalized to a range of -1 to 1 [cite: 19, 24].\n\n#### Advantages\n*   **Robustness:** It is widely considered the most robust coherence metric for general use cases, balancing strict co-occurrence requirements with normalization for word frequency [cite: 19, 23].\n*   **Independence:** Unlike $C_v$, it does not rely on an indirect cosine similarity vector, making it a more direct measure of word association [cite: 20].\n\n#### Disadvantages\n*   **Sparsity Sensitivity:** In very sparse datasets (e.g., short tweets), NPMI scores can be noisy if word co-occurrences are rare [cite: 22].\n\n---\n\n## 4. Matrix Factorization and Density-Based Metrics\n\nSeveral researchers have proposed specialized metrics that view LDA through the lens of matrix factorization or geometric density. These are often used in combination (e.g., in the R package `ldatuning`) to find a consensus $k$.\n\n### 4.1 Arun et al. (2010): KL Divergence\n\nThis method views LDA as a matrix factorization of the document-term matrix into document-topic and topic-word matrices. It computes the Kullback-Leibler (KL) divergence between the singular value distribution of the document-term matrix and the distribution of the topic-word matrix [cite: 6, 25, 26].\n\n*   **Optimization Goal:** **Minimize** the score.\n*   **Advantages:**\n    *   **Natural $k$ Detection:** It is particularly effective at finding the \"natural\" number of topics where the divergence is minimized, indicating a stable factorization [cite: 6, 26].\n    *   **Theoretical Grounding:** It leverages linear algebra concepts (SVD) to validate the probabilistic model [cite: 26].\n*   **Disadvantages:**\n    *   **Computation:** Requires Singular Value Decomposition (SVD), which can be expensive for very large vocabularies [cite: 26].\n\n### 4.2 Cao Juan et al. (2009): Density-Based Method\n\nThis metric calculates the average cosine similarity between pairs of topics. The core idea is that a good topic model should have topics that are distinct from one another [cite: 11, 27].\n\n*   **Optimization Goal:** **Minimize** the score (lower similarity implies higher distinctiveness).\n*   **Advantages:**\n    *   **Focus on Diversity:** It explicitly penalizes models where topics overlap significantly, ensuring that the selected $k$ produces distinct themes [cite: 27, 28].\n    *   **Stability:** It is often used to assess the stability of the model structure [cite: 29].\n*   **Disadvantages:**\n    *   **Instability:** Some studies report that the metric can fluctuate significantly and may not always produce a clear minimum, or may suggest a $k$ that conflicts with other metrics [cite: 11, 25].\n\n### 4.3 Deveaud et al. (2014): Latent Concept Modeling\n\nThis heuristic estimates the number of latent concepts by maximizing the information divergence (Jensen-Shannon divergence) between all pairs of topics [cite: 26].\n\n*   **Optimization Goal:** **Maximize** the score (higher divergence implies better separation).\n*   **Advantages:**\n    *   **Topic Distinctiveness:** Like Cao Juan, it prioritizes models with well-separated topics, which is crucial for interpretability [cite: 26].\n    *   **Complementary:** It often works well when used in conjunction with minimization metrics (Arun/Cao Juan) to find a convergence point [cite: 30].\n*   **Disadvantages:**\n    *   **Complexity:** Calculating pairwise divergence for high $k$ is computationally intensive ($O(k^2)$ complexity) [cite: 26].\n\n---\n\n## 5. Non-Parametric Alternatives: Hierarchical Dirichlet Processes (HDP)\n\nInstead of selecting $k$ via trial-and-error with LDA, Hierarchical Dirichlet Processes (HDP) extend LDA to a non-parametric setting. HDP infers the number of topics from the data itself using a Dirichlet Process prior [cite: 31, 32].\n\n### Advantages\n*   **Automatic Selection:** The primary advantage is that $k$ does not need to be specified. The model allows the number of topics to grow with the data complexity [cite: 31, 32].\n*   **Flexibility:** It is ideal for streaming data or growing corpora where the number of topics is not fixed over time [cite: 32].\n\n### Disadvantages\n*   **Granularity Control:** HDP often produces a very large number of \"micro-topics\" (hundreds or thousands) that may be too granular for human interpretation. It lacks the ability to force a \"high-level\" summary (e.g., \"give me just the top 10 themes\") [cite: 31].\n*   **Hyperparameter Sensitivity:** While it removes $k$, it introduces other sensitive hyperparameters (e.g., $\\gamma$, $\\alpha$) that control the rate at which new topics are created. Tuning these can be as difficult as picking $k$ [cite: 31].\n*   **Complexity:** HDP is mathematically more complex and generally slower to train than standard LDA [cite: 33, 34].\n\n---\n\n## 6. Comparative Summary Table\n\n| Method | Type | Optimization Goal | Primary Advantage | Primary Disadvantage |\n| :--- | :--- | :--- | :--- | :--- |\n| **Perplexity** | Probabilistic | Minimize | Standard, measures predictive fit. | Anti-correlated with human interpretability. |\n| **Coherence ($C_v$)** | Semantic | Maximize | High correlation with human judgment. | Computationally expensive; reliability questioned. |\n| **Coherence ($C_{UMass}$)** | Semantic | Maximize (closer to 0) | Fast, intrinsic, penalizes stopwords. | Scores are non-intuitive (negative); lower human correlation. |\n| **Arun et al. (2010)** | Matrix Factorization | Minimize | Finds natural factorization stability. | Computationally intensive (SVD). |\n| **Cao Juan et al. (2009)** | Density/Geometric | Minimize | Ensures topic distinctiveness. | Can be unstable; multiple minima. |\n| **Deveaud et al. (2014)** | Information Theory | Maximize | Maximizes information divergence. | $O(k^2)$ complexity for pairwise comparison. |\n| **HDP** | Non-Parametric | N/A (Inferred) | No need to set $k$; adapts to data. | Hard to control granularity; often produces too many topics. |\n\n## 7. Conclusion\n\nThe selection of the \"right\" number of topics is dependent on the end-user's objective. If the goal is **predictive modeling** (e.g., document classification), **perplexity** and **RPC** are the most appropriate metrics. However, for **exploratory analysis** where human insight is paramount, **topic coherence ($C_{NPMI}$ or $C_v$)** is the industry standard, despite computational costs.\n\nFor a robust academic approach, it is recommended to use a **consensus method**: computing multiple metrics (e.g., Arun, Cao Juan, and Coherence) across a range of $k$ and selecting the value where these metrics converge (e.g., where Arun is minimized and Coherence is maximized) [cite: 25, 30]. Furthermore, quantitative metrics should always be validated qualitatively by visualizing the topics (e.g., using pyLDAvis) to ensure they make semantic sense in the context of the specific domain [cite: 2, 9].",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# Comprehensive Evaluation of Methods for Determining the Optimal Number of Topics in Topic Modeling",
+      "header_level": 1,
+      "text": "# Comprehensive Evaluation of Methods for Determining the Optimal Number of Topics in Topic Modeling\n\n",
+      "start": 0,
+      "end": 102
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "### Key Points",
+      "header_level": 3,
+      "text": "### Key Points\n*   **No Single \"Ground Truth\":** There is no universally correct metric for determining the number of topics ($k$); the choice depends heavily on whether the goal is predictive accuracy (perplexity) or human interpretability (coherence).\n*   **Perplexity vs. Interpretability:** Traditional probabilistic metrics like **Perplexity** often negatively correlate with human judgment. While they measure how well the model fits the data, they frequently select a $k$ that produces incoherent or granular topics.\n*   **Coherence is the Modern Standard:** **Topic Coherence** (specifically $C_v$ and $C_{NPMI}$) is currently the preferred metric for exploratory analysis, as it approximates human semantic validation. However, metrics like $C_v$ have recently faced scrutiny regarding their reliability compared to simpler co-occurrence measures like $C_{UMass}$.\n*   **Specialized Statistical Metrics:** Methods by **Arun et al.** (minimize KL divergence), **Cao Juan et al.** (minimize cosine similarity), and **Deveaud et al.** (maximize information divergence) offer robust alternatives that analyze the structural properties of the document-topic matrices.\n*   **Non-Parametric Alternatives:** **Hierarchical Dirichlet Processes (HDP)** avoid the selection of $k$ entirely by inferring it from the data, though often at the cost of increased computational complexity and reduced control over topic granularity.\n\n---\n\n",
+      "start": 102,
+      "end": 1534
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 1. Introduction",
+      "header_level": 2,
+      "text": "## 1. Introduction\n\nTopic modeling, particularly Latent Dirichlet Allocation (LDA), is a powerful unsupervised machine learning technique used to uncover latent thematic structures within large text corpora. A critical challenge in applying LDA is that it requires the number of topics, denoted as $k$, to be specified *a priori* as a hyperparameter. The selection of $k$ is a \"Goldilocks problem\": too few topics result in overly broad, generic categories (underfitting), while too many topics lead to uninterpretable, fragmented, or redundant themes (overfitting) [cite: 1, 2].\n\nThe academic and practitioner communities have developed numerous methods to estimate the optimal $k$. These range from intrinsic probabilistic measurements to semantic coherence scores that attempt to mimic human cognition. This report provides a detailed analysis of the advantages and disadvantages of the top methods used in the field.\n\n---\n\n",
+      "start": 1534,
+      "end": 2461
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 2. Probabilistic and Information-Theoretic Criteria",
+      "header_level": 2,
+      "text": "## 2. Probabilistic and Information-Theoretic Criteria\n\nThese methods evaluate the model based on its statistical fit to the data. They are intrinsic to the generative process of LDA and are grounded in information theory.\n\n",
+      "start": 2461,
+      "end": 2685
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 2.1 Perplexity and Log-Likelihood",
+      "header_level": 3,
+      "text": "### 2.1 Perplexity and Log-Likelihood\n\nPerplexity is the classical standard for evaluating probabilistic models. It measures the inverse log-likelihood of a held-out test set. Intuitively, it assesses how \"surprised\" the model is by new data; a lower perplexity indicates a better predictive model [cite: 3, 4, 5].\n\n",
+      "start": 2685,
+      "end": 3001
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "#### Advantages",
+      "header_level": 4,
+      "text": "#### Advantages\n*   **Statistical Rigor:** Perplexity is mathematically derived directly from the probabilistic foundation of LDA. It provides a standardized measure of generalization performance [cite: 4, 6].\n*   **Standardization:** It is a built-in metric in almost all major topic modeling libraries (e.g., Gensim, Scikit-learn, Mallet), making it easy to compute without external reference corpora [cite: 7].\n*   **Predictive Utility:** If the downstream task is document classification or information retrieval, perplexity is often a reliable indicator of performance [cite: 8].\n\n",
+      "start": 3001,
+      "end": 3587
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "#### Disadvantages",
+      "header_level": 4,
+      "text": "#### Disadvantages\n*   **Anti-Correlation with Interpretability:** The most significant drawback is that perplexity often does not correlate with human judgment. Research by Chang et al. (2009) demonstrated that models with lower perplexity (better statistical fit) often produce topics that humans find less semantically coherent [cite: 5, 9, 10].\n*   **Monotonic Decrease:** In many datasets, perplexity continues to decrease as $k$ increases, often stabilizing only at very high values of $k$ (e.g., hundreds of topics). This makes identifying a clear \"elbow\" or optimal point difficult and can lead to severe overfitting [cite: 6].\n*   **Instability:** Perplexity scores can be unstable across different random initializations of the model, varying significantly based on the seed used [cite: 11, 12].\n\n",
+      "start": 3587,
+      "end": 4394
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### 2.2 Rate of Perplexity Change (RPC)",
+      "header_level": 3,
+      "text": "### 2.2 Rate of Perplexity Change (RPC)\n\nProposed by Zhao et al. (2015), this heuristic calculates the rate of change (first derivative) of the perplexity curve to identify an \"elbow\" point where the gain in model fit diminishes [cite: 13, 14].\n\n",
+      "start": 4394,
+      "end": 4640
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "#### Advantages",
+      "header_level": 4,
+      "text": "#### Advantages\n*   **Clearer Selection Criteria:** Unlike raw perplexity, which may not show a minimum, RPC helps identify the point of diminishing returns, offering a more definitive suggestion for $k$ [cite: 13, 15].\n*   **Stability:** Empirical studies suggest RPC is more stable across different datasets and initializations compared to raw perplexity [cite: 12].\n\n",
+      "start": 4640,
+      "end": 5010
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "#### Disadvantages",
+      "header_level": 4,
+      "text": "#### Disadvantages\n*   **Heuristic Nature:** It remains a heuristic approach based on perplexity and inherits the fundamental flaw of perplexity: optimizing for predictive likelihood rather than semantic quality [cite: 12].\n\n",
+      "start": 5010,
+      "end": 5235
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "### 2.3 Information Criteria (AIC and BIC)",
+      "header_level": 3,
+      "text": "### 2.3 Information Criteria (AIC and BIC)\n\nThe Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) attempt to balance model fit (log-likelihood) with model complexity (penalty for the number of parameters) [cite: 1, 16].\n\n",
+      "start": 5235,
+      "end": 5482
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "#### Advantages",
+      "header_level": 4,
+      "text": "#### Advantages\n*   **Complexity Penalty:** Unlike perplexity, AIC and BIC explicitly penalize overfitting. BIC imposes a stricter penalty for model complexity ($k \\ln(n)$) compared to AIC ($2k$), which helps prevent the selection of excessively large $k$ [cite: 16, 17].\n*   **Simplicity:** Recent experiments (2024) suggest that simple metrics like AIC and BIC can sometimes outperform complex coherence metrics in identifying the true number of topics in synthetic datasets [cite: 1].\n\n",
+      "start": 5482,
+      "end": 5971
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "#### Disadvantages",
+      "header_level": 4,
+      "text": "#### Disadvantages\n*   **Oversimplification:** In large text corpora, the number of parameters in LDA is vast. Standard BIC/AIC calculations can be dominated by the likelihood term or the penalty term depending on vocabulary size, sometimes leading to the selection of very few topics or failing to capture subtle semantic structures [cite: 1, 18].\n*   **Lack of Semantic Awareness:** Like perplexity, these metrics do not account for the actual meaning of the words in the topics [cite: 1].\n\n---\n\n",
+      "start": 5971,
+      "end": 6469
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "## 3. Semantic Interpretability Metrics (Topic Coherence)",
+      "header_level": 2,
+      "text": "## 3. Semantic Interpretability Metrics (Topic Coherence)\n\nTopic coherence measures have emerged as the preferred method for exploratory topic modeling. They evaluate the quality of a topic by measuring the semantic similarity between the top-$N$ words within that topic. The assumption is that words in a coherent topic should co-occur frequently in the corpus [cite: 9, 19, 20].\n\n",
+      "start": 6469,
+      "end": 6851
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "### 3.1 $C_v$ Coherence",
+      "header_level": 3,
+      "text": "### 3.1 $C_v$ Coherence\n\n$C_v$ is currently the most popular coherence metric. It combines a sliding window, normalized pointwise mutual information (NPMI), and cosine similarity to score topics [cite: 20, 21].\n\n",
+      "start": 6851,
+      "end": 7063
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "#### Advantages",
+      "header_level": 4,
+      "text": "#### Advantages\n*   **Human Correlation:** Historically, $C_v$ was found to have the strongest correlation with human ratings of topic quality in the seminal paper by R\u00f6der et al. (2015) [cite: 20].\n*   **Range:** It outputs a score between 0 and 1, making it easy to interpret and compare across models [cite: 22].\n\n",
+      "start": 7063,
+      "end": 7380
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "#### Disadvantages",
+      "header_level": 4,
+      "text": "#### Disadvantages\n*   **Computational Cost:** $C_v$ is computationally expensive because it requires calculating co-occurrence statistics over a sliding window across the entire corpus [cite: 2].\n*   **Reliability Concerns:** Recent critiques suggest $C_v$ may be unreliable. It creates content vectors that can sometimes inflate scores for topics that are not actually semantically related. Some researchers now recommend against it in favor of simpler metrics like $C_{UMass}$ or $C_{NPMI}$ [cite: 21].\n\n",
+      "start": 7380,
+      "end": 7887
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "### 3.2 $C_{UMass}$ Coherence",
+      "header_level": 3,
+      "text": "### 3.2 $C_{UMass}$ Coherence\n\n$C_{UMass}$ is an intrinsic metric based on document co-occurrence counts. It calculates the log-conditional probability of a word given a preceding word [cite: 3, 21].\n\n",
+      "start": 7887,
+      "end": 8088
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "#### Advantages",
+      "header_level": 4,
+      "text": "#### Advantages\n*   **Efficiency:** It is computationally faster than $C_v$ because it uses document-level co-occurrences rather than a sliding window [cite: 21].\n*   **Penalizes Common Words:** It naturally penalizes topics dominated by ubiquitous words (stopwords) that appear in every document, as these do not provide high conditional probability information [cite: 23].\n\n",
+      "start": 8088,
+      "end": 8464
+    },
+    {
+      "idx": 19,
+      "section_type": "text",
+      "header": "#### Disadvantages",
+      "header_level": 4,
+      "text": "#### Disadvantages\n*   **Interpretability:** The scores are negative (ranging from $-\\infty$ to 0), which can be less intuitive for stakeholders than the 0-to-1 range of $C_v$ [cite: 3, 22].\n*   **Performance:** In some benchmarks, it correlates slightly less with human judgment than NPMI-based measures [cite: 23].\n\n",
+      "start": 8464,
+      "end": 8782
+    },
+    {
+      "idx": 20,
+      "section_type": "text",
+      "header": "### 3.3 $C_{NPMI}$ (Normalized Pointwise Mutual Information)",
+      "header_level": 3,
+      "text": "### 3.3 $C_{NPMI}$ (Normalized Pointwise Mutual Information)\n\n$C_{NPMI}$ measures the co-occurrence of word pairs relative to their individual independence probabilities, normalized to a range of -1 to 1 [cite: 19, 24].\n\n",
+      "start": 8782,
+      "end": 9003
+    },
+    {
+      "idx": 21,
+      "section_type": "text",
+      "header": "#### Advantages",
+      "header_level": 4,
+      "text": "#### Advantages\n*   **Robustness:** It is widely considered the most robust coherence metric for general use cases, balancing strict co-occurrence requirements with normalization for word frequency [cite: 19, 23].\n*   **Independence:** Unlike $C_v$, it does not rely on an indirect cosine similarity vector, making it a more direct measure of word association [cite: 20].\n\n",
+      "start": 9003,
+      "end": 9376
+    },
+    {
+      "idx": 22,
+      "section_type": "text",
+      "header": "#### Disadvantages",
+      "header_level": 4,
+      "text": "#### Disadvantages\n*   **Sparsity Sensitivity:** In very sparse datasets (e.g., short tweets), NPMI scores can be noisy if word co-occurrences are rare [cite: 22].\n\n---\n\n",
+      "start": 9376,
+      "end": 9546
+    },
+    {
+      "idx": 23,
+      "section_type": "text",
+      "header": "## 4. Matrix Factorization and Density-Based Metrics",
+      "header_level": 2,
+      "text": "## 4. Matrix Factorization and Density-Based Metrics\n\nSeveral researchers have proposed specialized metrics that view LDA through the lens of matrix factorization or geometric density. These are often used in combination (e.g., in the R package `ldatuning`) to find a consensus $k$.\n\n",
+      "start": 9546,
+      "end": 9830
+    },
+    {
+      "idx": 24,
+      "section_type": "text",
+      "header": "### 4.1 Arun et al. (2010): KL Divergence",
+      "header_level": 3,
+      "text": "### 4.1 Arun et al. (2010): KL Divergence\n\nThis method views LDA as a matrix factorization of the document-term matrix into document-topic and topic-word matrices. It computes the Kullback-Leibler (KL) divergence between the singular value distribution of the document-term matrix and the distribution of the topic-word matrix [cite: 6, 25, 26].\n\n*   **Optimization Goal:** **Minimize** the score.\n*   **Advantages:**\n    *   **Natural $k$ Detection:** It is particularly effective at finding the \"natural\" number of topics where the divergence is minimized, indicating a stable factorization [cite: 6, 26].\n    *   **Theoretical Grounding:** It leverages linear algebra concepts (SVD) to validate the probabilistic model [cite: 26].\n*   **Disadvantages:**\n    *   **Computation:** Requires Singular Value Decomposition (SVD), which can be expensive for very large vocabularies [cite: 26].\n\n",
+      "start": 9830,
+      "end": 10721
+    },
+    {
+      "idx": 25,
+      "section_type": "text",
+      "header": "### 4.2 Cao Juan et al. (2009): Density-Based Method",
+      "header_level": 3,
+      "text": "### 4.2 Cao Juan et al. (2009): Density-Based Method\n\nThis metric calculates the average cosine similarity between pairs of topics. The core idea is that a good topic model should have topics that are distinct from one another [cite: 11, 27].\n\n*   **Optimization Goal:** **Minimize** the score (lower similarity implies higher distinctiveness).\n*   **Advantages:**\n    *   **Focus on Diversity:** It explicitly penalizes models where topics overlap significantly, ensuring that the selected $k$ produces distinct themes [cite: 27, 28].\n    *   **Stability:** It is often used to assess the stability of the model structure [cite: 29].\n*   **Disadvantages:**\n    *   **Instability:** Some studies report that the metric can fluctuate significantly and may not always produce a clear minimum, or may suggest a $k$ that conflicts with other metrics [cite: 11, 25].\n\n",
+      "start": 10721,
+      "end": 11584
+    },
+    {
+      "idx": 26,
+      "section_type": "text",
+      "header": "### 4.3 Deveaud et al. (2014): Latent Concept Modeling",
+      "header_level": 3,
+      "text": "### 4.3 Deveaud et al. (2014): Latent Concept Modeling\n\nThis heuristic estimates the number of latent concepts by maximizing the information divergence (Jensen-Shannon divergence) between all pairs of topics [cite: 26].\n\n*   **Optimization Goal:** **Maximize** the score (higher divergence implies better separation).\n*   **Advantages:**\n    *   **Topic Distinctiveness:** Like Cao Juan, it prioritizes models with well-separated topics, which is crucial for interpretability [cite: 26].\n    *   **Complementary:** It often works well when used in conjunction with minimization metrics (Arun/Cao Juan) to find a convergence point [cite: 30].\n*   **Disadvantages:**\n    *   **Complexity:** Calculating pairwise divergence for high $k$ is computationally intensive ($O(k^2)$ complexity) [cite: 26].\n\n---\n\n",
+      "start": 11584,
+      "end": 12387
+    },
+    {
+      "idx": 27,
+      "section_type": "text",
+      "header": "## 5. Non-Parametric Alternatives: Hierarchical Dirichlet Processes (HDP)",
+      "header_level": 2,
+      "text": "## 5. Non-Parametric Alternatives: Hierarchical Dirichlet Processes (HDP)\n\nInstead of selecting $k$ via trial-and-error with LDA, Hierarchical Dirichlet Processes (HDP) extend LDA to a non-parametric setting. HDP infers the number of topics from the data itself using a Dirichlet Process prior [cite: 31, 32].\n\n",
+      "start": 12387,
+      "end": 12698
+    },
+    {
+      "idx": 28,
+      "section_type": "text",
+      "header": "### Advantages",
+      "header_level": 3,
+      "text": "### Advantages\n*   **Automatic Selection:** The primary advantage is that $k$ does not need to be specified. The model allows the number of topics to grow with the data complexity [cite: 31, 32].\n*   **Flexibility:** It is ideal for streaming data or growing corpora where the number of topics is not fixed over time [cite: 32].\n\n",
+      "start": 12698,
+      "end": 13028
+    },
+    {
+      "idx": 29,
+      "section_type": "text",
+      "header": "### Disadvantages",
+      "header_level": 3,
+      "text": "### Disadvantages\n*   **Granularity Control:** HDP often produces a very large number of \"micro-topics\" (hundreds or thousands) that may be too granular for human interpretation. It lacks the ability to force a \"high-level\" summary (e.g., \"give me just the top 10 themes\") [cite: 31].\n*   **Hyperparameter Sensitivity:** While it removes $k$, it introduces other sensitive hyperparameters (e.g., $\\gamma$, $\\alpha$) that control the rate at which new topics are created. Tuning these can be as difficult as picking $k$ [cite: 31].\n*   **Complexity:** HDP is mathematically more complex and generally slower to train than standard LDA [cite: 33, 34].\n\n---\n\n",
+      "start": 13028,
+      "end": 13684
+    },
+    {
+      "idx": 30,
+      "section_type": "text",
+      "header": "## 6. Comparative Summary Table",
+      "header_level": 2,
+      "text": "## 6. Comparative Summary Table\n\n",
+      "start": 13684,
+      "end": 13717
+    },
+    {
+      "idx": 31,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Method | Type | Optimization Goal | Primary Advantage | Primary Disadvantage |\n| :--- | :--- | :--- | :--- | :--- |\n| **Perplexity** | Probabilistic | Minimize | Standard, measures predictive fit. | Anti-correlated with human interpretability. |\n| **Coherence ($C_v$)** | Semantic | Maximize | High correlation with human judgment. | Computationally expensive; reliability questioned. |\n| **Coherence ($C_{UMass}$)** | Semantic | Maximize (closer to 0) | Fast, intrinsic, penalizes stopwords. | Scores are non-intuitive (negative); lower human correlation. |\n| **Arun et al. (2010)** | Matrix Factorization | Minimize | Finds natural factorization stability. | Computationally intensive (SVD). |\n| **Cao Juan et al. (2009)** | Density/Geometric | Minimize | Ensures topic distinctiveness. | Can be unstable; multiple minima. |\n| **Deveaud et al. (2014)** | Information Theory | Maximize | Maximizes information divergence. | $O(k^2)$ complexity for pairwise comparison. |\n| **HDP** | Non-Parametric | N/A (Inferred) | No need to set $k$; adapts to data. | Hard to control granularity; often produces too many topics. |",
+      "start": 13717,
+      "end": 14838
+    },
+    {
+      "idx": 32,
+      "section_type": "text",
+      "header": "## 7. Conclusion",
+      "header_level": 2,
+      "text": "## 7. Conclusion\n\nThe selection of the \"right\" number of topics is dependent on the end-user's objective. If the goal is **predictive modeling** (e.g., document classification), **perplexity** and **RPC** are the most appropriate metrics. However, for **exploratory analysis** where human insight is paramount, **topic coherence ($C_{NPMI}$ or $C_v$)** is the industry standard, despite computational costs.\n\nFor a robust academic approach, it is recommended to use a **consensus method**: computing multiple metrics (e.g., Arun, Cao Juan, and Coherence) across a range of $k$ and selecting the value where these metrics converge (e.g., where Arun is minimized and Coherence is maximized) [cite: 25, 30]. Furthermore, quantitative metrics should always be validated qualitatively by visualizing the topics (e.g., using pyLDAvis) to ensure they make semantic sense in the context of the specific domain [cite: 2, 9].",
+      "start": 14839,
+      "end": 15754
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# Comprehensive Evaluation of Methods for Determining the Optimal Number of Topics in Topic Modeling",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "### 2.3 Information Criteria (AIC and BIC)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4BiBj7JQdRJOErC-1hbnxAxq7dL4cH8jjUtZ-m-doGdINfJjbDa7GIYER8Py3lwvs5xMSNQuk0tiwqqsDGsnKfD3TfKqd5WWoLkKBA6s4Mez5vu2FZLuJcHdTCaT8ehmPmT8TQqDzwCheiiAaEBwL"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "The Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) attempt to balance model fit (log-likelihood) with model complexity (penalty for the number of parameters).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4BiBj7JQdRJOErC-1hbnxAxq7dL4cH8jjUtZ-m-doGdINfJjbDa7GIYER8Py3lwvs5xMSNQuk0tiwqqsDGsnKfD3TfKqd5WWoLkKBA6s4Mez5vu2FZLuJcHdTCaT8ehmPmT8TQqDzwCheiiAaEBwL"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "#### Advantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "*  **Complexity Penalty:** Unlike perplexity, AIC and BIC explicitly penalize overfitting.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "BIC imposes a stricter penalty for model complexity ($k \\ln(n)$) compared to AIC ($2k$), which helps prevent the selection of excessively large $k$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4BiBj7JQdRJOErC-1hbnxAxq7dL4cH8jjUtZ-m-doGdINfJjbDa7GIYER8Py3lwvs5xMSNQuk0tiwqqsDGsnKfD3TfKqd5WWoLkKBA6s4Mez5vu2FZLuJcHdTCaT8ehmPmT8TQqDzwCheiiAaEBwL"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUh8emOU0slCgGZAuDUGGV-xWCVTz3uKImrorg17qgniWfmO1fcdIbhia2i8LwN3oW-LNvhEJaN5mr4QUQYPHrRCm8Z4WF1EWcm6Sc0myiPIMgraaDALsXEw4pWs4AYzMAihH1ryrFfiIrK2Sz8FT6DkCagPvTVCx2FEPATrfrrBdPSeu5LsKEGCznqJTChzq5havUHmZLqd4="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "*  **Simplicity:** Recent experiments (2024) suggest that simple metrics like AIC and BIC can sometimes outperform complex coherence metrics in identifying the true number of topics in synthetic datasets.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "#### Disadvantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "*  **Oversimplification:** In large text corpora, the number of parameters in LDA is vast.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_2",
+      "section_idx": 12,
+      "idx_in_section": 2,
+      "text": "Standard BIC/AIC calculations can be dominated by the likelihood term or the penalty term depending on vocabulary size, sometimes leading to the selection of very few topics or failing to capture subtle semantic structures.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ],
+        [
+          "jmlr.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHrBrMCJ1JSjIHsfUCxbaG6rpBVE80FpIH1RQOF8s7iTLvy6GvZ5Nch4LfTBgsMS_h8842SC4vhluHvh7FocmNSHWlkQBZ54cYpmeSfTo2fCbV9fm1V0fYYafnKiB0sPTOK2zf0Ydcd249J"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_3",
+      "section_idx": 12,
+      "idx_in_section": 3,
+      "text": "*  **Lack of Semantic Awareness:** Like perplexity, these metrics do not account for the actual meaning of the words in the topics .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "## 3. Semantic Interpretability Metrics (Topic Coherence)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "Topic coherence measures have emerged as the preferred method for exploratory topic modeling.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "squareup.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHowp4b624-MysMedmpeyxroXbxwmSd3NAfYVWzTGSuqKI7XdZeRt8YUlM4WAIJz0lYS9YOc_1KENIWvgtXwgpKHtaexNWm1skHvqy2nMlB3T5RMie17_7OzgkJQ34H9lTtk9nNVPuqjDs0TXVEi5p_OfG5hgyvc15lS_hBBtktVUIYDqZshEBnnYeW7bpPuw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdh_55R1cNimcij_hqY-0wHov-zN-k1-rXre3c64omWGUd7shQBn4sEv0yVL7Y0D-kcuq2MywNXi-uhposoLZLEDJIzgP0845OVVNxXjmt2zZPWAZozHzN38jQ5ZthwLHYoPD3SdNLPLOrCLUO0QVWmJsa72Q0pll5UWnOwmf2luuBwRT_WAboj_YjsGh9-cjwKcps1kYFvGyMjeU7AyxVNRTPfQ=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC4cgGgsbCTVNHy4h-dn52Obgy-TsBfYGK-QZTjlnDXblAFEs_1_5xx0KOzk2D0cMjIQlHa_5EmJqEVKk8qXWQ5xIxpcS-UKqBGJsKkyqqB7ipCQpjwkGx6xal-8T0ZXDMjIbLPZUlFJh3LV214TuHRPpYcvtn2CFIhyiu0ThDBzsHz2rng4g="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_2",
+      "section_idx": 13,
+      "idx_in_section": 2,
+      "text": "They evaluate the quality of a topic by measuring the semantic similarity between the top-$N$ words within that topic.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "squareup.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHowp4b624-MysMedmpeyxroXbxwmSd3NAfYVWzTGSuqKI7XdZeRt8YUlM4WAIJz0lYS9YOc_1KENIWvgtXwgpKHtaexNWm1skHvqy2nMlB3T5RMie17_7OzgkJQ34H9lTtk9nNVPuqjDs0TXVEi5p_OfG5hgyvc15lS_hBBtktVUIYDqZshEBnnYeW7bpPuw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdh_55R1cNimcij_hqY-0wHov-zN-k1-rXre3c64omWGUd7shQBn4sEv0yVL7Y0D-kcuq2MywNXi-uhposoLZLEDJIzgP0845OVVNxXjmt2zZPWAZozHzN38jQ5ZthwLHYoPD3SdNLPLOrCLUO0QVWmJsa72Q0pll5UWnOwmf2luuBwRT_WAboj_YjsGh9-cjwKcps1kYFvGyMjeU7AyxVNRTPfQ=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC4cgGgsbCTVNHy4h-dn52Obgy-TsBfYGK-QZTjlnDXblAFEs_1_5xx0KOzk2D0cMjIQlHa_5EmJqEVKk8qXWQ5xIxpcS-UKqBGJsKkyqqB7ipCQpjwkGx6xal-8T0ZXDMjIbLPZUlFJh3LV214TuHRPpYcvtn2CFIhyiu0ThDBzsHz2rng4g="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_3",
+      "section_idx": 13,
+      "idx_in_section": 3,
+      "text": "The assumption is that words in a coherent topic should co-occur frequently in the corpus.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "squareup.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHowp4b624-MysMedmpeyxroXbxwmSd3NAfYVWzTGSuqKI7XdZeRt8YUlM4WAIJz0lYS9YOc_1KENIWvgtXwgpKHtaexNWm1skHvqy2nMlB3T5RMie17_7OzgkJQ34H9lTtk9nNVPuqjDs0TXVEi5p_OfG5hgyvc15lS_hBBtktVUIYDqZshEBnnYeW7bpPuw=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdh_55R1cNimcij_hqY-0wHov-zN-k1-rXre3c64omWGUd7shQBn4sEv0yVL7Y0D-kcuq2MywNXi-uhposoLZLEDJIzgP0845OVVNxXjmt2zZPWAZozHzN38jQ5ZthwLHYoPD3SdNLPLOrCLUO0QVWmJsa72Q0pll5UWnOwmf2luuBwRT_WAboj_YjsGh9-cjwKcps1kYFvGyMjeU7AyxVNRTPfQ=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC4cgGgsbCTVNHy4h-dn52Obgy-TsBfYGK-QZTjlnDXblAFEs_1_5xx0KOzk2D0cMjIQlHa_5EmJqEVKk8qXWQ5xIxpcS-UKqBGJsKkyqqB7ipCQpjwkGx6xal-8T0ZXDMjIbLPZUlFJh3LV214TuHRPpYcvtn2CFIhyiu0ThDBzsHz2rng4g="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "### 3.1 $C_v$ Coherence",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "$C_v$ is currently the most popular coherence metric.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC4cgGgsbCTVNHy4h-dn52Obgy-TsBfYGK-QZTjlnDXblAFEs_1_5xx0KOzk2D0cMjIQlHa_5EmJqEVKk8qXWQ5xIxpcS-UKqBGJsKkyqqB7ipCQpjwkGx6xal-8T0ZXDMjIbLPZUlFJh3LV214TuHRPpYcvtn2CFIhyiu0ThDBzsHz2rng4g="
+        ],
+        [
+          "baeldung.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgB4-Iw9Og2clhcPfFbyW0tBWarJWUsN47jzCDZ8OM2BabQP3k6ZJIQexS5gu6cfpJHo6cRN-_7XbD34JlmVMr87FLQyyD-PCE3twJPOmC2qCnmG2t4l1lyTmZ0mnttaV4vjQ2M-I04n7uUHYo1BbU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_2",
+      "section_idx": 14,
+      "idx_in_section": 2,
+      "text": "It combines a sliding window, normalized pointwise mutual information (NPMI), and cosine similarity to score topics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC4cgGgsbCTVNHy4h-dn52Obgy-TsBfYGK-QZTjlnDXblAFEs_1_5xx0KOzk2D0cMjIQlHa_5EmJqEVKk8qXWQ5xIxpcS-UKqBGJsKkyqqB7ipCQpjwkGx6xal-8T0ZXDMjIbLPZUlFJh3LV214TuHRPpYcvtn2CFIhyiu0ThDBzsHz2rng4g="
+        ],
+        [
+          "baeldung.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgB4-Iw9Og2clhcPfFbyW0tBWarJWUsN47jzCDZ8OM2BabQP3k6ZJIQexS5gu6cfpJHo6cRN-_7XbD34JlmVMr87FLQyyD-PCE3twJPOmC2qCnmG2t4l1lyTmZ0mnttaV4vjQ2M-I04n7uUHYo1BbU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "#### Advantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "*  **Human Correlation:** Historically, $C_v$ was found to have the strongest correlation with human ratings of topic quality in the seminal paper by R\u00f6der et al. (2015).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC4cgGgsbCTVNHy4h-dn52Obgy-TsBfYGK-QZTjlnDXblAFEs_1_5xx0KOzk2D0cMjIQlHa_5EmJqEVKk8qXWQ5xIxpcS-UKqBGJsKkyqqB7ipCQpjwkGx6xal-8T0ZXDMjIbLPZUlFJh3LV214TuHRPpYcvtn2CFIhyiu0ThDBzsHz2rng4g="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_2",
+      "section_idx": 15,
+      "idx_in_section": 2,
+      "text": "*  **Range:** It outputs a score between 0 and 1, making it easy to interpret and compare across models.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackoverflow.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE9NaJRNvVDgsDgZBQMkdcmNLjVgnDGDSLXJa7ro_mne0Wow8bAT6CbBMMcRQFlJLUuwRODJX-tv66EZkjqs1fz3k6ut1nWoFSszk23fE6OMra-Qvn2i9Tr4Xc2TbbTrHu9IUbK4nfBsJjpsUq5r5MbABP1dv7LWIQiT7DWKTMgUORo905rWWeQUnnuG4N47Q-L5aejkyL0TX2vYAJr4Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "#### Disadvantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "*  **Computational Cost:** $C_v$ is computationally expensive because it requires calculating co-occurrence statistics over a sliding window across the entire corpus.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG7L40HBxH_Fo3xsxFHq2uRdfcuknLGYb419Sk4RUcBJ0cQ9d5lztwP7x5f1JRdEZBnQriT7t4yJpYvIl_lmtp1ZVP_T4E7dR_jOUO18aAqJLlqNSH1CB2uYfKrqYSePdJKjSiP_LLvm1I3d2RI7JmPjev4U-jrpGpd0hTj7M5A2nP8QcDoPEgPw-easxtKHJo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "*  **Reliability Concerns:** Recent critiques suggest $C_v$ may be unreliable.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "baeldung.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgB4-Iw9Og2clhcPfFbyW0tBWarJWUsN47jzCDZ8OM2BabQP3k6ZJIQexS5gu6cfpJHo6cRN-_7XbD34JlmVMr87FLQyyD-PCE3twJPOmC2qCnmG2t4l1lyTmZ0mnttaV4vjQ2M-I04n7uUHYo1BbU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_3",
+      "section_idx": 16,
+      "idx_in_section": 3,
+      "text": "It creates content vectors that can sometimes inflate scores for topics that are not actually semantically related.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "baeldung.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgB4-Iw9Og2clhcPfFbyW0tBWarJWUsN47jzCDZ8OM2BabQP3k6ZJIQexS5gu6cfpJHo6cRN-_7XbD34JlmVMr87FLQyyD-PCE3twJPOmC2qCnmG2t4l1lyTmZ0mnttaV4vjQ2M-I04n7uUHYo1BbU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_4",
+      "section_idx": 16,
+      "idx_in_section": 4,
+      "text": "Some researchers now recommend against it in favor of simpler metrics like $C_{UMass}$ or $C_{NPMI}$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "baeldung.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgB4-Iw9Og2clhcPfFbyW0tBWarJWUsN47jzCDZ8OM2BabQP3k6ZJIQexS5gu6cfpJHo6cRN-_7XbD34JlmVMr87FLQyyD-PCE3twJPOmC2qCnmG2t4l1lyTmZ0mnttaV4vjQ2M-I04n7uUHYo1BbU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "### 3.2 $C_{UMass}$ Coherence",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "$C_{UMass}$ is an intrinsic metric based on document co-occurrence counts.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEABQ6Cxu5-SgO5tnlkQ9emXsgCgKrokf6DTmTntXMD8_e6unJo5P2KRLqRPRGdCjZmnVB-52DImnaxcQ5qoQjhSsU3Up8cqiC0UCVR5nxxHN6dV7vh7VaEj2oAYh48E-1t9nqaRKD5pZ678rvPZSoGaJf9MOl6YA9xBIy2XyZPDYM4-2b6PFneeVFWy37S5cuw-eU2x8Lqn5ZV-c2NqaeAvF_emMFzXuIHYmposYlW"
+        ],
+        [
+          "baeldung.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgB4-Iw9Og2clhcPfFbyW0tBWarJWUsN47jzCDZ8OM2BabQP3k6ZJIQexS5gu6cfpJHo6cRN-_7XbD34JlmVMr87FLQyyD-PCE3twJPOmC2qCnmG2t4l1lyTmZ0mnttaV4vjQ2M-I04n7uUHYo1BbU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "It calculates the log-conditional probability of a word given a preceding word.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEABQ6Cxu5-SgO5tnlkQ9emXsgCgKrokf6DTmTntXMD8_e6unJo5P2KRLqRPRGdCjZmnVB-52DImnaxcQ5qoQjhSsU3Up8cqiC0UCVR5nxxHN6dV7vh7VaEj2oAYh48E-1t9nqaRKD5pZ678rvPZSoGaJf9MOl6YA9xBIy2XyZPDYM4-2b6PFneeVFWy37S5cuw-eU2x8Lqn5ZV-c2NqaeAvF_emMFzXuIHYmposYlW"
+        ],
+        [
+          "baeldung.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgB4-Iw9Og2clhcPfFbyW0tBWarJWUsN47jzCDZ8OM2BabQP3k6ZJIQexS5gu6cfpJHo6cRN-_7XbD34JlmVMr87FLQyyD-PCE3twJPOmC2qCnmG2t4l1lyTmZ0mnttaV4vjQ2M-I04n7uUHYo1BbU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "#### Advantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "*  **Efficiency:** It is computationally faster than $C_v$ because it uses document-level co-occurrences rather than a sliding window.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "baeldung.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFgB4-Iw9Og2clhcPfFbyW0tBWarJWUsN47jzCDZ8OM2BabQP3k6ZJIQexS5gu6cfpJHo6cRN-_7XbD34JlmVMr87FLQyyD-PCE3twJPOmC2qCnmG2t4l1lyTmZ0mnttaV4vjQ2M-I04n7uUHYo1BbU"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "*  **Penalizes Common Words:** It naturally penalizes topics dominated by ubiquitous words (stopwords) that appear in every document, as these do not provide high conditional probability information.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "rug.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXbGd0E03jBWlCIbKRbfAQb81ufi4Mh-k1s64F9UQaRs02FDVg6yqxnAhccGcg11JdKEtrfEXmC1llFr4E2n8uBKv7HVpJy0WBXyEuQJn09SqHzd3vLY-KpT35ziDT4i8nbBYTjwT-pujLX1ViUTHosganOdirTITMrfR_CTQVmdrMh6Zp6IojuDA="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_0",
+      "section_idx": 19,
+      "idx_in_section": 0,
+      "text": "#### Disadvantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_1",
+      "section_idx": 19,
+      "idx_in_section": 1,
+      "text": "*  **Interpretability:** The scores are negative (ranging from $-\\infty$ to 0), which can be less intuitive for stakeholders than the 0-to-1 range of $C_v$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEABQ6Cxu5-SgO5tnlkQ9emXsgCgKrokf6DTmTntXMD8_e6unJo5P2KRLqRPRGdCjZmnVB-52DImnaxcQ5qoQjhSsU3Up8cqiC0UCVR5nxxHN6dV7vh7VaEj2oAYh48E-1t9nqaRKD5pZ678rvPZSoGaJf9MOl6YA9xBIy2XyZPDYM4-2b6PFneeVFWy37S5cuw-eU2x8Lqn5ZV-c2NqaeAvF_emMFzXuIHYmposYlW"
+        ],
+        [
+          "stackoverflow.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE9NaJRNvVDgsDgZBQMkdcmNLjVgnDGDSLXJa7ro_mne0Wow8bAT6CbBMMcRQFlJLUuwRODJX-tv66EZkjqs1fz3k6ut1nWoFSszk23fE6OMra-Qvn2i9Tr4Xc2TbbTrHu9IUbK4nfBsJjpsUq5r5MbABP1dv7LWIQiT7DWKTMgUORo905rWWeQUnnuG4N47Q-L5aejkyL0TX2vYAJr4Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_2",
+      "section_idx": 19,
+      "idx_in_section": 2,
+      "text": "*  **Performance:** In some benchmarks, it correlates slightly less with human judgment than NPMI-based measures.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "rug.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXbGd0E03jBWlCIbKRbfAQb81ufi4Mh-k1s64F9UQaRs02FDVg6yqxnAhccGcg11JdKEtrfEXmC1llFr4E2n8uBKv7HVpJy0WBXyEuQJn09SqHzd3vLY-KpT35ziDT4i8nbBYTjwT-pujLX1ViUTHosganOdirTITMrfR_CTQVmdrMh6Zp6IojuDA="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "### Key Points",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "*  **No Single \"Ground Truth\":** There is no universally correct metric for determining the number of topics ($k$); the choice depends heavily on whether the goal is predictive accuracy (perplexity) or human interpretability (coherence).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "*  **Perplexity vs. Interpretability:** Traditional probabilistic metrics like **Perplexity** often negatively correlate with human judgment.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "While they measure how well the model fits the data, they frequently select a $k$ that produces incoherent or granular topics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "*  **Coherence is the Modern Standard:** **Topic Coherence** (specifically $C_v$ and $C_{NPMI}$) is currently the preferred metric for exploratory analysis, as it approximates human semantic validation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "However, metrics like $C_v$ have recently faced scrutiny regarding their reliability compared to simpler co-occurrence measures like $C_{UMass}$.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_6",
+      "section_idx": 1,
+      "idx_in_section": 6,
+      "text": "*  **Specialized Statistical Metrics:** Methods by **Arun et al.** (minimize KL divergence), **Cao Juan et al.** (minimize cosine similarity), and **Deveaud et al.** (maximize information divergence) offer robust alternatives that analyze the structural properties of the document-topic matrices.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_7",
+      "section_idx": 1,
+      "idx_in_section": 7,
+      "text": "*  **Non-Parametric Alternatives:** **Hierarchical Dirichlet Processes (HDP)** avoid the selection of $k$ entirely by inferring it from the data, though often at the cost of increased computational complexity and reduced control over topic granularity.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_0",
+      "section_idx": 20,
+      "idx_in_section": 0,
+      "text": "### 3.3 $C_{NPMI}$ (Normalized Pointwise Mutual Information)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdh_55R1cNimcij_hqY-0wHov-zN-k1-rXre3c64omWGUd7shQBn4sEv0yVL7Y0D-kcuq2MywNXi-uhposoLZLEDJIzgP0845OVVNxXjmt2zZPWAZozHzN38jQ5ZthwLHYoPD3SdNLPLOrCLUO0QVWmJsa72Q0pll5UWnOwmf2luuBwRT_WAboj_YjsGh9-cjwKcps1kYFvGyMjeU7AyxVNRTPfQ=="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHFw-LSD6tSk2Oh2KNbJzXgW32rxSzduq1eMJWAjEZuiMxvPt6Uf6y4x09zvpuVe8CZ4_HDbOUQAhzPQlURhu7DpalA7hv-qszNr2kLORbWEFtk4VBseAQVL-PEPQ-VdatQxjZdg1Y="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_1",
+      "section_idx": 20,
+      "idx_in_section": 1,
+      "text": "$C_{NPMI}$ measures the co-occurrence of word pairs relative to their individual independence probabilities, normalized to a range of -1 to 1.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdh_55R1cNimcij_hqY-0wHov-zN-k1-rXre3c64omWGUd7shQBn4sEv0yVL7Y0D-kcuq2MywNXi-uhposoLZLEDJIzgP0845OVVNxXjmt2zZPWAZozHzN38jQ5ZthwLHYoPD3SdNLPLOrCLUO0QVWmJsa72Q0pll5UWnOwmf2luuBwRT_WAboj_YjsGh9-cjwKcps1kYFvGyMjeU7AyxVNRTPfQ=="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHFw-LSD6tSk2Oh2KNbJzXgW32rxSzduq1eMJWAjEZuiMxvPt6Uf6y4x09zvpuVe8CZ4_HDbOUQAhzPQlURhu7DpalA7hv-qszNr2kLORbWEFtk4VBseAQVL-PEPQ-VdatQxjZdg1Y="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_0",
+      "section_idx": 21,
+      "idx_in_section": 0,
+      "text": "#### Advantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_1",
+      "section_idx": 21,
+      "idx_in_section": 1,
+      "text": "*  **Robustness:** It is widely considered the most robust coherence metric for general use cases, balancing strict co-occurrence requirements with normalization for word frequency.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdh_55R1cNimcij_hqY-0wHov-zN-k1-rXre3c64omWGUd7shQBn4sEv0yVL7Y0D-kcuq2MywNXi-uhposoLZLEDJIzgP0845OVVNxXjmt2zZPWAZozHzN38jQ5ZthwLHYoPD3SdNLPLOrCLUO0QVWmJsa72Q0pll5UWnOwmf2luuBwRT_WAboj_YjsGh9-cjwKcps1kYFvGyMjeU7AyxVNRTPfQ=="
+        ],
+        [
+          "rug.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXbGd0E03jBWlCIbKRbfAQb81ufi4Mh-k1s64F9UQaRs02FDVg6yqxnAhccGcg11JdKEtrfEXmC1llFr4E2n8uBKv7HVpJy0WBXyEuQJn09SqHzd3vLY-KpT35ziDT4i8nbBYTjwT-pujLX1ViUTHosganOdirTITMrfR_CTQVmdrMh6Zp6IojuDA="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_2",
+      "section_idx": 21,
+      "idx_in_section": 2,
+      "text": "*  **Independence:** Unlike $C_v$, it does not rely on an indirect cosine similarity vector, making it a more direct measure of word association.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGC4cgGgsbCTVNHy4h-dn52Obgy-TsBfYGK-QZTjlnDXblAFEs_1_5xx0KOzk2D0cMjIQlHa_5EmJqEVKk8qXWQ5xIxpcS-UKqBGJsKkyqqB7ipCQpjwkGx6xal-8T0ZXDMjIbLPZUlFJh3LV214TuHRPpYcvtn2CFIhyiu0ThDBzsHz2rng4g="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_0",
+      "section_idx": 22,
+      "idx_in_section": 0,
+      "text": "#### Disadvantages",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackoverflow.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE9NaJRNvVDgsDgZBQMkdcmNLjVgnDGDSLXJa7ro_mne0Wow8bAT6CbBMMcRQFlJLUuwRODJX-tv66EZkjqs1fz3k6ut1nWoFSszk23fE6OMra-Qvn2i9Tr4Xc2TbbTrHu9IUbK4nfBsJjpsUq5r5MbABP1dv7LWIQiT7DWKTMgUORo905rWWeQUnnuG4N47Q-L5aejkyL0TX2vYAJr4Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_1",
+      "section_idx": 22,
+      "idx_in_section": 1,
+      "text": "*  **Sparsity Sensitivity:** In very sparse datasets (e.g., short tweets), NPMI scores can be noisy if word co-occurrences are rare .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackoverflow.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE9NaJRNvVDgsDgZBQMkdcmNLjVgnDGDSLXJa7ro_mne0Wow8bAT6CbBMMcRQFlJLUuwRODJX-tv66EZkjqs1fz3k6ut1nWoFSszk23fE6OMra-Qvn2i9Tr4Xc2TbbTrHu9IUbK4nfBsJjpsUq5r5MbABP1dv7LWIQiT7DWKTMgUORo905rWWeQUnnuG4N47Q-L5aejkyL0TX2vYAJr4Q=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_0",
+      "section_idx": 23,
+      "idx_in_section": 0,
+      "text": "## 4. Matrix Factorization and Density-Based Metrics",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_1",
+      "section_idx": 23,
+      "idx_in_section": 1,
+      "text": "Several researchers have proposed specialized metrics that view LDA through the lens of matrix factorization or geometric density.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_2",
+      "section_idx": 23,
+      "idx_in_section": 2,
+      "text": "These are often used in combination (e.g., in the R package `ldatuning`) to find a consensus $k$.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_0",
+      "section_idx": 24,
+      "idx_in_section": 0,
+      "text": "### 4.1 Arun et al. (2010): KL Divergence",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_1",
+      "section_idx": 24,
+      "idx_in_section": 1,
+      "text": "This method views LDA as a matrix factorization of the document-term matrix into document-topic and topic-word matrices.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpVxeRVph4Y5R-DDu7R55LKZKD_DnziHHnurLTllB0dKiMXx1vbKMd5ws0nARVjU6xM3SV-TU1ov0Ash7nLgV8SKkjCQZSU3SVcluRhwn1PX-NjyQI20RYil73n6kqay694bJf3g93"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5ZwOzd3XwzBKTxAFDUcuqPy2iGt09cf-qbX-zGJsriOsXEuQML19XvfYGFxiIQXtrUpqVO9xa79L2HppDTREDu2rCJ4k_qT3aEyt4_hEgaqOQ_hsRqXAG4wSLZunnsyC0IdAjc48WYGasHM7PQlEjiNinu1UuEjAYbTY_8HX8Z-A5yPbW1uH8ovcT_n7l-E4lVZMMpC-SxFIxt10A6rC6VG7wdwEzKElIN4jE8nTBSkJW0jRB1baL566wk-ThPjxWqAG7"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_2",
+      "section_idx": 24,
+      "idx_in_section": 2,
+      "text": "It computes the Kullback-Leibler (KL) divergence between the singular value distribution of the document-term matrix and the distribution of the topic-word matrix.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpVxeRVph4Y5R-DDu7R55LKZKD_DnziHHnurLTllB0dKiMXx1vbKMd5ws0nARVjU6xM3SV-TU1ov0Ash7nLgV8SKkjCQZSU3SVcluRhwn1PX-NjyQI20RYil73n6kqay694bJf3g93"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5ZwOzd3XwzBKTxAFDUcuqPy2iGt09cf-qbX-zGJsriOsXEuQML19XvfYGFxiIQXtrUpqVO9xa79L2HppDTREDu2rCJ4k_qT3aEyt4_hEgaqOQ_hsRqXAG4wSLZunnsyC0IdAjc48WYGasHM7PQlEjiNinu1UuEjAYbTY_8HX8Z-A5yPbW1uH8ovcT_n7l-E4lVZMMpC-SxFIxt10A6rC6VG7wdwEzKElIN4jE8nTBSkJW0jRB1baL566wk-ThPjxWqAG7"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_3",
+      "section_idx": 24,
+      "idx_in_section": 3,
+      "text": "*  **Optimization Goal:** **Minimize** the score.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_4",
+      "section_idx": 24,
+      "idx_in_section": 4,
+      "text": "*  **Advantages:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_5",
+      "section_idx": 24,
+      "idx_in_section": 5,
+      "text": "*  **Natural $k$ Detection:** It is particularly effective at finding the \"natural\" number of topics where the divergence is minimized, indicating a stable factorization.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpVxeRVph4Y5R-DDu7R55LKZKD_DnziHHnurLTllB0dKiMXx1vbKMd5ws0nARVjU6xM3SV-TU1ov0Ash7nLgV8SKkjCQZSU3SVcluRhwn1PX-NjyQI20RYil73n6kqay694bJf3g93"
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_6",
+      "section_idx": 24,
+      "idx_in_section": 6,
+      "text": "*  **Theoretical Grounding:** It leverages linear algebra concepts (SVD) to validate the probabilistic model.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_7",
+      "section_idx": 24,
+      "idx_in_section": 7,
+      "text": "*  **Disadvantages:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_8",
+      "section_idx": 24,
+      "idx_in_section": 8,
+      "text": "*  **Computation:** Requires Singular Value Decomposition (SVD), which can be expensive for very large vocabularies.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_0",
+      "section_idx": 25,
+      "idx_in_section": 0,
+      "text": "### 4.2 Cao Juan et al. (2009): Density-Based Method",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_1",
+      "section_idx": 25,
+      "idx_in_section": 1,
+      "text": "This metric calculates the average cosine similarity between pairs of topics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVy8J5RB6XazXMQlBtwSO7jFw0JeOuMcIXIrAZtgJiiHQOkij7U5ZszCv5IKIQxPPjK1RkSBt7wclN9DHskIwg4no6WA3FJftw1igOq3brnyHVJIpvA7NDmIRcCqPYZ3h1CqwRaz_pc7N2GscPmckwRZy3pUNNBLbkDweYf0Z-koYC0RUUDKzhbcb2gb6V4mZqgTL7vLel0cpRsbJ9vIbN"
+        ],
+        [
+          "uel.br",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHzQveioaFdymYDzSqmEyAkoYobNyZlP2M6B6HqmGjLkSt-1a5VvloB8zY8lqvZy8DsPKdZPpjR1hWFWD_ip2n8Mi7QMamMiti_8l8JLBHIUH5IQQvCAdMtDjH6siF8bW0YNCHCb2CD9NYAIWCJG-QGfoK1QBaWyZKQJzzlGQzL_aLJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_2",
+      "section_idx": 25,
+      "idx_in_section": 2,
+      "text": "The core idea is that a good topic model should have topics that are distinct from one another.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVy8J5RB6XazXMQlBtwSO7jFw0JeOuMcIXIrAZtgJiiHQOkij7U5ZszCv5IKIQxPPjK1RkSBt7wclN9DHskIwg4no6WA3FJftw1igOq3brnyHVJIpvA7NDmIRcCqPYZ3h1CqwRaz_pc7N2GscPmckwRZy3pUNNBLbkDweYf0Z-koYC0RUUDKzhbcb2gb6V4mZqgTL7vLel0cpRsbJ9vIbN"
+        ],
+        [
+          "uel.br",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHzQveioaFdymYDzSqmEyAkoYobNyZlP2M6B6HqmGjLkSt-1a5VvloB8zY8lqvZy8DsPKdZPpjR1hWFWD_ip2n8Mi7QMamMiti_8l8JLBHIUH5IQQvCAdMtDjH6siF8bW0YNCHCb2CD9NYAIWCJG-QGfoK1QBaWyZKQJzzlGQzL_aLJ"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_3",
+      "section_idx": 25,
+      "idx_in_section": 3,
+      "text": "*  **Optimization Goal:** **Minimize** the score (lower similarity implies higher distinctiveness).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_4",
+      "section_idx": 25,
+      "idx_in_section": 4,
+      "text": "*  **Advantages:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_5",
+      "section_idx": 25,
+      "idx_in_section": 5,
+      "text": "*  **Focus on Diversity:** It explicitly penalizes models where topics overlap significantly, ensuring that the selected $k$ produces distinct themes.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uel.br",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHzQveioaFdymYDzSqmEyAkoYobNyZlP2M6B6HqmGjLkSt-1a5VvloB8zY8lqvZy8DsPKdZPpjR1hWFWD_ip2n8Mi7QMamMiti_8l8JLBHIUH5IQQvCAdMtDjH6siF8bW0YNCHCb2CD9NYAIWCJG-QGfoK1QBaWyZKQJzzlGQzL_aLJ"
+        ],
+        [
+          "injoit.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQELR1rlSsJ0sbGZopgE5nGAqDIFq2abHzYjAPjTcJ_RG6EXKT4xya3FB010xQiwDkt2gDzpJn18J_voLJCSs17kR0xOdrVmZSmaJggzWYPoo12VqpoF3JzhGDkpOnSB0XyOViiwow=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_6",
+      "section_idx": 25,
+      "idx_in_section": 6,
+      "text": "*  **Stability:** It is often used to assess the stability of the model structure.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "uu.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGr1Ilv3NOjUHlyGb4h63-H1djDH_9-U3ZkKBSMBuJBKIDtvX5FIuDbYPMFC3ce0jP1KiERMI7K3lTBdtOGMKxLpSdl4CO4klQtmlKOHodIuZmy687H4UZ8ewHMJfGdAk-xFbwpikPK7929SCs0mSaSkQrx70DD-5a8Ky8fn3aRkiUIG6bCueoA1dKSze7-fYuti86eNr7D4XpGVtXo"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "25_7",
+      "section_idx": 25,
+      "idx_in_section": 7,
+      "text": "*  **Disadvantages:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVy8J5RB6XazXMQlBtwSO7jFw0JeOuMcIXIrAZtgJiiHQOkij7U5ZszCv5IKIQxPPjK1RkSBt7wclN9DHskIwg4no6WA3FJftw1igOq3brnyHVJIpvA7NDmIRcCqPYZ3h1CqwRaz_pc7N2GscPmckwRZy3pUNNBLbkDweYf0Z-koYC0RUUDKzhbcb2gb6V4mZqgTL7vLel0cpRsbJ9vIbN"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5ZwOzd3XwzBKTxAFDUcuqPy2iGt09cf-qbX-zGJsriOsXEuQML19XvfYGFxiIQXtrUpqVO9xa79L2HppDTREDu2rCJ4k_qT3aEyt4_hEgaqOQ_hsRqXAG4wSLZunnsyC0IdAjc48WYGasHM7PQlEjiNinu1UuEjAYbTY_8HX8Z-A5yPbW1uH8ovcT_n7l-E4lVZMMpC-SxFIxt10A6rC6VG7wdwEzKElIN4jE8nTBSkJW0jRB1baL566wk-ThPjxWqAG7"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "25_8",
+      "section_idx": 25,
+      "idx_in_section": 8,
+      "text": "*  **Instability:** Some studies report that the metric can fluctuate significantly and may not always produce a clear minimum, or may suggest a $k$ that conflicts with other metrics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVy8J5RB6XazXMQlBtwSO7jFw0JeOuMcIXIrAZtgJiiHQOkij7U5ZszCv5IKIQxPPjK1RkSBt7wclN9DHskIwg4no6WA3FJftw1igOq3brnyHVJIpvA7NDmIRcCqPYZ3h1CqwRaz_pc7N2GscPmckwRZy3pUNNBLbkDweYf0Z-koYC0RUUDKzhbcb2gb6V4mZqgTL7vLel0cpRsbJ9vIbN"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5ZwOzd3XwzBKTxAFDUcuqPy2iGt09cf-qbX-zGJsriOsXEuQML19XvfYGFxiIQXtrUpqVO9xa79L2HppDTREDu2rCJ4k_qT3aEyt4_hEgaqOQ_hsRqXAG4wSLZunnsyC0IdAjc48WYGasHM7PQlEjiNinu1UuEjAYbTY_8HX8Z-A5yPbW1uH8ovcT_n7l-E4lVZMMpC-SxFIxt10A6rC6VG7wdwEzKElIN4jE8nTBSkJW0jRB1baL566wk-ThPjxWqAG7"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_0",
+      "section_idx": 26,
+      "idx_in_section": 0,
+      "text": "### 4.3 Deveaud et al. (2014): Latent Concept Modeling",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_1",
+      "section_idx": 26,
+      "idx_in_section": 1,
+      "text": "This heuristic estimates the number of latent concepts by maximizing the information divergence (Jensen-Shannon divergence) between all pairs of topics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_2",
+      "section_idx": 26,
+      "idx_in_section": 2,
+      "text": "*  **Optimization Goal:** **Maximize** the score (higher divergence implies better separation).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_3",
+      "section_idx": 26,
+      "idx_in_section": 3,
+      "text": "*  **Advantages:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_4",
+      "section_idx": 26,
+      "idx_in_section": 4,
+      "text": "*  **Topic Distinctiveness:** Like Cao Juan, it prioritizes models with well-separated topics, which is crucial for interpretability.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_5",
+      "section_idx": 26,
+      "idx_in_section": 5,
+      "text": "*  **Complementary:** It often works well when used in conjunction with minimization metrics (Arun/Cao Juan) to find a convergence point.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFAIRGVPzlqXEbBWBiTU6Ztt-R8pRzvdz97hZ0BOJCMAjUhk-N7bWF9FViPH2vIj2J9nHjUk68axfjkGc8v3xt1efrX2bQAMxDWuzls32CMmnh53akJWk7PvYXfOq76rM1_JkbYu8BibR87iBvTm9tNaxN7APiNhHxodKjE5jmQKxzS3NRgjWAbDzYUB9Sdd9xGc9Es4bah3VDigNxdObS39PzBWYNy-57q7HEDaiJ4b0eG4yNfMzfO0g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "26_6",
+      "section_idx": 26,
+      "idx_in_section": 6,
+      "text": "*  **Disadvantages:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "26_7",
+      "section_idx": 26,
+      "idx_in_section": 7,
+      "text": "*  **Complexity:** Calculating pairwise divergence for high $k$ is computationally intensive ($O(k^2)$ complexity) .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENZKJK9CrppqjZhyCQUKTDDwCxrLPYTe3Da7MwBG0l8GECofgcIhC01YeTMqdQhkUiHKrZvQJ_oz7I8fE25wmg3i_zKHtZp8oV5GCEHJQW_j8pnE8fB0VpMfin9KMe0kIvsJy8LXRWQp58ucQ6y3Oxw_yWy28FsK87NFYT7U_ms8jf0MDjAqVCvYZxsfPKWSP9rSYhzOIankKlWNxkWma8W98UO4dpxUghL1Fd_7ZbgoK9QdhN7Qa1e3RimJKN5m23YZz9"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "27_0",
+      "section_idx": 27,
+      "idx_in_section": 0,
+      "text": "## 5. Non-Parametric Alternatives: Hierarchical Dirichlet Processes (HDP)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_1",
+      "section_idx": 27,
+      "idx_in_section": 1,
+      "text": "Instead of selecting $k$ via trial-and-error with LDA, Hierarchical Dirichlet Processes (HDP) extend LDA to a non-parametric setting.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFOoI9xvlJmg4K4caSOwLZzUwSGj1-Ot_3UDWyZSIL7aBc-LihaQItUzhGZNjC-T1n_31DxZlYlZwlhfJd-Ho-bxZMLfj4BcB8HUtRkZBElPWnlk-37drMrMd-ZaWFUf90Gghq89TGv7Bf4IoXJrRtjX1DMekWY_44vd34eRrxFpuu5rKvDa9hHoxE5VHxkq7yOyJD-IrfzTffGxiIOPuXraMeFIzHibA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuJPcmtXM4Z-yYy5Mqu1lCtGvqmfb-e1aaVxm_3M9M1QRGZ7jk8tXSkb8OjFozZod-KeWiDK2p-RyzXnlIUUOi6bpC66Nl4xF7isKyuECaPG-ZZaxkiv1mwEVNZhCmw2R_14PX8AKHsteL1Lp-khtQtILR4xgIh2r9SL2Mrq4SoYs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "27_2",
+      "section_idx": 27,
+      "idx_in_section": 2,
+      "text": "HDP infers the number of topics from the data itself using a Dirichlet Process prior.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFOoI9xvlJmg4K4caSOwLZzUwSGj1-Ot_3UDWyZSIL7aBc-LihaQItUzhGZNjC-T1n_31DxZlYlZwlhfJd-Ho-bxZMLfj4BcB8HUtRkZBElPWnlk-37drMrMd-ZaWFUf90Gghq89TGv7Bf4IoXJrRtjX1DMekWY_44vd34eRrxFpuu5rKvDa9hHoxE5VHxkq7yOyJD-IrfzTffGxiIOPuXraMeFIzHibA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuJPcmtXM4Z-yYy5Mqu1lCtGvqmfb-e1aaVxm_3M9M1QRGZ7jk8tXSkb8OjFozZod-KeWiDK2p-RyzXnlIUUOi6bpC66Nl4xF7isKyuECaPG-ZZaxkiv1mwEVNZhCmw2R_14PX8AKHsteL1Lp-khtQtILR4xgIh2r9SL2Mrq4SoYs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "28_0",
+      "section_idx": 28,
+      "idx_in_section": 0,
+      "text": "### Advantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_1",
+      "section_idx": 28,
+      "idx_in_section": 1,
+      "text": "*  **Automatic Selection:** The primary advantage is that $k$ does not need to be specified.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuJPcmtXM4Z-yYy5Mqu1lCtGvqmfb-e1aaVxm_3M9M1QRGZ7jk8tXSkb8OjFozZod-KeWiDK2p-RyzXnlIUUOi6bpC66Nl4xF7isKyuECaPG-ZZaxkiv1mwEVNZhCmw2R_14PX8AKHsteL1Lp-khtQtILR4xgIh2r9SL2Mrq4SoYs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "28_2",
+      "section_idx": 28,
+      "idx_in_section": 2,
+      "text": "The model allows the number of topics to grow with the data complexity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFOoI9xvlJmg4K4caSOwLZzUwSGj1-Ot_3UDWyZSIL7aBc-LihaQItUzhGZNjC-T1n_31DxZlYlZwlhfJd-Ho-bxZMLfj4BcB8HUtRkZBElPWnlk-37drMrMd-ZaWFUf90Gghq89TGv7Bf4IoXJrRtjX1DMekWY_44vd34eRrxFpuu5rKvDa9hHoxE5VHxkq7yOyJD-IrfzTffGxiIOPuXraMeFIzHibA=="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuJPcmtXM4Z-yYy5Mqu1lCtGvqmfb-e1aaVxm_3M9M1QRGZ7jk8tXSkb8OjFozZod-KeWiDK2p-RyzXnlIUUOi6bpC66Nl4xF7isKyuECaPG-ZZaxkiv1mwEVNZhCmw2R_14PX8AKHsteL1Lp-khtQtILR4xgIh2r9SL2Mrq4SoYs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "28_3",
+      "section_idx": 28,
+      "idx_in_section": 3,
+      "text": "*  **Flexibility:** It is ideal for streaming data or growing corpora where the number of topics is not fixed over time.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuJPcmtXM4Z-yYy5Mqu1lCtGvqmfb-e1aaVxm_3M9M1QRGZ7jk8tXSkb8OjFozZod-KeWiDK2p-RyzXnlIUUOi6bpC66Nl4xF7isKyuECaPG-ZZaxkiv1mwEVNZhCmw2R_14PX8AKHsteL1Lp-khtQtILR4xgIh2r9SL2Mrq4SoYs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "29_0",
+      "section_idx": 29,
+      "idx_in_section": 0,
+      "text": "### Disadvantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "29_1",
+      "section_idx": 29,
+      "idx_in_section": 1,
+      "text": "*  **Granularity Control:** HDP often produces a very large number of \"micro-topics\" (hundreds or thousands) that may be too granular for human interpretation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFOoI9xvlJmg4K4caSOwLZzUwSGj1-Ot_3UDWyZSIL7aBc-LihaQItUzhGZNjC-T1n_31DxZlYlZwlhfJd-Ho-bxZMLfj4BcB8HUtRkZBElPWnlk-37drMrMd-ZaWFUf90Gghq89TGv7Bf4IoXJrRtjX1DMekWY_44vd34eRrxFpuu5rKvDa9hHoxE5VHxkq7yOyJD-IrfzTffGxiIOPuXraMeFIzHibA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "29_2",
+      "section_idx": 29,
+      "idx_in_section": 2,
+      "text": "It lacks the ability to force a \"high-level\" summary (e.g., \"give me just the top 10 themes\").",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFOoI9xvlJmg4K4caSOwLZzUwSGj1-Ot_3UDWyZSIL7aBc-LihaQItUzhGZNjC-T1n_31DxZlYlZwlhfJd-Ho-bxZMLfj4BcB8HUtRkZBElPWnlk-37drMrMd-ZaWFUf90Gghq89TGv7Bf4IoXJrRtjX1DMekWY_44vd34eRrxFpuu5rKvDa9hHoxE5VHxkq7yOyJD-IrfzTffGxiIOPuXraMeFIzHibA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "29_3",
+      "section_idx": 29,
+      "idx_in_section": 3,
+      "text": "*  **Hyperparameter Sensitivity:** While it removes $k$, it introduces other sensitive hyperparameters (e.g., $\\gamma$, $\\alpha$) that control the rate at which new topics are created.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "quora.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXuQiElr0aNhOj86ZSnGxYbepV1_9toGOsPHQ6J_sx3h5mHCqGhCLd88LXLxRFLU2Gcwm7OZPCTtziDd16ivdSHc3wjDXp8jG65CJiM8NuBYfsRmP9vD93uTegKvgGCjn2Fl9ehsL6hup6xXDC2lXm5oD2F75ZC9GVTyDin5UZceD_Ww=="
+        ],
+        [
+          "aclanthology.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGuXwk7q-I72RxO4J1UY0YuisRfvg14511ZkUqThRgg_QI0aWiuKr3tjGyaB-8wnqYveGsAHtGw3788xLDECyTFzkBAW9LFhQHCDCkoLXfCEzj5dVWCphQ_ywO1euYpqPDZzcM_kWU="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "29_4",
+      "section_idx": 29,
+      "idx_in_section": 4,
+      "text": "Tuning these can be as difficult as picking $k$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFOoI9xvlJmg4K4caSOwLZzUwSGj1-Ot_3UDWyZSIL7aBc-LihaQItUzhGZNjC-T1n_31DxZlYlZwlhfJd-Ho-bxZMLfj4BcB8HUtRkZBElPWnlk-37drMrMd-ZaWFUf90Gghq89TGv7Bf4IoXJrRtjX1DMekWY_44vd34eRrxFpuu5rKvDa9hHoxE5VHxkq7yOyJD-IrfzTffGxiIOPuXraMeFIzHibA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "29_5",
+      "section_idx": 29,
+      "idx_in_section": 5,
+      "text": "*  **Complexity:** HDP is mathematically more complex and generally slower to train than standard LDA .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "quora.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXuQiElr0aNhOj86ZSnGxYbepV1_9toGOsPHQ6J_sx3h5mHCqGhCLd88LXLxRFLU2Gcwm7OZPCTtziDd16ivdSHc3wjDXp8jG65CJiM8NuBYfsRmP9vD93uTegKvgGCjn2Fl9ehsL6hup6xXDC2lXm5oD2F75ZC9GVTyDin5UZceD_Ww=="
+        ],
+        [
+          "aclanthology.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGuXwk7q-I72RxO4J1UY0YuisRfvg14511ZkUqThRgg_QI0aWiuKr3tjGyaB-8wnqYveGsAHtGw3788xLDECyTFzkBAW9LFhQHCDCkoLXfCEzj5dVWCphQ_ywO1euYpqPDZzcM_kWU="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 1. Introduction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "Topic modeling, particularly Latent Dirichlet Allocation (LDA), is a powerful unsupervised machine learning technique used to uncover latent thematic structures within large text corpora.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG7L40HBxH_Fo3xsxFHq2uRdfcuknLGYb419Sk4RUcBJ0cQ9d5lztwP7x5f1JRdEZBnQriT7t4yJpYvIl_lmtp1ZVP_T4E7dR_jOUO18aAqJLlqNSH1CB2uYfKrqYSePdJKjSiP_LLvm1I3d2RI7JmPjev4U-jrpGpd0hTj7M5A2nP8QcDoPEgPw-easxtKHJo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "A critical challenge in applying LDA is that it requires the number of topics, denoted as $k$, to be specified *a priori* as a hyperparameter.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG7L40HBxH_Fo3xsxFHq2uRdfcuknLGYb419Sk4RUcBJ0cQ9d5lztwP7x5f1JRdEZBnQriT7t4yJpYvIl_lmtp1ZVP_T4E7dR_jOUO18aAqJLlqNSH1CB2uYfKrqYSePdJKjSiP_LLvm1I3d2RI7JmPjev4U-jrpGpd0hTj7M5A2nP8QcDoPEgPw-easxtKHJo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "The selection of $k$ is a \"Goldilocks problem\": too few topics result in overly broad, generic categories (underfitting), while too many topics lead to uninterpretable, fragmented, or redundant themes (overfitting).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmE30EZ0ewmwgSjt3FclCU63E45BCo4SbVQfjAfWqscxM6wuuk4vQ5ZN9z20G0e_rOlJAK5E0kMeVzkTAV3CdCJMbmazHQoBdENDhOq3V_Qgren0q7nrGYGg=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG7L40HBxH_Fo3xsxFHq2uRdfcuknLGYb419Sk4RUcBJ0cQ9d5lztwP7x5f1JRdEZBnQriT7t4yJpYvIl_lmtp1ZVP_T4E7dR_jOUO18aAqJLlqNSH1CB2uYfKrqYSePdJKjSiP_LLvm1I3d2RI7JmPjev4U-jrpGpd0hTj7M5A2nP8QcDoPEgPw-easxtKHJo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "The academic and practitioner communities have developed numerous methods to estimate the optimal $k$.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "These range from intrinsic probabilistic measurements to semantic coherence scores that attempt to mimic human cognition.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "This report provides a detailed analysis of the advantages and disadvantages of the top methods used in the field.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "30_0",
+      "section_idx": 30,
+      "idx_in_section": 0,
+      "text": "## 6. Comparative Summary Table",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "32_0",
+      "section_idx": 32,
+      "idx_in_section": 0,
+      "text": "## 7. Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "32_1",
+      "section_idx": 32,
+      "idx_in_section": 1,
+      "text": "The selection of the \"right\" number of topics is dependent on the end-user's objective.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "32_2",
+      "section_idx": 32,
+      "idx_in_section": 2,
+      "text": "If the goal is **predictive modeling** (e.g., document classification), **perplexity** and **RPC** are the most appropriate metrics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "32_3",
+      "section_idx": 32,
+      "idx_in_section": 3,
+      "text": "However, for **exploratory analysis** where human insight is paramount, **topic coherence ($C_{NPMI}$ or $C_v$)** is the industry standard, despite computational costs.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "32_4",
+      "section_idx": 32,
+      "idx_in_section": 4,
+      "text": "For a robust academic approach, it is recommended to use a **consensus method**: computing multiple metrics (e.g., Arun, Cao Juan, and Coherence) across a range of $k$ and selecting the value where these metrics converge (e.g., where Arun is minimized and Coherence is maximized).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5ZwOzd3XwzBKTxAFDUcuqPy2iGt09cf-qbX-zGJsriOsXEuQML19XvfYGFxiIQXtrUpqVO9xa79L2HppDTREDu2rCJ4k_qT3aEyt4_hEgaqOQ_hsRqXAG4wSLZunnsyC0IdAjc48WYGasHM7PQlEjiNinu1UuEjAYbTY_8HX8Z-A5yPbW1uH8ovcT_n7l-E4lVZMMpC-SxFIxt10A6rC6VG7wdwEzKElIN4jE8nTBSkJW0jRB1baL566wk-ThPjxWqAG7"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFAIRGVPzlqXEbBWBiTU6Ztt-R8pRzvdz97hZ0BOJCMAjUhk-N7bWF9FViPH2vIj2J9nHjUk68axfjkGc8v3xt1efrX2bQAMxDWuzls32CMmnh53akJWk7PvYXfOq76rM1_JkbYu8BibR87iBvTm9tNaxN7APiNhHxodKjE5jmQKxzS3NRgjWAbDzYUB9Sdd9xGc9Es4bah3VDigNxdObS39PzBWYNy-57q7HEDaiJ4b0eG4yNfMzfO0g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "32_5",
+      "section_idx": 32,
+      "idx_in_section": 5,
+      "text": "Furthermore, quantitative metrics should always be validated qualitatively by visualizing the topics (e.g., using pyLDAvis) to ensure they make semantic sense in the context of the specific domain.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG7L40HBxH_Fo3xsxFHq2uRdfcuknLGYb419Sk4RUcBJ0cQ9d5lztwP7x5f1JRdEZBnQriT7t4yJpYvIl_lmtp1ZVP_T4E7dR_jOUO18aAqJLlqNSH1CB2uYfKrqYSePdJKjSiP_LLvm1I3d2RI7JmPjev4U-jrpGpd0hTj7M5A2nP8QcDoPEgPw-easxtKHJo="
+        ],
+        [
+          "squareup.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHowp4b624-MysMedmpeyxroXbxwmSd3NAfYVWzTGSuqKI7XdZeRt8YUlM4WAIJz0lYS9YOc_1KENIWvgtXwgpKHtaexNWm1skHvqy2nMlB3T5RMie17_7OzgkJQ34H9lTtk9nNVPuqjDs0TXVEi5p_OfG5hgyvc15lS_hBBtktVUIYDqZshEBnnYeW7bpPuw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 2. Probabilistic and Information-Theoretic Criteria",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "These methods evaluate the model based on its statistical fit to the data.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "They are intrinsic to the generative process of LDA and are grounded in information theory.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 2.1 Perplexity and Log-Likelihood",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "Perplexity is the classical standard for evaluating probabilistic models.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEABQ6Cxu5-SgO5tnlkQ9emXsgCgKrokf6DTmTntXMD8_e6unJo5P2KRLqRPRGdCjZmnVB-52DImnaxcQ5qoQjhSsU3Up8cqiC0UCVR5nxxHN6dV7vh7VaEj2oAYh48E-1t9nqaRKD5pZ678rvPZSoGaJf9MOl6YA9xBIy2XyZPDYM4-2b6PFneeVFWy37S5cuw-eU2x8Lqn5ZV-c2NqaeAvF_emMFzXuIHYmposYlW"
+        ],
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGc6QAhNHjm8yEvyKhVcBZJFecXcAzeL1G0tO6C7SKX9-1IcNm1m_b4pCS43BMRdiZsq2kOMFNztnjF1ndbE2SMVom7TZ4dGvWmlJ8nCVF-39xZX_y8v2osx6_hxb0="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFFrxnIPCfpRIaT2GETSuFAvxIRlG4VzmPAWM375j9aNjljMn5iDyEGAHUlfPH1_cdrlb0RkMZz03iWytt9kBWCJGog83XnIGE-BB3nyDrWpvugnlH8HRmPFTCb_gspj25Pc6jCiDdEJTOGRdSnKHCWChSBt2cxppK1vYHDLaz72lEHg5yqeJqXAbgn5OeHjJAZhBgFA5Hpoy-mdKdsQyf0kQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "It measures the inverse log-likelihood of a held-out test set.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEABQ6Cxu5-SgO5tnlkQ9emXsgCgKrokf6DTmTntXMD8_e6unJo5P2KRLqRPRGdCjZmnVB-52DImnaxcQ5qoQjhSsU3Up8cqiC0UCVR5nxxHN6dV7vh7VaEj2oAYh48E-1t9nqaRKD5pZ678rvPZSoGaJf9MOl6YA9xBIy2XyZPDYM4-2b6PFneeVFWy37S5cuw-eU2x8Lqn5ZV-c2NqaeAvF_emMFzXuIHYmposYlW"
+        ],
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGc6QAhNHjm8yEvyKhVcBZJFecXcAzeL1G0tO6C7SKX9-1IcNm1m_b4pCS43BMRdiZsq2kOMFNztnjF1ndbE2SMVom7TZ4dGvWmlJ8nCVF-39xZX_y8v2osx6_hxb0="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFFrxnIPCfpRIaT2GETSuFAvxIRlG4VzmPAWM375j9aNjljMn5iDyEGAHUlfPH1_cdrlb0RkMZz03iWytt9kBWCJGog83XnIGE-BB3nyDrWpvugnlH8HRmPFTCb_gspj25Pc6jCiDdEJTOGRdSnKHCWChSBt2cxppK1vYHDLaz72lEHg5yqeJqXAbgn5OeHjJAZhBgFA5Hpoy-mdKdsQyf0kQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "Intuitively, it assesses how \"surprised\" the model is by new data; a lower perplexity indicates a better predictive model.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "stackexchange.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEABQ6Cxu5-SgO5tnlkQ9emXsgCgKrokf6DTmTntXMD8_e6unJo5P2KRLqRPRGdCjZmnVB-52DImnaxcQ5qoQjhSsU3Up8cqiC0UCVR5nxxHN6dV7vh7VaEj2oAYh48E-1t9nqaRKD5pZ678rvPZSoGaJf9MOl6YA9xBIy2XyZPDYM4-2b6PFneeVFWy37S5cuw-eU2x8Lqn5ZV-c2NqaeAvF_emMFzXuIHYmposYlW"
+        ],
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGc6QAhNHjm8yEvyKhVcBZJFecXcAzeL1G0tO6C7SKX9-1IcNm1m_b4pCS43BMRdiZsq2kOMFNztnjF1ndbE2SMVom7TZ4dGvWmlJ8nCVF-39xZX_y8v2osx6_hxb0="
+        ],
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFFrxnIPCfpRIaT2GETSuFAvxIRlG4VzmPAWM375j9aNjljMn5iDyEGAHUlfPH1_cdrlb0RkMZz03iWytt9kBWCJGog83XnIGE-BB3nyDrWpvugnlH8HRmPFTCb_gspj25Pc6jCiDdEJTOGRdSnKHCWChSBt2cxppK1vYHDLaz72lEHg5yqeJqXAbgn5OeHjJAZhBgFA5Hpoy-mdKdsQyf0kQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "#### Advantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "*  **Statistical Rigor:** Perplexity is mathematically derived directly from the probabilistic foundation of LDA.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGc6QAhNHjm8yEvyKhVcBZJFecXcAzeL1G0tO6C7SKX9-1IcNm1m_b4pCS43BMRdiZsq2kOMFNztnjF1ndbE2SMVom7TZ4dGvWmlJ8nCVF-39xZX_y8v2osx6_hxb0="
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpVxeRVph4Y5R-DDu7R55LKZKD_DnziHHnurLTllB0dKiMXx1vbKMd5ws0nARVjU6xM3SV-TU1ov0Ash7nLgV8SKkjCQZSU3SVcluRhwn1PX-NjyQI20RYil73n6kqay694bJf3g93"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "It provides a standardized measure of generalization performance.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "mdpi.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGc6QAhNHjm8yEvyKhVcBZJFecXcAzeL1G0tO6C7SKX9-1IcNm1m_b4pCS43BMRdiZsq2kOMFNztnjF1ndbE2SMVom7TZ4dGvWmlJ8nCVF-39xZX_y8v2osx6_hxb0="
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpVxeRVph4Y5R-DDu7R55LKZKD_DnziHHnurLTllB0dKiMXx1vbKMd5ws0nARVjU6xM3SV-TU1ov0Ash7nLgV8SKkjCQZSU3SVcluRhwn1PX-NjyQI20RYil73n6kqay694bJf3g93"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "*  **Standardization:** It is a built-in metric in almost all major topic modeling libraries (e.g., Gensim, Scikit-learn, Mallet), making it easy to compute without external reference corpora.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "memphis.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqJEk3-3uhHWT5hkEKhkQg-LpELvdvE-dItnWR8M54nKmgNNSbJrR1RtgxE890htdGFEFCsXm9YO6hdIBiGzoU_8dY0pnG51a6mpEBsXc-kc0mClO0wVvHt4H9edIbwmEd4jn8nRdptj9AmfdrDM5q2SOxZl-xKJqw3fzXWM3RXMwAZMNe"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "*  **Predictive Utility:** If the downstream task is document classification or information retrieval, perplexity is often a reliable indicator of performance.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ijosi.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHsjqci3VYSbuMT8all5s_f1G2CF4NcaKiADYIE4mzWOnNtwIfgeSVhqCC3uaIjoS6ogbFcwXX_0uVjnhbvpUo3lfrJwGoeKj4jIFTGiAf2CXVyytOtUsfmavU0JHVK45OoC5I4oRcWVKnP3-ZM"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "#### Disadvantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "*  **Anti-Correlation with Interpretability:** The most significant drawback is that perplexity often does not correlate with human judgment.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFFrxnIPCfpRIaT2GETSuFAvxIRlG4VzmPAWM375j9aNjljMn5iDyEGAHUlfPH1_cdrlb0RkMZz03iWytt9kBWCJGog83XnIGE-BB3nyDrWpvugnlH8HRmPFTCb_gspj25Pc6jCiDdEJTOGRdSnKHCWChSBt2cxppK1vYHDLaz72lEHg5yqeJqXAbgn5OeHjJAZhBgFA5Hpoy-mdKdsQyf0kQ=="
+        ],
+        [
+          "squareup.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHowp4b624-MysMedmpeyxroXbxwmSd3NAfYVWzTGSuqKI7XdZeRt8YUlM4WAIJz0lYS9YOc_1KENIWvgtXwgpKHtaexNWm1skHvqy2nMlB3T5RMie17_7OzgkJQ34H9lTtk9nNVPuqjDs0TXVEi5p_OfG5hgyvc15lS_hBBtktVUIYDqZshEBnnYeW7bpPuw=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF_5MmWnwfKVJFWrJuA_ZYALozIfwwEBWPXLRgQj8LxhoMgNjWg85o63ubZciO5rNLK7OYPAhPoBlObB5IEN-MY2AJNz54YH7dhHU_dLExw-t0oWO2GqnUaK5wmhJoyVwpscIFoOxmbYSRra3CkQUuj2w1f1DfUhlT_54X3NxbajhHYy5vbwGzt75Jc0gXInvenIaLbnU-GXmT7Vplj5axbBw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "Research by Chang et al. (2009) demonstrated that models with lower perplexity (better statistical fit) often produce topics that humans find less semantically coherent.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "medium.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFFrxnIPCfpRIaT2GETSuFAvxIRlG4VzmPAWM375j9aNjljMn5iDyEGAHUlfPH1_cdrlb0RkMZz03iWytt9kBWCJGog83XnIGE-BB3nyDrWpvugnlH8HRmPFTCb_gspj25Pc6jCiDdEJTOGRdSnKHCWChSBt2cxppK1vYHDLaz72lEHg5yqeJqXAbgn5OeHjJAZhBgFA5Hpoy-mdKdsQyf0kQ=="
+        ],
+        [
+          "squareup.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHowp4b624-MysMedmpeyxroXbxwmSd3NAfYVWzTGSuqKI7XdZeRt8YUlM4WAIJz0lYS9YOc_1KENIWvgtXwgpKHtaexNWm1skHvqy2nMlB3T5RMie17_7OzgkJQ34H9lTtk9nNVPuqjDs0TXVEi5p_OfG5hgyvc15lS_hBBtktVUIYDqZshEBnnYeW7bpPuw=="
+        ],
+        [
+          "towardsdatascience.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF_5MmWnwfKVJFWrJuA_ZYALozIfwwEBWPXLRgQj8LxhoMgNjWg85o63ubZciO5rNLK7OYPAhPoBlObB5IEN-MY2AJNz54YH7dhHU_dLExw-t0oWO2GqnUaK5wmhJoyVwpscIFoOxmbYSRra3CkQUuj2w1f1DfUhlT_54X3NxbajhHYy5vbwGzt75Jc0gXInvenIaLbnU-GXmT7Vplj5axbBw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "*  **Monotonic Decrease:** In many datasets, perplexity continues to decrease as $k$ increases, often stabilizing only at very high values of $k$ (e.g., hundreds of topics).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVy8J5RB6XazXMQlBtwSO7jFw0JeOuMcIXIrAZtgJiiHQOkij7U5ZszCv5IKIQxPPjK1RkSBt7wclN9DHskIwg4no6WA3FJftw1igOq3brnyHVJIpvA7NDmIRcCqPYZ3h1CqwRaz_pc7N2GscPmckwRZy3pUNNBLbkDweYf0Z-koYC0RUUDKzhbcb2gb6V4mZqgTL7vLel0cpRsbJ9vIbN"
+        ],
+        [
+          "amstat.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSuzzFGW-JgEniV2WpZA1xK47uQmaZR9YY1WJagYTGoxToaD5M8rJbcigueLw1hEtpUSEXnH62nPp-d5yRX840oUW9pUbaiQzYTzRcSgU6gxCethVHdTTBxiU9AE3239NYS3eSvuFWzVgKoR45Zv5B1xt45TmAoF7CEFbcgBMIhKs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "This makes identifying a clear \"elbow\" or optimal point difficult and can lead to severe overfitting.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEpVxeRVph4Y5R-DDu7R55LKZKD_DnziHHnurLTllB0dKiMXx1vbKMd5ws0nARVjU6xM3SV-TU1ov0Ash7nLgV8SKkjCQZSU3SVcluRhwn1PX-NjyQI20RYil73n6kqay694bJf3g93"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "text": "*  **Instability:** Perplexity scores can be unstable across different random initializations of the model, varying significantly based on the seed used.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVy8J5RB6XazXMQlBtwSO7jFw0JeOuMcIXIrAZtgJiiHQOkij7U5ZszCv5IKIQxPPjK1RkSBt7wclN9DHskIwg4no6WA3FJftw1igOq3brnyHVJIpvA7NDmIRcCqPYZ3h1CqwRaz_pc7N2GscPmckwRZy3pUNNBLbkDweYf0Z-koYC0RUUDKzhbcb2gb6V4mZqgTL7vLel0cpRsbJ9vIbN"
+        ],
+        [
+          "amstat.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSuzzFGW-JgEniV2WpZA1xK47uQmaZR9YY1WJagYTGoxToaD5M8rJbcigueLw1hEtpUSEXnH62nPp-d5yRX840oUW9pUbaiQzYTzRcSgU6gxCethVHdTTBxiU9AE3239NYS3eSvuFWzVgKoR45Zv5B1xt45TmAoF7CEFbcgBMIhKs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### 2.2 Rate of Perplexity Change (RPC)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY_-40MDjk-hUBvfGkEGcBJpaPZMeIEm0LKpfmeMJWkZpsLXgaqUWFF74Pec2EtvX5Dvyr_ozrO6BRKwXkJA2fVt7QnlpTz5oUj086D50nHuEevFju_GaAUelXsDzyDD-vPFet6TJy49MjggUTRoFUWCSkQqsXRtLyLXSkf3d8YlUUcqi81Dk3KcwSrNcYGsfXpUNKpitDhGZ4GzwMK8IZqKEfgOpEViPu4woKCMgFepwZBgG8HqaNYlYRrqc="
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHNN5STE8lLsqepPmTzuV7qwrQYOErgtB7ahSsHdfoE0REFACa3UPsuxemT2OnXGuFJOWSOcAmRFUvUzG1VhdA9BAJIongsuzbvAPj_U_JYgJ84AnHNirdEDf49gvmGqYg9mBgB4aVOvQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "Proposed by Zhao et al. (2015), this heuristic calculates the rate of change (first derivative) of the perplexity curve to identify an \"elbow\" point where the gain in model fit diminishes.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY_-40MDjk-hUBvfGkEGcBJpaPZMeIEm0LKpfmeMJWkZpsLXgaqUWFF74Pec2EtvX5Dvyr_ozrO6BRKwXkJA2fVt7QnlpTz5oUj086D50nHuEevFju_GaAUelXsDzyDD-vPFet6TJy49MjggUTRoFUWCSkQqsXRtLyLXSkf3d8YlUUcqi81Dk3KcwSrNcYGsfXpUNKpitDhGZ4GzwMK8IZqKEfgOpEViPu4woKCMgFepwZBgG8HqaNYlYRrqc="
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHNN5STE8lLsqepPmTzuV7qwrQYOErgtB7ahSsHdfoE0REFACa3UPsuxemT2OnXGuFJOWSOcAmRFUvUzG1VhdA9BAJIongsuzbvAPj_U_JYgJ84AnHNirdEDf49gvmGqYg9mBgB4aVOvQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "#### Advantages",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "*  **Clearer Selection Criteria:** Unlike raw perplexity, which may not show a minimum, RPC helps identify the point of diminishing returns, offering a more definitive suggestion for $k$.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFY_-40MDjk-hUBvfGkEGcBJpaPZMeIEm0LKpfmeMJWkZpsLXgaqUWFF74Pec2EtvX5Dvyr_ozrO6BRKwXkJA2fVt7QnlpTz5oUj086D50nHuEevFju_GaAUelXsDzyDD-vPFet6TJy49MjggUTRoFUWCSkQqsXRtLyLXSkf3d8YlUUcqi81Dk3KcwSrNcYGsfXpUNKpitDhGZ4GzwMK8IZqKEfgOpEViPu4woKCMgFepwZBgG8HqaNYlYRrqc="
+        ],
+        [
+          "scienpress.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGjCBQrRHY-SzJgBgdY-uggeiZ2TMPFmTH6FFgG8cD-Bjlg3-PlvMWoR-vPYGGoJnkFpR72DBL_FNTgs0eFkV25rOa4sn4T1fgTkSQUNVmAwedTeIEDD58_WYqbwrxKzU3Jb5NjVgb8hr1mWoo="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "*  **Stability:** Empirical studies suggest RPC is more stable across different datasets and initializations compared to raw perplexity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "amstat.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSuzzFGW-JgEniV2WpZA1xK47uQmaZR9YY1WJagYTGoxToaD5M8rJbcigueLw1hEtpUSEXnH62nPp-d5yRX840oUW9pUbaiQzYTzRcSgU6gxCethVHdTTBxiU9AE3239NYS3eSvuFWzVgKoR45Zv5B1xt45TmAoF7CEFbcgBMIhKs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "#### Disadvantages",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "amstat.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSuzzFGW-JgEniV2WpZA1xK47uQmaZR9YY1WJagYTGoxToaD5M8rJbcigueLw1hEtpUSEXnH62nPp-d5yRX840oUW9pUbaiQzYTzRcSgU6gxCethVHdTTBxiU9AE3239NYS3eSvuFWzVgKoR45Zv5B1xt45TmAoF7CEFbcgBMIhKs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "*  **Heuristic Nature:** It remains a heuristic approach based on perplexity and inherits the fundamental flaw of perplexity: optimizing for predictive likelihood rather than semantic quality.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "amstat.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFSuzzFGW-JgEniV2WpZA1xK47uQmaZR9YY1WJagYTGoxToaD5M8rJbcigueLw1hEtpUSEXnH62nPp-d5yRX840oUW9pUbaiQzYTzRcSgU6gxCethVHdTTBxiU9AE3239NYS3eSvuFWzVgKoR45Zv5B1xt45TmAoF7CEFbcgBMIhKs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

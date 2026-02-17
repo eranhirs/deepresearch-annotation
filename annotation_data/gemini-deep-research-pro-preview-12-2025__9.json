@@ -1,0 +1,2026 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "9",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat is the known evidence for pervasiveness of gaming of citation metrics like citation count and h-index?",
+  "answer": "# The Pervasiveness of Citation Metric Gaming: Evidence, Mechanisms, and Systemic Implications\n\n### Key Findings\n*   **Industrialized Manipulation:** Citation gaming has evolved from individual misconduct (self-citation) to organized industrial operations, including \"citation cartels\" and \"paper mills\" that sell citations for approximately $10\u2013$20 USD per citation [cite: 1].\n*   **Widespread Coercion:** Surveys indicate that approximately 20% of researchers have experienced coercive citation requests from editors, and up to two-thirds have reported pressure from peer reviewers to add superfluous citations [cite: 2, 3].\n*   **Systemic Vulnerabilities:** Major indices like Google Scholar are highly susceptible to manipulation, as evidenced by sting operations involving fictional authors (e.g., \"Ike Antkare\" and \"Larry the Cat\") achieving high h-indices through fabricated literature [cite: 4, 5].\n*   **Mass Retractions:** The scale of the problem is highlighted by the retraction of over 8,000 to 11,000 papers from Hindawi/Wiley journals in 2023\u20132024 due to compromised peer review and citation manipulation rings, leading to the delisting of 19 journals from the Web of Science [cite: 6, 7, 8].\n\n## 1. Introduction: The Metric-Driven Crisis\n\nThe academic ecosystem is currently witnessing a transition from \"publish or perish\" to \"get cited or perish,\" creating a high-stakes environment where quantitative bibliometric indicators\u2014specifically citation counts and the h-index\u2014determine career advancement, funding allocation, and institutional prestige [cite: 9, 10]. This reliance on metrics has triggered Goodhart\u2019s Law: when a measure becomes a target, it ceases to be a good measure. The evidence for the pervasiveness of citation gaming is no longer anecdotal; it is supported by large-scale data analyses, sting operations, and unprecedented mass retractions by major publishers.\n\nCurrent evidence suggests that gaming has metastasized from individual \"low-tech\" strategies, such as excessive self-citation, to \"high-tech,\" coordinated efforts involving artificial intelligence, black-market services, and compromised editorial boards [cite: 11]. This report details the known evidence for these practices, categorizing them by mechanism and scale.\n\n## 2. Coercive Citation: Editors and Reviewers\n\nCoercive citation occurs when an editor or reviewer requests that an author add citations to a specific journal or author (often themselves) as a condition for acceptance, despite the citations lacking scholarly relevance [cite: 2, 12].\n\n### 2.1 Prevalence Surveys and Data\nThe most robust evidence for coercive citation comes from large-scale surveys of the academic community.\n*   **The 2012 Wilhite and Fong Study:** A landmark survey of 6,672 researchers across economics, sociology, psychology, and business disciplines found that approximately **20% (1 in 5)** of respondents had experienced coercive citation requests [cite: 2, 12, 13]. The study noted that coercion was more prevalent in business and management disciplines compared to others [cite: 3].\n*   **The 2019 Nature Survey:** A subsequent survey of authors for the journal *Nature* revealed an even higher prevalence, with **two-thirds** of respondents reporting that they had received coercive citation suggestions from peer reviewers [cite: 3, 14].\n*   **Reviewer Bias:** Analysis of over 18,000 open-access articles indicated that manuscripts citing a reviewer's work were accepted at a rate of 92%, compared to 76% for those that did not, raising concerns about the implicit pressure to cite reviewers to ensure acceptance [cite: 15].\n\n### 2.2 Mechanisms of Coercion\n*   **Editorial Coercion:** Editors may direct authors to add citations from the editor's journal to boost the journal's Impact Factor (JIF). This is often done through \"gentle\" suggestions that carry the implicit threat of rejection [cite: 2, 16].\n*   **Reviewer Coercion:** Reviewers may request citations to their own work to inflate their personal h-index. While some requests are legitimate, \"coercive\" requests are characterized by a lack of relevance and a focus on a single author's body of work [cite: 3, 17].\n*   **Targeting Vulnerability:** Evidence suggests that coercive tactics disproportionately target junior researchers, those from non-English speaking countries, and lower-ranking academics who are less likely to push back against unethical requests [cite: 3, 12].\n\n## 3. Citation Cartels and Rings\n\nCitation cartels (or rings) represent a coordinated effort where groups of authors or journals agree to cite each other's work disproportionately to manipulate metrics. Unlike self-citation, which is easily detected, cartels are designed to mimic organic citation patterns, making them harder to identify [cite: 18, 19].\n\n### 3.1 Journal-Level Cartels (Citation Stacking)\nCitation stacking involves journals exchanging citations to mutually boost their Impact Factors.\n*   **The Cell Transplantation Case:** In 2012, it was revealed that *Medical Science Monitor* published a review article citing 445 papers from *Cell Transplantation*, which significantly inflated the latter's Impact Factor. This led to the suppression of these journals from citation reports [cite: 20, 21].\n*   **Thomson Reuters/Clarivate Suppressions:** In 2013, 37 journals were suppressed, and 66 were banned for citation stacking. In 2016, 18 journals were suppressed for anomalous citation patterns [cite: 22, 23].\n*   **Brazilian Citation Cartel:** A specific cartel involving Brazilian journals was detected by algorithms designed to spot citation stacking, where donor journals provided excessive citations to recipient journals to manipulate JIF calculations [cite: 22].\n\n### 3.2 Author-Level Cartels\n*   **Mathematics Community Crisis:** Recent investigations have uncovered \"cliques\" of mathematicians, particularly at institutions in China and Saudi Arabia, who artificially boost colleagues' citation counts. In 2023, a network of approximately 100 researchers co-authored 17 papers that generated nearly 400 citations in a single year, heavily relying on self-citations and co-author citations [cite: 10, 24, 25]. This manipulation was severe enough to exclude the entire field of mathematics from Clarivate's \"Highly Cited Researchers\" list in certain instances [cite: 25].\n*   **Detection Challenges:** While algorithms can detect \"anomalous citation groups\" (donor and recipient journals), proving intent remains difficult. However, patterns where citations are concentrated heavily within a closed loop of authors are a primary red flag [cite: 19, 26].\n\n## 4. Industrialized Gaming: Paper Mills and Special Issues\n\nThe most significant recent development in citation gaming is the industrialization of fraud through \"paper mills\"\u2014organizations that produce and sell fake research manuscripts\u2014and the exploitation of \"Special Issues\" in open-access journals.\n\n### 4.1 The Hindawi and Wiley Crisis (2023\u20132024)\nThe scale of this issue was laid bare by the massive retraction events involving Hindawi, a publisher acquired by Wiley.\n*   **Scale of Retractions:** In 2023 and 2024, Wiley/Hindawi retracted between **8,000 and 11,300 papers** [cite: 7, 8, 27]. This single event resulted in more retractions in one year than had previously been recorded by all publishers combined [cite: 7].\n*   **Mechanism:** Paper mills infiltrated the \"Guest Editor\" systems of Special Issues. Rogue editors accepted thousands of low-quality or fabricated papers that contained \"citation farms\"\u2014lists of irrelevant citations designed to boost the metrics of specific individuals or journals [cite: 6, 11, 28].\n*   **Financial Impact:** The crisis cost Wiley an estimated $35\u2013$40 million in lost revenue and forced the company to retire the Hindawi brand entirely [cite: 7, 27].\n\n### 4.2 Clarivate and Web of Science Delistings\nIn response to this industrial manipulation, Clarivate (which manages the Web of Science) took drastic action in 2023.\n*   **The Purge:** Clarivate delisted over **50 journals** from the Web of Science Master Journal List in March 2023. Of these, 19 were Hindawi titles [cite: 29, 30, 31].\n*   **Consequences:** Delisted journals lost their Impact Factors, and papers published in them no longer contributed to citation counts in the Web of Science ecosystem, rendering them effectively valueless for metric-based academic advancement [cite: 29, 32].\n*   **Impact Inflation:** Analysis of citation metrics revealed that publishers like MDPI and Hindawi showed significantly higher \"impact inflation\" and self-citation rates compared to other publishers, driven largely by the Special Issue model [cite: 33, 34].\n\n## 5. Fabricated Profiles and Sting Operations\n\nResearchers have repeatedly demonstrated the fragility of citation metrics, particularly on Google Scholar, through \"sting operations\" that create fictional entities with astronomical metrics.\n\n### 5.1 Historical Context: Ike Antkare (2010)\nOne of the earliest demonstrations of h-index hacking was the creation of \"Ike Antkare\" by Cyril Labb\u00e9.\n*   **Method:** Labb\u00e9 used SCIgen (a computer science paper generator) to create fake papers that cited each other.\n*   **Result:** Ike Antkare briefly became one of the most highly cited scientists in history, with an h-index of 94, surpassing Einstein, purely through circular citations in non-existent papers indexed by Google Scholar [cite: 4, 35, 36, 37].\n\n### 5.2 Modern Context: Larry the Cat (2024)\nIn 2024, researchers Reese Richardson and Nick Wise demonstrated that the vulnerabilities exposed by Ike Antkare remain unaddressed.\n*   **The Sting:** They created a Google Scholar profile for \"Larry Richardson\" (a cat) and uploaded 12 fake mathematical papers to ResearchGate, each citing the others.\n*   **Result:** Larry the Cat achieved an h-index of 12 and was briefly the world's highest-cited cat, with 132 citations. This prank highlighted that Google Scholar still lacks basic quality controls to filter out circular citations from predatory or fake repositories [cite: 5, 11, 38, 39].\n\n### 5.3 The NYU Abu Dhabi Study (Buying Citations)\nA more sinister investigation by Yasir Zaki and colleagues at NYU Abu Dhabi exposed the commercial availability of citations.\n*   **Method:** The team created a fictional researcher profile and contacted a \"citation boosting\" service found online.\n*   **Transaction:** They purchased **50 citations for $300**.\n*   **Outcome:** Within 40 days, the fictional profile received 50 citations from papers published in 22 different journals, 14 of which were indexed in Scopus. This proved that citations can be bought and successfully injected into reputable databases [cite: 40, 41, 42, 43].\n\n## 6. The Commercial Market for Citations\n\nThere is now a visible, open market for purchasing citations and h-index improvements. These services operate under the guise of \"academic visibility\" or \"consulting\" but explicitly offer metric manipulation.\n\n### 6.1 Pricing and Availability\nResearch into these services reveals a standardized pricing model:\n*   **Cost Per Citation:** Prices typically range from **$10 to $20 USD per citation** [cite: 1].\n*   **Packages:** Vendors offer bulk packages (e.g., 50 or 100 citations) with guarantees of indexing in Google Scholar, Scopus, or Web of Science [cite: 41, 44].\n*   **Platforms:** These services are advertised on freelance platforms like Fiverr, specialized websites (e.g., \"Futurity Publishing,\" \"Avestina\"), and through social media channels like WhatsApp and Facebook [cite: 39, 44, 45, 46].\n\n### 6.2 Service Claims\nVendors explicitly promise to boost h-indices and citation counts. For example:\n*   \"Guarantee of result within the indexation cycle.\"\n*   \"Result guarantee or your money back.\"\n*   \"Ethically increase google scholar citations and h index quickly.\" [cite: 1, 44, 47].\n\n### 6.3 Mechanism of Delivery\nThese services often utilize paper mills or a network of compromised journals to plant citations. The NYU Abu Dhabi sting confirmed that purchased citations often appear in low-quality or predatory journals, but also in Scopus-indexed titles, indicating a breach of legitimate bibliographic databases [cite: 40, 41].\n\n## 7. Predatory Journals and Citation Pollution\n\nPredatory journals\u2014entities that prioritize publication fees over peer review\u2014act as a reservoir for citation pollution.\n\n*   **Infiltration:** A study of 32 Nigerian predatory biomedical journals found that they received thousands of citations, and papers in predatory journals are increasingly cited by articles in legitimate, indexed journals [cite: 48].\n*   **Citation Leakage:** Citations from predatory journals are \"leaking\" into reputable databases. One study found that 31.4% of articles in a sample of predatory journals were cited at least once by articles indexed in the Web of Science [cite: 49, 50].\n*   **Impact:** This pollution distorts metrics for legitimate researchers and allows bad actors to launder their reputation by citing their own fake work in predatory outlets that are subsequently picked up by Google Scholar [cite: 51, 52].\n\n## 8. Systemic Vulnerabilities and Implications\n\nThe evidence points to systemic failures in how bibliographic data is curated and used.\n\n### 8.1 Database Vulnerabilities\n*   **Google Scholar:** Identified as the most vulnerable platform due to its automated crawling of the web without rigorous quality filters. It indexes preprints, predatory journals, and even uploaded PDFs on personal websites, making it trivial to game [cite: 11, 25, 46, 53].\n*   **Scopus and Web of Science:** While more rigorous, these databases are not immune. The presence of purchased citations in Scopus-indexed journals and the need for mass delistings by Clarivate demonstrate that \"gatekeeping\" is failing against industrialized fraud [cite: 29, 41].\n\n### 8.2 The \"Publish or Perish\" Feedback Loop\nThe pressure to secure tenure and funding creates a demand for these illicit services. As metrics become the primary proxy for scientific quality, the incentive to game them increases, creating a feedback loop where honest researchers are disadvantaged [cite: 9, 10].\n\n## 9. Conclusion\n\nThe evidence for the pervasiveness of citation gaming is overwhelming and multifaceted. It is no longer limited to isolated individuals padding their reference lists. Instead, it has evolved into a global industry involving:\n1.  **Coercion:** Institutionalized bullying by editors and reviewers (affecting ~20\u201366% of researchers).\n2.  **Cartels:** Organized rings of mutual citation, particularly in specific fields like mathematics.\n3.  **Commercialization:** A black market selling citations for ~$15, accessible via standard web searches.\n4.  **Industrial Fraud:** Paper mills generating thousands of fake papers to manipulate metrics, necessitating the retraction of over 10,000 papers in a single year by a single publisher.\n\nThis ecosystem of manipulation threatens the integrity of scientific evaluation, rendering standard metrics like the h-index increasingly unreliable as measures of true scholarly impact.",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# The Pervasiveness of Citation Metric Gaming: Evidence, Mechanisms, and Systemic Implications",
+      "header_level": 1,
+      "text": "# The Pervasiveness of Citation Metric Gaming: Evidence, Mechanisms, and Systemic Implications\n\n",
+      "start": 0,
+      "end": 96
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "### Key Findings",
+      "header_level": 3,
+      "text": "### Key Findings\n*   **Industrialized Manipulation:** Citation gaming has evolved from individual misconduct (self-citation) to organized industrial operations, including \"citation cartels\" and \"paper mills\" that sell citations for approximately $10\u2013$20 USD per citation [cite: 1].\n*   **Widespread Coercion:** Surveys indicate that approximately 20% of researchers have experienced coercive citation requests from editors, and up to two-thirds have reported pressure from peer reviewers to add superfluous citations [cite: 2, 3].\n*   **Systemic Vulnerabilities:** Major indices like Google Scholar are highly susceptible to manipulation, as evidenced by sting operations involving fictional authors (e.g., \"Ike Antkare\" and \"Larry the Cat\") achieving high h-indices through fabricated literature [cite: 4, 5].\n*   **Mass Retractions:** The scale of the problem is highlighted by the retraction of over 8,000 to 11,000 papers from Hindawi/Wiley journals in 2023\u20132024 due to compromised peer review and citation manipulation rings, leading to the delisting of 19 journals from the Web of Science [cite: 6, 7, 8].\n\n",
+      "start": 96,
+      "end": 1209
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 1. Introduction: The Metric-Driven Crisis",
+      "header_level": 2,
+      "text": "## 1. Introduction: The Metric-Driven Crisis\n\nThe academic ecosystem is currently witnessing a transition from \"publish or perish\" to \"get cited or perish,\" creating a high-stakes environment where quantitative bibliometric indicators\u2014specifically citation counts and the h-index\u2014determine career advancement, funding allocation, and institutional prestige [cite: 9, 10]. This reliance on metrics has triggered Goodhart\u2019s Law: when a measure becomes a target, it ceases to be a good measure. The evidence for the pervasiveness of citation gaming is no longer anecdotal; it is supported by large-scale data analyses, sting operations, and unprecedented mass retractions by major publishers.\n\nCurrent evidence suggests that gaming has metastasized from individual \"low-tech\" strategies, such as excessive self-citation, to \"high-tech,\" coordinated efforts involving artificial intelligence, black-market services, and compromised editorial boards [cite: 11]. This report details the known evidence for these practices, categorizing them by mechanism and scale.\n\n",
+      "start": 1209,
+      "end": 2269
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 2. Coercive Citation: Editors and Reviewers",
+      "header_level": 2,
+      "text": "## 2. Coercive Citation: Editors and Reviewers\n\nCoercive citation occurs when an editor or reviewer requests that an author add citations to a specific journal or author (often themselves) as a condition for acceptance, despite the citations lacking scholarly relevance [cite: 2, 12].\n\n",
+      "start": 2269,
+      "end": 2555
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 2.1 Prevalence Surveys and Data",
+      "header_level": 3,
+      "text": "### 2.1 Prevalence Surveys and Data\nThe most robust evidence for coercive citation comes from large-scale surveys of the academic community.\n*   **The 2012 Wilhite and Fong Study:** A landmark survey of 6,672 researchers across economics, sociology, psychology, and business disciplines found that approximately **20% (1 in 5)** of respondents had experienced coercive citation requests [cite: 2, 12, 13]. The study noted that coercion was more prevalent in business and management disciplines compared to others [cite: 3].\n*   **The 2019 Nature Survey:** A subsequent survey of authors for the journal *Nature* revealed an even higher prevalence, with **two-thirds** of respondents reporting that they had received coercive citation suggestions from peer reviewers [cite: 3, 14].\n*   **Reviewer Bias:** Analysis of over 18,000 open-access articles indicated that manuscripts citing a reviewer's work were accepted at a rate of 92%, compared to 76% for those that did not, raising concerns about the implicit pressure to cite reviewers to ensure acceptance [cite: 15].\n\n",
+      "start": 2555,
+      "end": 3625
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 2.2 Mechanisms of Coercion",
+      "header_level": 3,
+      "text": "### 2.2 Mechanisms of Coercion\n*   **Editorial Coercion:** Editors may direct authors to add citations from the editor's journal to boost the journal's Impact Factor (JIF). This is often done through \"gentle\" suggestions that carry the implicit threat of rejection [cite: 2, 16].\n*   **Reviewer Coercion:** Reviewers may request citations to their own work to inflate their personal h-index. While some requests are legitimate, \"coercive\" requests are characterized by a lack of relevance and a focus on a single author's body of work [cite: 3, 17].\n*   **Targeting Vulnerability:** Evidence suggests that coercive tactics disproportionately target junior researchers, those from non-English speaking countries, and lower-ranking academics who are less likely to push back against unethical requests [cite: 3, 12].\n\n",
+      "start": 3625,
+      "end": 4441
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## 3. Citation Cartels and Rings",
+      "header_level": 2,
+      "text": "## 3. Citation Cartels and Rings\n\nCitation cartels (or rings) represent a coordinated effort where groups of authors or journals agree to cite each other's work disproportionately to manipulate metrics. Unlike self-citation, which is easily detected, cartels are designed to mimic organic citation patterns, making them harder to identify [cite: 18, 19].\n\n",
+      "start": 4441,
+      "end": 4797
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### 3.1 Journal-Level Cartels (Citation Stacking)",
+      "header_level": 3,
+      "text": "### 3.1 Journal-Level Cartels (Citation Stacking)\nCitation stacking involves journals exchanging citations to mutually boost their Impact Factors.\n*   **The Cell Transplantation Case:** In 2012, it was revealed that *Medical Science Monitor* published a review article citing 445 papers from *Cell Transplantation*, which significantly inflated the latter's Impact Factor. This led to the suppression of these journals from citation reports [cite: 20, 21].\n*   **Thomson Reuters/Clarivate Suppressions:** In 2013, 37 journals were suppressed, and 66 were banned for citation stacking. In 2016, 18 journals were suppressed for anomalous citation patterns [cite: 22, 23].\n*   **Brazilian Citation Cartel:** A specific cartel involving Brazilian journals was detected by algorithms designed to spot citation stacking, where donor journals provided excessive citations to recipient journals to manipulate JIF calculations [cite: 22].\n\n",
+      "start": 4797,
+      "end": 5728
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "### 3.2 Author-Level Cartels",
+      "header_level": 3,
+      "text": "### 3.2 Author-Level Cartels\n*   **Mathematics Community Crisis:** Recent investigations have uncovered \"cliques\" of mathematicians, particularly at institutions in China and Saudi Arabia, who artificially boost colleagues' citation counts. In 2023, a network of approximately 100 researchers co-authored 17 papers that generated nearly 400 citations in a single year, heavily relying on self-citations and co-author citations [cite: 10, 24, 25]. This manipulation was severe enough to exclude the entire field of mathematics from Clarivate's \"Highly Cited Researchers\" list in certain instances [cite: 25].\n*   **Detection Challenges:** While algorithms can detect \"anomalous citation groups\" (donor and recipient journals), proving intent remains difficult. However, patterns where citations are concentrated heavily within a closed loop of authors are a primary red flag [cite: 19, 26].\n\n",
+      "start": 5728,
+      "end": 6619
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "## 4. Industrialized Gaming: Paper Mills and Special Issues",
+      "header_level": 2,
+      "text": "## 4. Industrialized Gaming: Paper Mills and Special Issues\n\nThe most significant recent development in citation gaming is the industrialization of fraud through \"paper mills\"\u2014organizations that produce and sell fake research manuscripts\u2014and the exploitation of \"Special Issues\" in open-access journals.\n\n",
+      "start": 6619,
+      "end": 6924
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "### 4.1 The Hindawi and Wiley Crisis (2023\u20132024)",
+      "header_level": 3,
+      "text": "### 4.1 The Hindawi and Wiley Crisis (2023\u20132024)\nThe scale of this issue was laid bare by the massive retraction events involving Hindawi, a publisher acquired by Wiley.\n*   **Scale of Retractions:** In 2023 and 2024, Wiley/Hindawi retracted between **8,000 and 11,300 papers** [cite: 7, 8, 27]. This single event resulted in more retractions in one year than had previously been recorded by all publishers combined [cite: 7].\n*   **Mechanism:** Paper mills infiltrated the \"Guest Editor\" systems of Special Issues. Rogue editors accepted thousands of low-quality or fabricated papers that contained \"citation farms\"\u2014lists of irrelevant citations designed to boost the metrics of specific individuals or journals [cite: 6, 11, 28].\n*   **Financial Impact:** The crisis cost Wiley an estimated $35\u2013$40 million in lost revenue and forced the company to retire the Hindawi brand entirely [cite: 7, 27].\n\n",
+      "start": 6924,
+      "end": 7825
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "### 4.2 Clarivate and Web of Science Delistings",
+      "header_level": 3,
+      "text": "### 4.2 Clarivate and Web of Science Delistings\nIn response to this industrial manipulation, Clarivate (which manages the Web of Science) took drastic action in 2023.\n*   **The Purge:** Clarivate delisted over **50 journals** from the Web of Science Master Journal List in March 2023. Of these, 19 were Hindawi titles [cite: 29, 30, 31].\n*   **Consequences:** Delisted journals lost their Impact Factors, and papers published in them no longer contributed to citation counts in the Web of Science ecosystem, rendering them effectively valueless for metric-based academic advancement [cite: 29, 32].\n*   **Impact Inflation:** Analysis of citation metrics revealed that publishers like MDPI and Hindawi showed significantly higher \"impact inflation\" and self-citation rates compared to other publishers, driven largely by the Special Issue model [cite: 33, 34].\n\n",
+      "start": 7825,
+      "end": 8686
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "## 5. Fabricated Profiles and Sting Operations",
+      "header_level": 2,
+      "text": "## 5. Fabricated Profiles and Sting Operations\n\nResearchers have repeatedly demonstrated the fragility of citation metrics, particularly on Google Scholar, through \"sting operations\" that create fictional entities with astronomical metrics.\n\n",
+      "start": 8686,
+      "end": 8928
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "### 5.1 Historical Context: Ike Antkare (2010)",
+      "header_level": 3,
+      "text": "### 5.1 Historical Context: Ike Antkare (2010)\nOne of the earliest demonstrations of h-index hacking was the creation of \"Ike Antkare\" by Cyril Labb\u00e9.\n*   **Method:** Labb\u00e9 used SCIgen (a computer science paper generator) to create fake papers that cited each other.\n*   **Result:** Ike Antkare briefly became one of the most highly cited scientists in history, with an h-index of 94, surpassing Einstein, purely through circular citations in non-existent papers indexed by Google Scholar [cite: 4, 35, 36, 37].\n\n",
+      "start": 8928,
+      "end": 9441
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "### 5.2 Modern Context: Larry the Cat (2024)",
+      "header_level": 3,
+      "text": "### 5.2 Modern Context: Larry the Cat (2024)\nIn 2024, researchers Reese Richardson and Nick Wise demonstrated that the vulnerabilities exposed by Ike Antkare remain unaddressed.\n*   **The Sting:** They created a Google Scholar profile for \"Larry Richardson\" (a cat) and uploaded 12 fake mathematical papers to ResearchGate, each citing the others.\n*   **Result:** Larry the Cat achieved an h-index of 12 and was briefly the world's highest-cited cat, with 132 citations. This prank highlighted that Google Scholar still lacks basic quality controls to filter out circular citations from predatory or fake repositories [cite: 5, 11, 38, 39].\n\n",
+      "start": 9441,
+      "end": 10083
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "### 5.3 The NYU Abu Dhabi Study (Buying Citations)",
+      "header_level": 3,
+      "text": "### 5.3 The NYU Abu Dhabi Study (Buying Citations)\nA more sinister investigation by Yasir Zaki and colleagues at NYU Abu Dhabi exposed the commercial availability of citations.\n*   **Method:** The team created a fictional researcher profile and contacted a \"citation boosting\" service found online.\n*   **Transaction:** They purchased **50 citations for $300**.\n*   **Outcome:** Within 40 days, the fictional profile received 50 citations from papers published in 22 different journals, 14 of which were indexed in Scopus. This proved that citations can be bought and successfully injected into reputable databases [cite: 40, 41, 42, 43].\n\n",
+      "start": 10083,
+      "end": 10723
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "## 6. The Commercial Market for Citations",
+      "header_level": 2,
+      "text": "## 6. The Commercial Market for Citations\n\nThere is now a visible, open market for purchasing citations and h-index improvements. These services operate under the guise of \"academic visibility\" or \"consulting\" but explicitly offer metric manipulation.\n\n",
+      "start": 10723,
+      "end": 10976
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "### 6.1 Pricing and Availability",
+      "header_level": 3,
+      "text": "### 6.1 Pricing and Availability\nResearch into these services reveals a standardized pricing model:\n*   **Cost Per Citation:** Prices typically range from **$10 to $20 USD per citation** [cite: 1].\n*   **Packages:** Vendors offer bulk packages (e.g., 50 or 100 citations) with guarantees of indexing in Google Scholar, Scopus, or Web of Science [cite: 41, 44].\n*   **Platforms:** These services are advertised on freelance platforms like Fiverr, specialized websites (e.g., \"Futurity Publishing,\" \"Avestina\"), and through social media channels like WhatsApp and Facebook [cite: 39, 44, 45, 46].\n\n",
+      "start": 10976,
+      "end": 11572
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "### 6.2 Service Claims",
+      "header_level": 3,
+      "text": "### 6.2 Service Claims\nVendors explicitly promise to boost h-indices and citation counts. For example:\n*   \"Guarantee of result within the indexation cycle.\"\n*   \"Result guarantee or your money back.\"\n*   \"Ethically increase google scholar citations and h index quickly.\" [cite: 1, 44, 47].\n\n",
+      "start": 11572,
+      "end": 11864
+    },
+    {
+      "idx": 19,
+      "section_type": "text",
+      "header": "### 6.3 Mechanism of Delivery",
+      "header_level": 3,
+      "text": "### 6.3 Mechanism of Delivery\nThese services often utilize paper mills or a network of compromised journals to plant citations. The NYU Abu Dhabi sting confirmed that purchased citations often appear in low-quality or predatory journals, but also in Scopus-indexed titles, indicating a breach of legitimate bibliographic databases [cite: 40, 41].\n\n",
+      "start": 11864,
+      "end": 12212
+    },
+    {
+      "idx": 20,
+      "section_type": "text",
+      "header": "## 7. Predatory Journals and Citation Pollution",
+      "header_level": 2,
+      "text": "## 7. Predatory Journals and Citation Pollution\n\nPredatory journals\u2014entities that prioritize publication fees over peer review\u2014act as a reservoir for citation pollution.\n\n*   **Infiltration:** A study of 32 Nigerian predatory biomedical journals found that they received thousands of citations, and papers in predatory journals are increasingly cited by articles in legitimate, indexed journals [cite: 48].\n*   **Citation Leakage:** Citations from predatory journals are \"leaking\" into reputable databases. One study found that 31.4% of articles in a sample of predatory journals were cited at least once by articles indexed in the Web of Science [cite: 49, 50].\n*   **Impact:** This pollution distorts metrics for legitimate researchers and allows bad actors to launder their reputation by citing their own fake work in predatory outlets that are subsequently picked up by Google Scholar [cite: 51, 52].\n\n",
+      "start": 12212,
+      "end": 13118
+    },
+    {
+      "idx": 21,
+      "section_type": "text",
+      "header": "## 8. Systemic Vulnerabilities and Implications",
+      "header_level": 2,
+      "text": "## 8. Systemic Vulnerabilities and Implications\n\nThe evidence points to systemic failures in how bibliographic data is curated and used.\n\n",
+      "start": 13118,
+      "end": 13256
+    },
+    {
+      "idx": 22,
+      "section_type": "text",
+      "header": "### 8.1 Database Vulnerabilities",
+      "header_level": 3,
+      "text": "### 8.1 Database Vulnerabilities\n*   **Google Scholar:** Identified as the most vulnerable platform due to its automated crawling of the web without rigorous quality filters. It indexes preprints, predatory journals, and even uploaded PDFs on personal websites, making it trivial to game [cite: 11, 25, 46, 53].\n*   **Scopus and Web of Science:** While more rigorous, these databases are not immune. The presence of purchased citations in Scopus-indexed journals and the need for mass delistings by Clarivate demonstrate that \"gatekeeping\" is failing against industrialized fraud [cite: 29, 41].\n\n",
+      "start": 13256,
+      "end": 13853
+    },
+    {
+      "idx": 23,
+      "section_type": "text",
+      "header": "### 8.2 The \"Publish or Perish\" Feedback Loop",
+      "header_level": 3,
+      "text": "### 8.2 The \"Publish or Perish\" Feedback Loop\nThe pressure to secure tenure and funding creates a demand for these illicit services. As metrics become the primary proxy for scientific quality, the incentive to game them increases, creating a feedback loop where honest researchers are disadvantaged [cite: 9, 10].\n\n",
+      "start": 13853,
+      "end": 14168
+    },
+    {
+      "idx": 24,
+      "section_type": "text",
+      "header": "## 9. Conclusion",
+      "header_level": 2,
+      "text": "## 9. Conclusion\n\nThe evidence for the pervasiveness of citation gaming is overwhelming and multifaceted. It is no longer limited to isolated individuals padding their reference lists. Instead, it has evolved into a global industry involving:\n1.  **Coercion:** Institutionalized bullying by editors and reviewers (affecting ~20\u201366% of researchers).\n2.  **Cartels:** Organized rings of mutual citation, particularly in specific fields like mathematics.\n3.  **Commercialization:** A black market selling citations for ~$15, accessible via standard web searches.\n4.  **Industrial Fraud:** Paper mills generating thousands of fake papers to manipulate metrics, necessitating the retraction of over 10,000 papers in a single year by a single publisher.\n\nThis ecosystem of manipulation threatens the integrity of scientific evaluation, rendering standard metrics like the h-index increasingly unreliable as measures of true scholarly impact.",
+      "start": 14168,
+      "end": 15103
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# The Pervasiveness of Citation Metric Gaming: Evidence, Mechanisms, and Systemic Implications",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "### 4.1 The Hindawi and Wiley Crisis (2023\u20132024)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "The scale of this issue was laid bare by the massive retraction events involving Hindawi, a publisher acquired by Wiley.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "*  **Scale of Retractions:** In 2023 and 2024, Wiley/Hindawi retracted between **8,000 and 11,300 papers**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOJWGfj0xzGpJ8Dq6erdYFNT7Bc2InO39t1kslz_9lZEt6A5xVFNEjrA0ZFvVR0OItIUlEQKCfjdqDQmm7-IlnR-5mKIblXiQpyjG227DWlowX25YHE6jCjQNk04Qvj-4rsIJJKuZUoM0LXGcjEpdxz-SbVYnDKEapEweFFxzZWC4ICsHqx1pz7Uz0u15okDWs57-1brRKTs0mX24TtuLwZ-FBFD7Eow=="
+        ],
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHK0qBOMWNHeiYj1KRD-aoCbFxBlJy1Ru0zi861_pnRSqiglCd8UgTkjy2IMMQ06mhcj2Kk44D-2mgxvYA7u2FLhLTTNk0kw-muxntnGPlxYhpE1BgfhVwaWV0vJkDaM0VXk5exivMdKnsLynYAPeQjKwKiRlfOo7AczQbTtDnKUoT51SMHGu-36PetNiUacZ34JTUHao802zFKCuq7"
+        ],
+        [
+          "uksg.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqMwvnODM7hUSybUN4-zRTermYon1XOR1e5Xt5JeRHombiqLUH-1_BOSP-ZJTeWBawCnGXYQKlw5sesWHq7pxn8nS6J00-HnS_wsklgbdVXW_Y6z0RY5KpCW2lDKK0gAwbFxPsURPW92LDVlfy1rcM8mqsIyGA8QgNiq3_pEHb68JvTURK8g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "This single event resulted in more retractions in one year than had previously been recorded by all publishers combined.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOJWGfj0xzGpJ8Dq6erdYFNT7Bc2InO39t1kslz_9lZEt6A5xVFNEjrA0ZFvVR0OItIUlEQKCfjdqDQmm7-IlnR-5mKIblXiQpyjG227DWlowX25YHE6jCjQNk04Qvj-4rsIJJKuZUoM0LXGcjEpdxz-SbVYnDKEapEweFFxzZWC4ICsHqx1pz7Uz0u15okDWs57-1brRKTs0mX24TtuLwZ-FBFD7Eow=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_4",
+      "section_idx": 10,
+      "idx_in_section": 4,
+      "text": "*  **Mechanism:** Paper mills infiltrated the \"Guest Editor\" systems of Special Issues.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOJWGfj0xzGpJ8Dq6erdYFNT7Bc2InO39t1kslz_9lZEt6A5xVFNEjrA0ZFvVR0OItIUlEQKCfjdqDQmm7-IlnR-5mKIblXiQpyjG227DWlowX25YHE6jCjQNk04Qvj-4rsIJJKuZUoM0LXGcjEpdxz-SbVYnDKEapEweFFxzZWC4ICsHqx1pz7Uz0u15okDWs57-1brRKTs0mX24TtuLwZ-FBFD7Eow=="
+        ],
+        [
+          "uksg.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqMwvnODM7hUSybUN4-zRTermYon1XOR1e5Xt5JeRHombiqLUH-1_BOSP-ZJTeWBawCnGXYQKlw5sesWHq7pxn8nS6J00-HnS_wsklgbdVXW_Y6z0RY5KpCW2lDKK0gAwbFxPsURPW92LDVlfy1rcM8mqsIyGA8QgNiq3_pEHb68JvTURK8g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_5",
+      "section_idx": 10,
+      "idx_in_section": 5,
+      "text": "Rogue editors accepted thousands of low-quality or fabricated papers that contained \"citation farms\"\u2014lists of irrelevant citations designed to boost the metrics of specific individuals or journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG28ITuY_X4-3t1anE--TjUhyPK_SX1Q5tDIvX9f4-zxEJ4vBLMgLPM15HzOszBRomLys8nMoJM_MmNTdYnWLPfcpljHYyTRpu_ZmE8JmM_oU3lCKR81cU-pg4iZmYNZ2GvaN0dKBDFJBxtOboyvQXUde4y5xJYynOzS-M4a0cY__hwjtQH_KzsC4rxaxqJzZD6y-BwgPvL9lHnDzaHErq7KCiia7A56BMbTx9nUloMfg=="
+        ],
+        [
+          "thepublicationplan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8S6-D7gKmZGS76CnfY3iHSGmZ2WQMvKbr4m4Xqi9Ss9hfJZsxztNdcb5HLadKlvbM-Fg0eEFOIPZc8izuzEHFLO4hUhe9PHshPSGeFmfLJOe-t59TP7vIFwaGgHJKb_vSgHxyhx-zv_O5pcCZQyMLork4TSQzxvYv82eVuE6EAlSmyZa6m6GkSBrUI__O-FjGhY8="
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEeHm8fpn5cExF3yui2A7CLttaAVh_riBD5UVBAjeOFOt7v0S5Hd0QzrWyJUG7f8CP7SCkvDfvbOB036zQa3Br9PlTuSOY5Aln4ERf7q0Lvywmfj5lVyDwHU2CeNEaNjlolH8QexPbnPQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_6",
+      "section_idx": 10,
+      "idx_in_section": 6,
+      "text": "*  **Financial Impact:** The crisis cost Wiley an estimated $35\u2013$40 million in lost revenue and forced the company to retire the Hindawi brand entirely.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOJWGfj0xzGpJ8Dq6erdYFNT7Bc2InO39t1kslz_9lZEt6A5xVFNEjrA0ZFvVR0OItIUlEQKCfjdqDQmm7-IlnR-5mKIblXiQpyjG227DWlowX25YHE6jCjQNk04Qvj-4rsIJJKuZUoM0LXGcjEpdxz-SbVYnDKEapEweFFxzZWC4ICsHqx1pz7Uz0u15okDWs57-1brRKTs0mX24TtuLwZ-FBFD7Eow=="
+        ],
+        [
+          "uksg.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqMwvnODM7hUSybUN4-zRTermYon1XOR1e5Xt5JeRHombiqLUH-1_BOSP-ZJTeWBawCnGXYQKlw5sesWHq7pxn8nS6J00-HnS_wsklgbdVXW_Y6z0RY5KpCW2lDKK0gAwbFxPsURPW92LDVlfy1rcM8mqsIyGA8QgNiq3_pEHb68JvTURK8g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "### 4.2 Clarivate and Web of Science Delistings",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "In response to this industrial manipulation, Clarivate (which manages the Web of Science) took drastic action in 2023.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "*  **The Purge:** Clarivate delisted over **50 journals** from the Web of Science Master Journal List in March 2023.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "timeshighereducation.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEff-N6vhBo0eBodhpwNB0ZSxkU2rNnVZHhVW7LDdQRRfmR400EsO-m8b68FDOQequLr-g5TSQ59D6Ze6yfzZDHFiNKJmxpWiVIOzlKr339UB0oap6tzo-Ip3mRDY5XoULQNkNYEjaWF2vYjciXFXTZKi2QIFdtuASf-nYLLxdo7lY8aXvNwWVRS2B2FhsBdnCO55HiA054Eh4="
+        ],
+        [
+          "librarylearningspace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEW9ffktUVYLqmY8MSvR7dhXknc4rA83ORjrSMOQhizfC-h4iPan71NO0TfmZapVOaCDeiee0wgbTkSWKvRYUIhc-1kj_0L5AhdJDTLYajZChP6Y0AyAlUMa8QXyu3rgS6l2LDHYzRGNjUOmEvhbAyZlPMD2QUFQj_Bit2j6KHrAvWbzO0tHZwkK5FEkwh9IRnmgsg3wVuQ2pt7bl_fyosZ-5r_1FsFnOE7XY_pNrXxSbYY"
+        ],
+        [
+          "reddit.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5vXo9CCgJ_wYecAQ4OPtH-26atJuELvLWNxnxaHZKmlQuAYj7uHQEqpvty4xwy_PSbXrWuMC5Rd2gww1h6AV5C5sAFZOT1Tc-dZEaVhrXAHGuGG3XXDcc89SFWKR94t3w-tGjwPLZbNUv8akYpjgM5kcV2IuDYgtJyiJy-nK66gdmynSDwPzl6kaZdagMxAuXB8E7Y2qP"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "Of these, 19 were Hindawi titles.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "timeshighereducation.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEff-N6vhBo0eBodhpwNB0ZSxkU2rNnVZHhVW7LDdQRRfmR400EsO-m8b68FDOQequLr-g5TSQ59D6Ze6yfzZDHFiNKJmxpWiVIOzlKr339UB0oap6tzo-Ip3mRDY5XoULQNkNYEjaWF2vYjciXFXTZKi2QIFdtuASf-nYLLxdo7lY8aXvNwWVRS2B2FhsBdnCO55HiA054Eh4="
+        ],
+        [
+          "librarylearningspace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEW9ffktUVYLqmY8MSvR7dhXknc4rA83ORjrSMOQhizfC-h4iPan71NO0TfmZapVOaCDeiee0wgbTkSWKvRYUIhc-1kj_0L5AhdJDTLYajZChP6Y0AyAlUMa8QXyu3rgS6l2LDHYzRGNjUOmEvhbAyZlPMD2QUFQj_Bit2j6KHrAvWbzO0tHZwkK5FEkwh9IRnmgsg3wVuQ2pt7bl_fyosZ-5r_1FsFnOE7XY_pNrXxSbYY"
+        ],
+        [
+          "reddit.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5vXo9CCgJ_wYecAQ4OPtH-26atJuELvLWNxnxaHZKmlQuAYj7uHQEqpvty4xwy_PSbXrWuMC5Rd2gww1h6AV5C5sAFZOT1Tc-dZEaVhrXAHGuGG3XXDcc89SFWKR94t3w-tGjwPLZbNUv8akYpjgM5kcV2IuDYgtJyiJy-nK66gdmynSDwPzl6kaZdagMxAuXB8E7Y2qP"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "*  **Consequences:** Delisted journals lost their Impact Factors, and papers published in them no longer contributed to citation counts in the Web of Science ecosystem, rendering them effectively valueless for metric-based academic advancement.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "timeshighereducation.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEff-N6vhBo0eBodhpwNB0ZSxkU2rNnVZHhVW7LDdQRRfmR400EsO-m8b68FDOQequLr-g5TSQ59D6Ze6yfzZDHFiNKJmxpWiVIOzlKr339UB0oap6tzo-Ip3mRDY5XoULQNkNYEjaWF2vYjciXFXTZKi2QIFdtuASf-nYLLxdo7lY8aXvNwWVRS2B2FhsBdnCO55HiA054Eh4="
+        ],
+        [
+          "umasscreate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFPXuNKSEpwa_mJbstnFJXlS1xAM8zSIUIrmqbAaP1hiJYGfDWPlF3CAZzuc2ay_93Jjzj6CvDa9MUBQYFvjHvV5Q1e1wJaZj0olS9kw_UIkFxS6tIWlUy6bybJOBBxDp5sZTXs-EjlSJayCdvmtfaLgXEjCxsYTgVl4b_YkyV7EqwfCDCg-f_qAp8ZK_JxH_FT9Qu6DPLVD2R2OrXMSx67mbo5nen5V_sL6AfFnSC2xXLb43cR_k04zWN"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "*  **Impact Inflation:** Analysis of citation metrics revealed that publishers like MDPI and Hindawi showed significantly higher \"impact inflation\" and self-citation rates compared to other publishers, driven largely by the Special Issue model.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH3qWUDYrdSuHyeyX-BYMh1yBkBJ-ADvgksGNVUet4E7uB-23JkU-tHb4QTMLSYuRssazAh-cSAOtMuI39W_gQJVIdSiGrz29bTxF4lg9pXnHAgFU6It7eYE_DyWiPK7tH-PEdvGOOu-aaDK-NpTu49Ho3GTR-x7DLqcYIU_l3v3bFFqPfoPuMDgMzbGGTEmxneESu0qR4lUKHnA3_irpUS7Gmu7KyB2MLaVBQi7f8vmNOVUr_eio5gb9GMfS48i20="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_yBOAUwKvMKDpvTu0sbYzFx8mjqSO0eSz8xqu9p4DowIsFZ9BeEHhy5--410UB-GjaJb4agX_UnEdfJgCiCdiYjkj1MVvg0Cx1tN76A0WWgCL-AgljHyonI5mj9imKG6p7KO0O5MKqLce3qyzN3eLMAlPPIss42yJxXVU_f2zXHvMHP6BaDg-Go_9UNFmeJj8azzxcR1bA8oYtm_eJQaEIffdtAxuM3FnfGTdkZST-2qPlIs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "## 5. Fabricated Profiles and Sting Operations",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "Researchers have repeatedly demonstrated the fragility of citation metrics, particularly on Google Scholar, through \"sting operations\" that create fictional entities with astronomical metrics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "### 5.1 Historical Context: Ike Antkare (2010)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "One of the earliest demonstrations of h-index hacking was the creation of \"Ike Antkare\" by Cyril Labb\u00e9.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_2",
+      "section_idx": 13,
+      "idx_in_section": 2,
+      "text": "*  **Method:** Labb\u00e9 used SCIgen (a computer science paper generator) to create fake papers that cited each other.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUaH0pbrN6LKScDjqK9FkxoDUFewJzSp5NXhG2h19ikPUU-reMpGSzrA34HOxVZNTIGjae_na77W0BRUKPdba4CRSgbjEJhs1dVibXagJhI5SAUGCq"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUa2zA3BzIyWLnCooShAie51EoQo2mK2gJkroFD0s7z7XYGI4omcXa_Ryj70dk6PyV4aPCG43zI36JVPOjJ8DSJl2AvFA046cBBD_fRhGuG6nhhhglnnOzFh0gmWtizH_rjnq_HBUXViQmFgC1BnK9Hw=="
+        ],
+        [
+          "scielo.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZl-G35Zhsjukay0RU33DqNIYv6mLc0mj57QHz9ghGFzW2FCheZJkqzxwqt6dUUbgo3iaOrX_J5mWXiApXkP358lLL9KkM15ZYuX6QPp4qiLfeSRWzLldY2PJZRmjPCW9F8GaMDzrgiJhaQQSeD5EJ_q0X-9ilD-CpW2Z_7s5DfV9ZjC6itkoKudYJ_8C00wibEYT9JJjtstEGtzFWI90agXudZ0A1E6bWmqX-LnR663Gouw=="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGdqaQknPDmsTQx4e4cTDIuvHDHKkrcWKTOht46fwCCJVF5tG5qbbpdadasFW63-buY2NBJAZLXy2DPy54ETaQFS6Q4gJebXEMsDKvlx-u57GbRHWIIpKYqY1EOEa8NdS-xxLNryPCxtKxjQkLVC3Y5yuF0X6gjYSmya0CJKRFfL6m2tuquXXkg2IaYYq-xjZwbknvrIC3Sfdc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_3",
+      "section_idx": 13,
+      "idx_in_section": 3,
+      "text": "*  **Result:** Ike Antkare briefly became one of the most highly cited scientists in history, with an h-index of 94, surpassing Einstein, purely through circular citations in non-existent papers indexed by Google Scholar.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUaH0pbrN6LKScDjqK9FkxoDUFewJzSp5NXhG2h19ikPUU-reMpGSzrA34HOxVZNTIGjae_na77W0BRUKPdba4CRSgbjEJhs1dVibXagJhI5SAUGCq"
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUa2zA3BzIyWLnCooShAie51EoQo2mK2gJkroFD0s7z7XYGI4omcXa_Ryj70dk6PyV4aPCG43zI36JVPOjJ8DSJl2AvFA046cBBD_fRhGuG6nhhhglnnOzFh0gmWtizH_rjnq_HBUXViQmFgC1BnK9Hw=="
+        ],
+        [
+          "scielo.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZl-G35Zhsjukay0RU33DqNIYv6mLc0mj57QHz9ghGFzW2FCheZJkqzxwqt6dUUbgo3iaOrX_J5mWXiApXkP358lLL9KkM15ZYuX6QPp4qiLfeSRWzLldY2PJZRmjPCW9F8GaMDzrgiJhaQQSeD5EJ_q0X-9ilD-CpW2Z_7s5DfV9ZjC6itkoKudYJ_8C00wibEYT9JJjtstEGtzFWI90agXudZ0A1E6bWmqX-LnR663Gouw=="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGdqaQknPDmsTQx4e4cTDIuvHDHKkrcWKTOht46fwCCJVF5tG5qbbpdadasFW63-buY2NBJAZLXy2DPy54ETaQFS6Q4gJebXEMsDKvlx-u57GbRHWIIpKYqY1EOEa8NdS-xxLNryPCxtKxjQkLVC3Y5yuF0X6gjYSmya0CJKRFfL6m2tuquXXkg2IaYYq-xjZwbknvrIC3Sfdc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "### 5.2 Modern Context: Larry the Cat (2024)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "In 2024, researchers Reese Richardson and Nick Wise demonstrated that the vulnerabilities exposed by Ike Antkare remain unaddressed.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_2",
+      "section_idx": 14,
+      "idx_in_section": 2,
+      "text": "*  **The Sting:** They created a Google Scholar profile for \"Larry Richardson\" (a cat) and uploaded 12 fake mathematical papers to ResearchGate, each citing the others.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_3",
+      "section_idx": 14,
+      "idx_in_section": 3,
+      "text": "*  **Result:** Larry the Cat achieved an h-index of 12 and was briefly the world's highest-cited cat, with 132 citations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "reeserichardson.blog",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYev-QnPqqzuMeIC3k9dbjVJJ-r8UDyaGhqUwb97n2b8qFHngVK7E1HO3HcAOTSGXTxpbXI6ydl7qrtWV3uCFV2gylAEnt7yqzGH3tuym_8t6eTf7tvM38RUWwKJxvSxa398arq9f8khKG5e5tpWuma2N3BvVlQ7oswZICQODc7X_vL6W0-bFxX3rgzBs="
+        ],
+        [
+          "thepublicationplan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8S6-D7gKmZGS76CnfY3iHSGmZ2WQMvKbr4m4Xqi9Ss9hfJZsxztNdcb5HLadKlvbM-Fg0eEFOIPZc8izuzEHFLO4hUhe9PHshPSGeFmfLJOe-t59TP7vIFwaGgHJKb_vSgHxyhx-zv_O5pcCZQyMLork4TSQzxvYv82eVuE6EAlSmyZa6m6GkSBrUI__O-FjGhY8="
+        ],
+        [
+          "reason.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFR9L5Mi98esDrDqOQkSi_noKMo_e-kFdp0F4w1CJKXtes7RAdGooT1GVSVpiqoFjq-s0fcRlkDMXuYrkn2RdHLcZdo4rEHKlitH_OTjMlDxRhOGEqggEtvvlLw2pXxe6rdMViW7A=="
+        ],
+        [
+          "whyevolutionistrue.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnz1SilePiThVle_V2JrLDlv5IK6r0MkZmw0wA3tHrJBvwPDwMJS5pWjPcu4xy6z6_OuirdrhpoOEU7wnej2_NHKatX19VTD17AHsmx8LRrUo2FMLq1USJ_9tCpHclN5DgyRn2200bC7d94jVt6PcuRbKMxwrncMvoc79S93J1UEtrsoXw2yHj7SZ4_kizv7T3XLnB0ne6h6Iwj9QimqUUHhljJeU1nzB2nPFaJ4kG_x6ziRQmBoRXOn7teEAHySUkSCHABecyKy6ucCUaLlxPqKfj-D7Ce7iYzA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_4",
+      "section_idx": 14,
+      "idx_in_section": 4,
+      "text": "This prank highlighted that Google Scholar still lacks basic quality controls to filter out circular citations from predatory or fake repositories.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "reeserichardson.blog",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYev-QnPqqzuMeIC3k9dbjVJJ-r8UDyaGhqUwb97n2b8qFHngVK7E1HO3HcAOTSGXTxpbXI6ydl7qrtWV3uCFV2gylAEnt7yqzGH3tuym_8t6eTf7tvM38RUWwKJxvSxa398arq9f8khKG5e5tpWuma2N3BvVlQ7oswZICQODc7X_vL6W0-bFxX3rgzBs="
+        ],
+        [
+          "thepublicationplan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8S6-D7gKmZGS76CnfY3iHSGmZ2WQMvKbr4m4Xqi9Ss9hfJZsxztNdcb5HLadKlvbM-Fg0eEFOIPZc8izuzEHFLO4hUhe9PHshPSGeFmfLJOe-t59TP7vIFwaGgHJKb_vSgHxyhx-zv_O5pcCZQyMLork4TSQzxvYv82eVuE6EAlSmyZa6m6GkSBrUI__O-FjGhY8="
+        ],
+        [
+          "reason.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFR9L5Mi98esDrDqOQkSi_noKMo_e-kFdp0F4w1CJKXtes7RAdGooT1GVSVpiqoFjq-s0fcRlkDMXuYrkn2RdHLcZdo4rEHKlitH_OTjMlDxRhOGEqggEtvvlLw2pXxe6rdMViW7A=="
+        ],
+        [
+          "whyevolutionistrue.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnz1SilePiThVle_V2JrLDlv5IK6r0MkZmw0wA3tHrJBvwPDwMJS5pWjPcu4xy6z6_OuirdrhpoOEU7wnej2_NHKatX19VTD17AHsmx8LRrUo2FMLq1USJ_9tCpHclN5DgyRn2200bC7d94jVt6PcuRbKMxwrncMvoc79S93J1UEtrsoXw2yHj7SZ4_kizv7T3XLnB0ne6h6Iwj9QimqUUHhljJeU1nzB2nPFaJ4kG_x6ziRQmBoRXOn7teEAHySUkSCHABecyKy6ucCUaLlxPqKfj-D7Ce7iYzA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "### 5.3 The NYU Abu Dhabi Study (Buying Citations)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "A more sinister investigation by Yasir Zaki and colleagues at NYU Abu Dhabi exposed the commercial availability of citations.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_2",
+      "section_idx": 15,
+      "idx_in_section": 2,
+      "text": "*  **Method:** The team created a fictional researcher profile and contacted a \"citation boosting\" service found online.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_3",
+      "section_idx": 15,
+      "idx_in_section": 3,
+      "text": "*  **Transaction:** They purchased **50 citations for $300**.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_4",
+      "section_idx": 15,
+      "idx_in_section": 4,
+      "text": "*  **Outcome:** Within 40 days, the fictional profile received 50 citations from papers published in 22 different journals, 14 of which were indexed in Scopus.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "technicaeditorial.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG-y7YSdcVL_vwnXjEEplZfdFaSIlKf5-rEE0dQS6K5m2rqEJ1ihCjaUIHrXsbRFTUY2kbwCYQ_XNZigbSxcNsStLhLsHL-OkNUJZoSqpYC5aeEK9Fd3BxOefvz2nK5WOi9nIuHNCRK2jlZyBURQ0UKwdd-uePMoewDbtp52aBG9wX5o90y1NV6SVeDfQDOdQ=="
+        ],
+        [
+          "techdirt.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvOeVtNB7QqNB_B10qtiNDlwB5SwmGMyRTfWFnVa26hTmBJGIQTXTljXvDfR95AX7ySe5xxAW5dN2ojoO-BOp1_PhC99dqgs6l6I1yfZsZNSkoSLaUABsp_OeVWVcvMbbYt5ySZocDPSR1d0D-F2MjVpHFJ6d76pM3oC-1TgkSpEfH0TOS7YDQKyfj_a1cjyZp4Ad6uE25fM9U8kFIOiHnyOnqeukbmoZMWZWGSeYq0SC6CfWl3QSTTRCvaos="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE55GO9OM-zBTAsfYAqrTza-094sFtRfHVJqA7XaOxt-Sj6Lkz1AvMoDrKoJsSZmmhTMe-dOvA8VM9MYDfNJ7eKbNnrAna-NUHIXJaO3KgJiH3XKIJb8kI9sdBDR9qgPVduT82izBHV7JLamOuI7FhfHxqcaGg="
+        ],
+        [
+          "scribd.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwPwLFonW0q-9Kb73wZBh0bwdDOCIOn_qQwDOZ9JBLBzT7cw4nar1WmlgJyT0P__gPvH7kTy4Mv5-HWcJJCDj_gyOuQRL2UHyHnNpYgvItn69S-fZt4PX-5y7wyYngkZhIMFnN7IVCKeWBDrWDMhRfy6PWxoyXc4e-c-NGEingWltEdgX6fKGxNLfK402L6VnVhGQEweKpPtfaSdQB0EZt0UjmB1-CfjG4lFP8HqGUdUu8L_Ur2-3JviKNe0mjnbc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_5",
+      "section_idx": 15,
+      "idx_in_section": 5,
+      "text": "This proved that citations can be bought and successfully injected into reputable databases.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "technicaeditorial.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG-y7YSdcVL_vwnXjEEplZfdFaSIlKf5-rEE0dQS6K5m2rqEJ1ihCjaUIHrXsbRFTUY2kbwCYQ_XNZigbSxcNsStLhLsHL-OkNUJZoSqpYC5aeEK9Fd3BxOefvz2nK5WOi9nIuHNCRK2jlZyBURQ0UKwdd-uePMoewDbtp52aBG9wX5o90y1NV6SVeDfQDOdQ=="
+        ],
+        [
+          "techdirt.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvOeVtNB7QqNB_B10qtiNDlwB5SwmGMyRTfWFnVa26hTmBJGIQTXTljXvDfR95AX7ySe5xxAW5dN2ojoO-BOp1_PhC99dqgs6l6I1yfZsZNSkoSLaUABsp_OeVWVcvMbbYt5ySZocDPSR1d0D-F2MjVpHFJ6d76pM3oC-1TgkSpEfH0TOS7YDQKyfj_a1cjyZp4Ad6uE25fM9U8kFIOiHnyOnqeukbmoZMWZWGSeYq0SC6CfWl3QSTTRCvaos="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE55GO9OM-zBTAsfYAqrTza-094sFtRfHVJqA7XaOxt-Sj6Lkz1AvMoDrKoJsSZmmhTMe-dOvA8VM9MYDfNJ7eKbNnrAna-NUHIXJaO3KgJiH3XKIJb8kI9sdBDR9qgPVduT82izBHV7JLamOuI7FhfHxqcaGg="
+        ],
+        [
+          "scribd.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFwPwLFonW0q-9Kb73wZBh0bwdDOCIOn_qQwDOZ9JBLBzT7cw4nar1WmlgJyT0P__gPvH7kTy4Mv5-HWcJJCDj_gyOuQRL2UHyHnNpYgvItn69S-fZt4PX-5y7wyYngkZhIMFnN7IVCKeWBDrWDMhRfy6PWxoyXc4e-c-NGEingWltEdgX6fKGxNLfK402L6VnVhGQEweKpPtfaSdQB0EZt0UjmB1-CfjG4lFP8HqGUdUu8L_Ur2-3JviKNe0mjnbc="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "## 6. The Commercial Market for Citations",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "There is now a visible, open market for purchasing citations and h-index improvements.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "These services operate under the guise of \"academic visibility\" or \"consulting\" but explicitly offer metric manipulation.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "### 6.1 Pricing and Availability",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "Research into these services reveals a standardized pricing model:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "**Cost Per Citation:** Prices typically range from **$10 to $20 USD per citation**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "futurity-publishing.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUSmnIsfZKj0bS3WZ9XvLoR8RhaRO8g7fu58ALp9OrshZABjWWeBYVvO1-pIoUAKLqKWSBFKNVSZZd0bI_iW1FtJuNJKNRZLayiTPvZPQP4MhuGgSXphki2AvrdLHQFlHzCw5mzw94GgrWChoMZPWliunEJ5lnbkGX-7niZ6_KDYXALHflUWa2lPpKU2BmuoQQWOGopfCR954="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_3",
+      "section_idx": 17,
+      "idx_in_section": 3,
+      "text": "**Packages:** Vendors offer bulk packages (e.g., 50 or 100 citations) with guarantees of indexing in Google Scholar, Scopus, or Web of Science.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "techdirt.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvOeVtNB7QqNB_B10qtiNDlwB5SwmGMyRTfWFnVa26hTmBJGIQTXTljXvDfR95AX7ySe5xxAW5dN2ojoO-BOp1_PhC99dqgs6l6I1yfZsZNSkoSLaUABsp_OeVWVcvMbbYt5ySZocDPSR1d0D-F2MjVpHFJ6d76pM3oC-1TgkSpEfH0TOS7YDQKyfj_a1cjyZp4Ad6uE25fM9U8kFIOiHnyOnqeukbmoZMWZWGSeYq0SC6CfWl3QSTTRCvaos="
+        ],
+        [
+          "fiverr.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvks3AmrKMba8L0B5K60Yni3bXrjklgQjuNcwZVld3HZpGFOM4e8mRaFe5wyRuojAoe7xTmaSxg4kJ7Rjhxy4ToB3WUYhnE5buaPcS00JKWO9Q-mX3G7hUyA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_4",
+      "section_idx": 17,
+      "idx_in_section": 4,
+      "text": "*  **Platforms:** These services are advertised on freelance platforms like Fiverr, specialized websites (e.g., \"Futurity Publishing,\" \"Avestina\"), and through social media channels like WhatsApp and Facebook.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "whyevolutionistrue.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGnz1SilePiThVle_V2JrLDlv5IK6r0MkZmw0wA3tHrJBvwPDwMJS5pWjPcu4xy6z6_OuirdrhpoOEU7wnej2_NHKatX19VTD17AHsmx8LRrUo2FMLq1USJ_9tCpHclN5DgyRn2200bC7d94jVt6PcuRbKMxwrncMvoc79S93J1UEtrsoXw2yHj7SZ4_kizv7T3XLnB0ne6h6Iwj9QimqUUHhljJeU1nzB2nPFaJ4kG_x6ziRQmBoRXOn7teEAHySUkSCHABecyKy6ucCUaLlxPqKfj-D7Ce7iYzA=="
+        ],
+        [
+          "fiverr.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvks3AmrKMba8L0B5K60Yni3bXrjklgQjuNcwZVld3HZpGFOM4e8mRaFe5wyRuojAoe7xTmaSxg4kJ7Rjhxy4ToB3WUYhnE5buaPcS00JKWO9Q-mX3G7hUyA=="
+        ],
+        [
+          "researchasist.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFLqzyUb4OHGovyrsOswFI4qvZCCgAelYss2fAZBFMtHCOYrccc95ipS9UKCIora5oJPf2MP6N6hlTUvL23nw0JCMFmTmSyDiTbmP3TGvPDnntENEAoSJ9FvB95K57q7FbQuHF_8KU="
+        ],
+        [
+          "reeserichardson.blog",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFUJqjkJ-qeVeoCFKokr4m4IrfuXu2m-dcjaULX3Sf8tviOxMeVAZJEELVkKMd3mXpoc2FLYm09CHRLqdfdhVNaQaFMchZ5m_DUEKlv1UVIgETuNDamES_viVbLwBxMX2dafFbrDtoBwVYi-NFT3vtdrLlwZExFhVAZnaf5ku33wBO7eqbbdVv03f_zM3FRpku3oZwqNHMT0TYA9k5Kw30k"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "### 6.2 Service Claims",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "Vendors explicitly promise to boost h-indices and citation counts.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "For example:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_3",
+      "section_idx": 18,
+      "idx_in_section": 3,
+      "text": "*  \"Guarantee of result within the indexation cycle.\"",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_4",
+      "section_idx": 18,
+      "idx_in_section": 4,
+      "text": "*  \"Result guarantee or your money back.\"",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "futurity-publishing.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUSmnIsfZKj0bS3WZ9XvLoR8RhaRO8g7fu58ALp9OrshZABjWWeBYVvO1-pIoUAKLqKWSBFKNVSZZd0bI_iW1FtJuNJKNRZLayiTPvZPQP4MhuGgSXphki2AvrdLHQFlHzCw5mzw94GgrWChoMZPWliunEJ5lnbkGX-7niZ6_KDYXALHflUWa2lPpKU2BmuoQQWOGopfCR954="
+        ],
+        [
+          "fiverr.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvks3AmrKMba8L0B5K60Yni3bXrjklgQjuNcwZVld3HZpGFOM4e8mRaFe5wyRuojAoe7xTmaSxg4kJ7Rjhxy4ToB3WUYhnE5buaPcS00JKWO9Q-mX3G7hUyA=="
+        ],
+        [
+          "spubl.com.ua",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF0SNaBQ9_MGsgld5SgS8dMJORSNsR-bYlmy8MQrpozgRUnr4Z9w1weSCsGf7S-iz9WjvFm8PtQuy5xcdw9ala3XHMDNWtXCd8LZ-Zm_sZaga2YfltfJg12odsPi7rCYX4dDtLYdAbvjVpDHfcOggKySLYX"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_5",
+      "section_idx": 18,
+      "idx_in_section": 5,
+      "text": "*  \"Ethically increase google scholar citations and h index quickly.\".",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "futurity-publishing.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUSmnIsfZKj0bS3WZ9XvLoR8RhaRO8g7fu58ALp9OrshZABjWWeBYVvO1-pIoUAKLqKWSBFKNVSZZd0bI_iW1FtJuNJKNRZLayiTPvZPQP4MhuGgSXphki2AvrdLHQFlHzCw5mzw94GgrWChoMZPWliunEJ5lnbkGX-7niZ6_KDYXALHflUWa2lPpKU2BmuoQQWOGopfCR954="
+        ],
+        [
+          "fiverr.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvks3AmrKMba8L0B5K60Yni3bXrjklgQjuNcwZVld3HZpGFOM4e8mRaFe5wyRuojAoe7xTmaSxg4kJ7Rjhxy4ToB3WUYhnE5buaPcS00JKWO9Q-mX3G7hUyA=="
+        ],
+        [
+          "spubl.com.ua",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF0SNaBQ9_MGsgld5SgS8dMJORSNsR-bYlmy8MQrpozgRUnr4Z9w1weSCsGf7S-iz9WjvFm8PtQuy5xcdw9ala3XHMDNWtXCd8LZ-Zm_sZaga2YfltfJg12odsPi7rCYX4dDtLYdAbvjVpDHfcOggKySLYX"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "19_0",
+      "section_idx": 19,
+      "idx_in_section": 0,
+      "text": "### 6.3 Mechanism of Delivery",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "technicaeditorial.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG-y7YSdcVL_vwnXjEEplZfdFaSIlKf5-rEE0dQS6K5m2rqEJ1ihCjaUIHrXsbRFTUY2kbwCYQ_XNZigbSxcNsStLhLsHL-OkNUJZoSqpYC5aeEK9Fd3BxOefvz2nK5WOi9nIuHNCRK2jlZyBURQ0UKwdd-uePMoewDbtp52aBG9wX5o90y1NV6SVeDfQDOdQ=="
+        ],
+        [
+          "techdirt.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvOeVtNB7QqNB_B10qtiNDlwB5SwmGMyRTfWFnVa26hTmBJGIQTXTljXvDfR95AX7ySe5xxAW5dN2ojoO-BOp1_PhC99dqgs6l6I1yfZsZNSkoSLaUABsp_OeVWVcvMbbYt5ySZocDPSR1d0D-F2MjVpHFJ6d76pM3oC-1TgkSpEfH0TOS7YDQKyfj_a1cjyZp4Ad6uE25fM9U8kFIOiHnyOnqeukbmoZMWZWGSeYq0SC6CfWl3QSTTRCvaos="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_1",
+      "section_idx": 19,
+      "idx_in_section": 1,
+      "text": "These services often utilize paper mills or a network of compromised journals to plant citations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "technicaeditorial.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG-y7YSdcVL_vwnXjEEplZfdFaSIlKf5-rEE0dQS6K5m2rqEJ1ihCjaUIHrXsbRFTUY2kbwCYQ_XNZigbSxcNsStLhLsHL-OkNUJZoSqpYC5aeEK9Fd3BxOefvz2nK5WOi9nIuHNCRK2jlZyBURQ0UKwdd-uePMoewDbtp52aBG9wX5o90y1NV6SVeDfQDOdQ=="
+        ],
+        [
+          "techdirt.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvOeVtNB7QqNB_B10qtiNDlwB5SwmGMyRTfWFnVa26hTmBJGIQTXTljXvDfR95AX7ySe5xxAW5dN2ojoO-BOp1_PhC99dqgs6l6I1yfZsZNSkoSLaUABsp_OeVWVcvMbbYt5ySZocDPSR1d0D-F2MjVpHFJ6d76pM3oC-1TgkSpEfH0TOS7YDQKyfj_a1cjyZp4Ad6uE25fM9U8kFIOiHnyOnqeukbmoZMWZWGSeYq0SC6CfWl3QSTTRCvaos="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "19_2",
+      "section_idx": 19,
+      "idx_in_section": 2,
+      "text": "The NYU Abu Dhabi sting confirmed that purchased citations often appear in low-quality or predatory journals, but also in Scopus-indexed titles, indicating a breach of legitimate bibliographic databases.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "technicaeditorial.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG-y7YSdcVL_vwnXjEEplZfdFaSIlKf5-rEE0dQS6K5m2rqEJ1ihCjaUIHrXsbRFTUY2kbwCYQ_XNZigbSxcNsStLhLsHL-OkNUJZoSqpYC5aeEK9Fd3BxOefvz2nK5WOi9nIuHNCRK2jlZyBURQ0UKwdd-uePMoewDbtp52aBG9wX5o90y1NV6SVeDfQDOdQ=="
+        ],
+        [
+          "techdirt.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvOeVtNB7QqNB_B10qtiNDlwB5SwmGMyRTfWFnVa26hTmBJGIQTXTljXvDfR95AX7ySe5xxAW5dN2ojoO-BOp1_PhC99dqgs6l6I1yfZsZNSkoSLaUABsp_OeVWVcvMbbYt5ySZocDPSR1d0D-F2MjVpHFJ6d76pM3oC-1TgkSpEfH0TOS7YDQKyfj_a1cjyZp4Ad6uE25fM9U8kFIOiHnyOnqeukbmoZMWZWGSeYq0SC6CfWl3QSTTRCvaos="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "### Key Findings",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "*  **Industrialized Manipulation:** Citation gaming has evolved from individual misconduct (self-citation) to organized industrial operations, including \"citation cartels\" and \"paper mills\" that sell citations for approximately $10\u2013$20 USD per citation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "futurity-publishing.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUSmnIsfZKj0bS3WZ9XvLoR8RhaRO8g7fu58ALp9OrshZABjWWeBYVvO1-pIoUAKLqKWSBFKNVSZZd0bI_iW1FtJuNJKNRZLayiTPvZPQP4MhuGgSXphki2AvrdLHQFlHzCw5mzw94GgrWChoMZPWliunEJ5lnbkGX-7niZ6_KDYXALHflUWa2lPpKU2BmuoQQWOGopfCR954="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "*  **Widespread Coercion:** Surveys indicate that approximately 20% of researchers have experienced coercive citation requests from editors, and up to two-thirds have reported pressure from peer reviewers to add superfluous citations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "missouri.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEWRqNRet7TkkQBJ16mL0G0A5vDBG-ppVsaDepSRJJhCZ0NeCt3QKIIgC6NIbpkLhfjSNm85Ugn6EC0WPNm3AF9B9KH3XVqa02zpyxZK-EtiVmzLZkNNYQUHUEv7dfV_k650R29OuCgQaPpRLUa1vD-VU--w3dgS3BBbdujyZSs5iPgoKSLW_Lh0qF9SmSSMCL9PA=="
+        ],
+        [
+          "emerald.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE-oi-etiFRyRd5eBq7W59J_1IePBQmSSzY3BBQibRiz5vb5mU6UPvnNfESPnUgnnBdqPx_wfpFRWaeB7ws_uUC_8LQ7JCC5_tfPcFrd0n1K5Ip3Cqzbs6SsLCa-_krPedI4JOvOzGzWTYyWR5U4btTyIBmqi9l62lCMR0otUTTXUBcOBM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "*  **Systemic Vulnerabilities:** Major indices like Google Scholar are highly susceptible to manipulation, as evidenced by sting operations involving fictional authors (e.g., \"Ike Antkare\" and \"Larry the Cat\") achieving high h-indices through fabricated literature.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUaH0pbrN6LKScDjqK9FkxoDUFewJzSp5NXhG2h19ikPUU-reMpGSzrA34HOxVZNTIGjae_na77W0BRUKPdba4CRSgbjEJhs1dVibXagJhI5SAUGCq"
+        ],
+        [
+          "reeserichardson.blog",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGYev-QnPqqzuMeIC3k9dbjVJJ-r8UDyaGhqUwb97n2b8qFHngVK7E1HO3HcAOTSGXTxpbXI6ydl7qrtWV3uCFV2gylAEnt7yqzGH3tuym_8t6eTf7tvM38RUWwKJxvSxa398arq9f8khKG5e5tpWuma2N3BvVlQ7oswZICQODc7X_vL6W0-bFxX3rgzBs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "*  **Mass Retractions:** The scale of the problem is highlighted by the retraction of over 8,000 to 11,000 papers from Hindawi/Wiley journals in 2023\u20132024 due to compromised peer review and citation manipulation rings, leading to the delisting of 19 journals from the Web of Science.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG28ITuY_X4-3t1anE--TjUhyPK_SX1Q5tDIvX9f4-zxEJ4vBLMgLPM15HzOszBRomLys8nMoJM_MmNTdYnWLPfcpljHYyTRpu_ZmE8JmM_oU3lCKR81cU-pg4iZmYNZ2GvaN0dKBDFJBxtOboyvQXUde4y5xJYynOzS-M4a0cY__hwjtQH_KzsC4rxaxqJzZD6y-BwgPvL9lHnDzaHErq7KCiia7A56BMbTx9nUloMfg=="
+        ],
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEOJWGfj0xzGpJ8Dq6erdYFNT7Bc2InO39t1kslz_9lZEt6A5xVFNEjrA0ZFvVR0OItIUlEQKCfjdqDQmm7-IlnR-5mKIblXiQpyjG227DWlowX25YHE6jCjQNk04Qvj-4rsIJJKuZUoM0LXGcjEpdxz-SbVYnDKEapEweFFxzZWC4ICsHqx1pz7Uz0u15okDWs57-1brRKTs0mX24TtuLwZ-FBFD7Eow=="
+        ],
+        [
+          "retractionwatch.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHK0qBOMWNHeiYj1KRD-aoCbFxBlJy1Ru0zi861_pnRSqiglCd8UgTkjy2IMMQ06mhcj2Kk44D-2mgxvYA7u2FLhLTTNk0kw-muxntnGPlxYhpE1BgfhVwaWV0vJkDaM0VXk5exivMdKnsLynYAPeQjKwKiRlfOo7AczQbTtDnKUoT51SMHGu-36PetNiUacZ34JTUHao802zFKCuq7"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_0",
+      "section_idx": 20,
+      "idx_in_section": 0,
+      "text": "## 7. Predatory Journals and Citation Pollution",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_1",
+      "section_idx": 20,
+      "idx_in_section": 1,
+      "text": "Predatory journals\u2014entities that prioritize publication fees over peer review\u2014act as a reservoir for citation pollution.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_2",
+      "section_idx": 20,
+      "idx_in_section": 2,
+      "text": "*  **Infiltration:** A study of 32 Nigerian predatory biomedical journals found that they received thousands of citations, and papers in predatory journals are increasingly cited by articles in legitimate, indexed journals.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHUd7gTjgYZHn2QVQgRuZp-jZ8Jwsxrm2ZGrcanxSXgOYvM5PQrkJf7UxOnl3EUkKQmDJyDmKWmyFZ2bF9ah4I_XA8qg1uaYm6UBlU5O-FZaV3v8GA0_cljnqASs2SLpNvTdEGSmwLOg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_3",
+      "section_idx": 20,
+      "idx_in_section": 3,
+      "text": "*  **Citation Leakage:** Citations from predatory journals are \"leaking\" into reputable databases.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEG7__tWZhOck15TWYFyZkCrMIIfK1Q9P9HPPi3o5fd805hxtuHYUEOPwu0B1GRPZbdwHKGU3DxKqAPdwTb-QY4Rck6KAaWpyjcPJRbMyhnqj5Ix14FZD-ROHOTvE2Y-fWflpir8NReOD2ZwUbbI8zjhYXuXq0XzHwriz_E0m5qSG5QmBYhumUWqDuh-RnRigMKfpDNPYFwlg2PFo1baAs3H3NT6vL3g8w44wIFuMkO-8yoQa1SJMR6yJe71UdJIiWPiUJLqS-wZBH3ssGZ"
+        ],
+        [
+          "mit.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGTZ4AagM92UeIdkUqVn7-CPMCmt6v4TALeKVb38qtDPs1yaWBZ89x2zCU3S4HFPGC-Lz4wl4tTeiZjYr7PrZqzLrf2pJc44ATKAQaMDkqjhfiuwYf9Moiwue-bhFFSMSRSu6V-vphBrBPW2aANonUSMCCJGzws0mzc29p2eO8l-iFblKVik7CnOpL1tFLDDDgv"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "20_4",
+      "section_idx": 20,
+      "idx_in_section": 4,
+      "text": "One study found that 31.4% of articles in a sample of predatory journals were cited at least once by articles indexed in the Web of Science.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "infodocs.eu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEF4eT0F1ONw-gl2TJlY8sQSlODIwhF8ptcBPVmMM6cGx132imJBlvtqMBim6KCJf6tsFY5OF6O1R2TQmnxr2HYfhF6PEWzzwT1U9vGLgWvmEfzjCu0A61-KLzK5RO-dpurfB8fSNP3zbRlkPbaWXje-rSVaUSvdR4pphcbFUiGzWP_me3wpJuU3_F3ScJ6woYBaBrOO6KjWHt_NMrg1FVefhYsrNYtqbf46tJd60E="
+        ],
+        [
+          "mlanet.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHOxwkl9j_xV1EdwHMzyM54qwaVIunfGnAnlNVV3a1ulnv0_XWSMsEHXQnwXUVpNcA74G-FlFKc0GyDhrpNe0fZ_mCvjF9dorR-Ii-T7t3DsOZDgrXojZzwXjn3ip0-3EEN9TqaqW0IYw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "20_5",
+      "section_idx": 20,
+      "idx_in_section": 5,
+      "text": "*  **Impact:** This pollution distorts metrics for legitimate researchers and allows bad actors to launder their reputation by citing their own fake work in predatory outlets that are subsequently picked up by Google Scholar.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEG7__tWZhOck15TWYFyZkCrMIIfK1Q9P9HPPi3o5fd805hxtuHYUEOPwu0B1GRPZbdwHKGU3DxKqAPdwTb-QY4Rck6KAaWpyjcPJRbMyhnqj5Ix14FZD-ROHOTvE2Y-fWflpir8NReOD2ZwUbbI8zjhYXuXq0XzHwriz_E0m5qSG5QmBYhumUWqDuh-RnRigMKfpDNPYFwlg2PFo1baAs3H3NT6vL3g8w44wIFuMkO-8yoQa1SJMR6yJe71UdJIiWPiUJLqS-wZBH3ssGZ"
+        ],
+        [
+          "mit.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGTZ4AagM92UeIdkUqVn7-CPMCmt6v4TALeKVb38qtDPs1yaWBZ89x2zCU3S4HFPGC-Lz4wl4tTeiZjYr7PrZqzLrf2pJc44ATKAQaMDkqjhfiuwYf9Moiwue-bhFFSMSRSu6V-vphBrBPW2aANonUSMCCJGzws0mzc29p2eO8l-iFblKVik7CnOpL1tFLDDDgv"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "21_0",
+      "section_idx": 21,
+      "idx_in_section": 0,
+      "text": "## 8. Systemic Vulnerabilities and Implications",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "21_1",
+      "section_idx": 21,
+      "idx_in_section": 1,
+      "text": "The evidence points to systemic failures in how bibliographic data is curated and used.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_0",
+      "section_idx": 22,
+      "idx_in_section": 0,
+      "text": "### 8.1 Database Vulnerabilities",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_1",
+      "section_idx": 22,
+      "idx_in_section": 1,
+      "text": "*  **Google Scholar:** Identified as the most vulnerable platform due to its automated crawling of the web without rigorous quality filters.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "thepublicationplan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8S6-D7gKmZGS76CnfY3iHSGmZ2WQMvKbr4m4Xqi9Ss9hfJZsxztNdcb5HLadKlvbM-Fg0eEFOIPZc8izuzEHFLO4hUhe9PHshPSGeFmfLJOe-t59TP7vIFwaGgHJKb_vSgHxyhx-zv_O5pcCZQyMLork4TSQzxvYv82eVuE6EAlSmyZa6m6GkSBrUI__O-FjGhY8="
+        ],
+        [
+          "hkust.edu.hk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEiojytEUwRlCQHTFBrEefJM0hQYQ7pkPhYKymuUobISmVHt0xB4mmWm5pvsR-LJXCBvssOV0qcqKVf83QBHmfZJLSs1Ok5nfWarG-JZunk4JOWuT9FiiCutVKD-HGYYh9aJ-Ngm-2WGxV7ZcGRvRSiv7xjkvf_qv_aMps4iccnmJqj6w=="
+        ],
+        [
+          "reeserichardson.blog",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFUJqjkJ-qeVeoCFKokr4m4IrfuXu2m-dcjaULX3Sf8tviOxMeVAZJEELVkKMd3mXpoc2FLYm09CHRLqdfdhVNaQaFMchZ5m_DUEKlv1UVIgETuNDamES_viVbLwBxMX2dafFbrDtoBwVYi-NFT3vtdrLlwZExFhVAZnaf5ku33wBO7eqbbdVv03f_zM3FRpku3oZwqNHMT0TYA9k5Kw30k"
+        ],
+        [
+          "spatialedge.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGQp9mp8AbTt0_s1uqcp33AlEK7zLG2eu1SHAhSi4ctvhQa90YBYMw2RchM-RDMKflpooljM17O11lyPBsKEc2H-9Y6d7EJccmh4TwFRohkKIi6WPNi3jqyiEv6BHmy6nuMgXUR3vM9MjquljyGaH7vXZABMNEkEfHBHc0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_2",
+      "section_idx": 22,
+      "idx_in_section": 2,
+      "text": "It indexes preprints, predatory journals, and even uploaded PDFs on personal websites, making it trivial to game.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "thepublicationplan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8S6-D7gKmZGS76CnfY3iHSGmZ2WQMvKbr4m4Xqi9Ss9hfJZsxztNdcb5HLadKlvbM-Fg0eEFOIPZc8izuzEHFLO4hUhe9PHshPSGeFmfLJOe-t59TP7vIFwaGgHJKb_vSgHxyhx-zv_O5pcCZQyMLork4TSQzxvYv82eVuE6EAlSmyZa6m6GkSBrUI__O-FjGhY8="
+        ],
+        [
+          "hkust.edu.hk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEiojytEUwRlCQHTFBrEefJM0hQYQ7pkPhYKymuUobISmVHt0xB4mmWm5pvsR-LJXCBvssOV0qcqKVf83QBHmfZJLSs1Ok5nfWarG-JZunk4JOWuT9FiiCutVKD-HGYYh9aJ-Ngm-2WGxV7ZcGRvRSiv7xjkvf_qv_aMps4iccnmJqj6w=="
+        ],
+        [
+          "reeserichardson.blog",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFUJqjkJ-qeVeoCFKokr4m4IrfuXu2m-dcjaULX3Sf8tviOxMeVAZJEELVkKMd3mXpoc2FLYm09CHRLqdfdhVNaQaFMchZ5m_DUEKlv1UVIgETuNDamES_viVbLwBxMX2dafFbrDtoBwVYi-NFT3vtdrLlwZExFhVAZnaf5ku33wBO7eqbbdVv03f_zM3FRpku3oZwqNHMT0TYA9k5Kw30k"
+        ],
+        [
+          "spatialedge.co",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGQp9mp8AbTt0_s1uqcp33AlEK7zLG2eu1SHAhSi4ctvhQa90YBYMw2RchM-RDMKflpooljM17O11lyPBsKEc2H-9Y6d7EJccmh4TwFRohkKIi6WPNi3jqyiEv6BHmy6nuMgXUR3vM9MjquljyGaH7vXZABMNEkEfHBHc0="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "22_3",
+      "section_idx": 22,
+      "idx_in_section": 3,
+      "text": "*  **Scopus and Web of Science:** While more rigorous, these databases are not immune.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "timeshighereducation.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEff-N6vhBo0eBodhpwNB0ZSxkU2rNnVZHhVW7LDdQRRfmR400EsO-m8b68FDOQequLr-g5TSQ59D6Ze6yfzZDHFiNKJmxpWiVIOzlKr339UB0oap6tzo-Ip3mRDY5XoULQNkNYEjaWF2vYjciXFXTZKi2QIFdtuASf-nYLLxdo7lY8aXvNwWVRS2B2FhsBdnCO55HiA054Eh4="
+        ],
+        [
+          "techdirt.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvOeVtNB7QqNB_B10qtiNDlwB5SwmGMyRTfWFnVa26hTmBJGIQTXTljXvDfR95AX7ySe5xxAW5dN2ojoO-BOp1_PhC99dqgs6l6I1yfZsZNSkoSLaUABsp_OeVWVcvMbbYt5ySZocDPSR1d0D-F2MjVpHFJ6d76pM3oC-1TgkSpEfH0TOS7YDQKyfj_a1cjyZp4Ad6uE25fM9U8kFIOiHnyOnqeukbmoZMWZWGSeYq0SC6CfWl3QSTTRCvaos="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "22_4",
+      "section_idx": 22,
+      "idx_in_section": 4,
+      "text": "The presence of purchased citations in Scopus-indexed journals and the need for mass delistings by Clarivate demonstrate that \"gatekeeping\" is failing against industrialized fraud.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "timeshighereducation.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEff-N6vhBo0eBodhpwNB0ZSxkU2rNnVZHhVW7LDdQRRfmR400EsO-m8b68FDOQequLr-g5TSQ59D6Ze6yfzZDHFiNKJmxpWiVIOzlKr339UB0oap6tzo-Ip3mRDY5XoULQNkNYEjaWF2vYjciXFXTZKi2QIFdtuASf-nYLLxdo7lY8aXvNwWVRS2B2FhsBdnCO55HiA054Eh4="
+        ],
+        [
+          "techdirt.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHvOeVtNB7QqNB_B10qtiNDlwB5SwmGMyRTfWFnVa26hTmBJGIQTXTljXvDfR95AX7ySe5xxAW5dN2ojoO-BOp1_PhC99dqgs6l6I1yfZsZNSkoSLaUABsp_OeVWVcvMbbYt5ySZocDPSR1d0D-F2MjVpHFJ6d76pM3oC-1TgkSpEfH0TOS7YDQKyfj_a1cjyZp4Ad6uE25fM9U8kFIOiHnyOnqeukbmoZMWZWGSeYq0SC6CfWl3QSTTRCvaos="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "23_0",
+      "section_idx": 23,
+      "idx_in_section": 0,
+      "text": "### 8.2 The \"Publish or Perish\" Feedback Loop",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAJHXsrk6LgmM9ssGhz7nRg7O6Di3hAgCExqUlYUl4KdwUIvhr7-0Z2JGhgEa4a96J6J7tcv9FF5AqmnCvqCMZs006SN-oDHV1pcTyNHdOXrgm_qN-AfLVaZTBw098P_Wa2vBARxbNtA=="
+        ],
+        [
+          "chronicle.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGHdwuh0hmeg798z7gKU3PDQqQ3SYH7aniczUrJ_ocRhYPyqEPFzCI-94Yb3cMyBq7RV1Bxa7V5UIRXpEu2zuNxc3EA5caeU5Na0ieVbf1oX6ScHhOFdnw_p0pUewt0hfq6xCQiien_krbMfSY3Zqmo_Ro3IbpJBBWa4A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_1",
+      "section_idx": 23,
+      "idx_in_section": 1,
+      "text": "The pressure to secure tenure and funding creates a demand for these illicit services.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAJHXsrk6LgmM9ssGhz7nRg7O6Di3hAgCExqUlYUl4KdwUIvhr7-0Z2JGhgEa4a96J6J7tcv9FF5AqmnCvqCMZs006SN-oDHV1pcTyNHdOXrgm_qN-AfLVaZTBw098P_Wa2vBARxbNtA=="
+        ],
+        [
+          "chronicle.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGHdwuh0hmeg798z7gKU3PDQqQ3SYH7aniczUrJ_ocRhYPyqEPFzCI-94Yb3cMyBq7RV1Bxa7V5UIRXpEu2zuNxc3EA5caeU5Na0ieVbf1oX6ScHhOFdnw_p0pUewt0hfq6xCQiien_krbMfSY3Zqmo_Ro3IbpJBBWa4A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "23_2",
+      "section_idx": 23,
+      "idx_in_section": 2,
+      "text": "As metrics become the primary proxy for scientific quality, the incentive to game them increases, creating a feedback loop where honest researchers are disadvantaged.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAJHXsrk6LgmM9ssGhz7nRg7O6Di3hAgCExqUlYUl4KdwUIvhr7-0Z2JGhgEa4a96J6J7tcv9FF5AqmnCvqCMZs006SN-oDHV1pcTyNHdOXrgm_qN-AfLVaZTBw098P_Wa2vBARxbNtA=="
+        ],
+        [
+          "chronicle.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGHdwuh0hmeg798z7gKU3PDQqQ3SYH7aniczUrJ_ocRhYPyqEPFzCI-94Yb3cMyBq7RV1Bxa7V5UIRXpEu2zuNxc3EA5caeU5Na0ieVbf1oX6ScHhOFdnw_p0pUewt0hfq6xCQiien_krbMfSY3Zqmo_Ro3IbpJBBWa4A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_0",
+      "section_idx": 24,
+      "idx_in_section": 0,
+      "text": "## 9. Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_1",
+      "section_idx": 24,
+      "idx_in_section": 1,
+      "text": "The evidence for the pervasiveness of citation gaming is overwhelming and multifaceted.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_2",
+      "section_idx": 24,
+      "idx_in_section": 2,
+      "text": "It is no longer limited to isolated individuals padding their reference lists.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_3",
+      "section_idx": 24,
+      "idx_in_section": 3,
+      "text": "Instead, it has evolved into a global industry involving:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_4",
+      "section_idx": 24,
+      "idx_in_section": 4,
+      "text": "1. **Coercion:** Institutionalized bullying by editors and reviewers (affecting ~20\u201366% of researchers).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_5",
+      "section_idx": 24,
+      "idx_in_section": 5,
+      "text": "2. **Cartels:** Organized rings of mutual citation, particularly in specific fields like mathematics.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_6",
+      "section_idx": 24,
+      "idx_in_section": 6,
+      "text": "3. **Commercialization:** A black market selling citations for ~$15, accessible via standard web searches.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "24_7",
+      "section_idx": 24,
+      "idx_in_section": 7,
+      "text": "4. **Industrial Fraud:** Paper mills generating thousands of fake papers to manipulate metrics, necessitating the retraction of over 10,000 papers in a single year by a single publisher.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "24_8",
+      "section_idx": 24,
+      "idx_in_section": 8,
+      "text": "This ecosystem of manipulation threatens the integrity of scientific evaluation, rendering standard metrics like the h-index increasingly unreliable as measures of true scholarly impact.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 1. Introduction: The Metric-Driven Crisis",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "The academic ecosystem is currently witnessing a transition from \"publish or perish\" to \"get cited or perish,\" creating a high-stakes environment where quantitative bibliometric indicators\u2014specifically citation counts and the h-index\u2014determine career advancement, funding allocation, and institutional prestige.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHAJHXsrk6LgmM9ssGhz7nRg7O6Di3hAgCExqUlYUl4KdwUIvhr7-0Z2JGhgEa4a96J6J7tcv9FF5AqmnCvqCMZs006SN-oDHV1pcTyNHdOXrgm_qN-AfLVaZTBw098P_Wa2vBARxbNtA=="
+        ],
+        [
+          "chronicle.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGHdwuh0hmeg798z7gKU3PDQqQ3SYH7aniczUrJ_ocRhYPyqEPFzCI-94Yb3cMyBq7RV1Bxa7V5UIRXpEu2zuNxc3EA5caeU5Na0ieVbf1oX6ScHhOFdnw_p0pUewt0hfq6xCQiien_krbMfSY3Zqmo_Ro3IbpJBBWa4A=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "This reliance on metrics has triggered Goodhart\u2019s Law: when a measure becomes a target, it ceases to be a good measure.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "The evidence for the pervasiveness of citation gaming is no longer anecdotal; it is supported by large-scale data analyses, sting operations, and unprecedented mass retractions by major publishers.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "Current evidence suggests that gaming has metastasized from individual \"low-tech\" strategies, such as excessive self-citation, to \"high-tech,\" coordinated efforts involving artificial intelligence, black-market services, and compromised editorial boards.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "thepublicationplan.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE8S6-D7gKmZGS76CnfY3iHSGmZ2WQMvKbr4m4Xqi9Ss9hfJZsxztNdcb5HLadKlvbM-Fg0eEFOIPZc8izuzEHFLO4hUhe9PHshPSGeFmfLJOe-t59TP7vIFwaGgHJKb_vSgHxyhx-zv_O5pcCZQyMLork4TSQzxvYv82eVuE6EAlSmyZa6m6GkSBrUI__O-FjGhY8="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "This report details the known evidence for these practices, categorizing them by mechanism and scale.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 2. Coercive Citation: Editors and Reviewers",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "missouri.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEWRqNRet7TkkQBJ16mL0G0A5vDBG-ppVsaDepSRJJhCZ0NeCt3QKIIgC6NIbpkLhfjSNm85Ugn6EC0WPNm3AF9B9KH3XVqa02zpyxZK-EtiVmzLZkNNYQUHUEv7dfV_k650R29OuCgQaPpRLUa1vD-VU--w3dgS3BBbdujyZSs5iPgoKSLW_Lh0qF9SmSSMCL9PA=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5c0739m6ihYchGGrJz_0d_pWfoqUJWkjHwhn0zYs_qNG5V7EiaMWBYKpoHkt_zy82edSZ9_l2vvaAJbtY16SJbIS0dTaznTxLrWdPTR_eBKXF3EKeK7vVoPYvtieeux6xp_g-ZA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "Coercive citation occurs when an editor or reviewer requests that an author add citations to a specific journal or author (often themselves) as a condition for acceptance, despite the citations lacking scholarly relevance.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "missouri.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEWRqNRet7TkkQBJ16mL0G0A5vDBG-ppVsaDepSRJJhCZ0NeCt3QKIIgC6NIbpkLhfjSNm85Ugn6EC0WPNm3AF9B9KH3XVqa02zpyxZK-EtiVmzLZkNNYQUHUEv7dfV_k650R29OuCgQaPpRLUa1vD-VU--w3dgS3BBbdujyZSs5iPgoKSLW_Lh0qF9SmSSMCL9PA=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5c0739m6ihYchGGrJz_0d_pWfoqUJWkjHwhn0zYs_qNG5V7EiaMWBYKpoHkt_zy82edSZ9_l2vvaAJbtY16SJbIS0dTaznTxLrWdPTR_eBKXF3EKeK7vVoPYvtieeux6xp_g-ZA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 2.1 Prevalence Surveys and Data",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "The most robust evidence for coercive citation comes from large-scale surveys of the academic community.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "*  **The 2012 Wilhite and Fong Study:** A landmark survey of 6,672 researchers across economics, sociology, psychology, and business disciplines found that approximately **20% (1 in 5)** of respondents had experienced coercive citation requests.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "missouri.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEWRqNRet7TkkQBJ16mL0G0A5vDBG-ppVsaDepSRJJhCZ0NeCt3QKIIgC6NIbpkLhfjSNm85Ugn6EC0WPNm3AF9B9KH3XVqa02zpyxZK-EtiVmzLZkNNYQUHUEv7dfV_k650R29OuCgQaPpRLUa1vD-VU--w3dgS3BBbdujyZSs5iPgoKSLW_Lh0qF9SmSSMCL9PA=="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5c0739m6ihYchGGrJz_0d_pWfoqUJWkjHwhn0zYs_qNG5V7EiaMWBYKpoHkt_zy82edSZ9_l2vvaAJbtY16SJbIS0dTaznTxLrWdPTR_eBKXF3EKeK7vVoPYvtieeux6xp_g-ZA=="
+        ],
+        [
+          "enago.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjfPJj7GGnGswGsPwvfXvD_-TodXmBk62pY5Pib5tJ9vCwA4kcLKn5_6e0jqDiIemw6N3SmWfbKroQS72-uhWfLc0tgGil0I-ZtIlchdcWdhYXizQzN-oeEPiZ0K6FQz9uaIEAPj8jdbqoQKr8GjTyrym7b1NzNOyut9wN_w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "The study noted that coercion was more prevalent in business and management disciplines compared to others.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emerald.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE-oi-etiFRyRd5eBq7W59J_1IePBQmSSzY3BBQibRiz5vb5mU6UPvnNfESPnUgnnBdqPx_wfpFRWaeB7ws_uUC_8LQ7JCC5_tfPcFrd0n1K5Ip3Cqzbs6SsLCa-_krPedI4JOvOzGzWTYyWR5U4btTyIBmqi9l62lCMR0otUTTXUBcOBM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "*  **The 2019 Nature Survey:** A subsequent survey of authors for the journal *Nature* revealed an even higher prevalence, with **two-thirds** of respondents reporting that they had received coercive citation suggestions from peer reviewers.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emerald.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE-oi-etiFRyRd5eBq7W59J_1IePBQmSSzY3BBQibRiz5vb5mU6UPvnNfESPnUgnnBdqPx_wfpFRWaeB7ws_uUC_8LQ7JCC5_tfPcFrd0n1K5Ip3Cqzbs6SsLCa-_krPedI4JOvOzGzWTYyWR5U4btTyIBmqi9l62lCMR0otUTTXUBcOBM="
+        ],
+        [
+          "elifesciences.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdP9Bs84wuuGF4tMYKQVPGJ-HazoDkyEkgQ0Kt2ap_7UMrvZIS8-S3ZrUMtwwihAV9tczrZcRbpr8X5QwlIpAjctgZN19em-As9FvmPyXjrxOAqAHQKtEoLWHX8fBc_w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "*  **Reviewer Bias:** Analysis of over 18,000 open-access articles indicated that manuscripts citing a reviewer's work were accepted at a rate of 92%, compared to 76% for those that did not, raising concerns about the implicit pressure to cite reviewers to ensure acceptance.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "reddit.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEmdG7Ij4vR9S2er541u-CyRWUG5I4CPsSD4-RfHW8QHDnJn67zvywY_QFY99oNnx2c-T7C92f96KMGlNbCfRaQ0PnnzIwI6W1ADRzd444i4-JVXCKd6y62jKUaANlNmU9t6hJ6WV-MMu4cNe3LCgAT0f69KpNv31QwgX9C2hdsbt7a1l_GfvMTxUYbnmMDF8YBNDU0CoXMCQYJVFtgbih-"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 2.2 Mechanisms of Coercion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "*  **Editorial Coercion:** Editors may direct authors to add citations from the editor's journal to boost the journal's Impact Factor (JIF).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "missouri.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEWRqNRet7TkkQBJ16mL0G0A5vDBG-ppVsaDepSRJJhCZ0NeCt3QKIIgC6NIbpkLhfjSNm85Ugn6EC0WPNm3AF9B9KH3XVqa02zpyxZK-EtiVmzLZkNNYQUHUEv7dfV_k650R29OuCgQaPpRLUa1vD-VU--w3dgS3BBbdujyZSs5iPgoKSLW_Lh0qF9SmSSMCL9PA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGF4qmQHxAvGuG8dcxchMQ5LVNTp8Z9aeJa6Xk7A6C1stU340mZHys9ZtIDtScXcd1uXWFYnD0LKHBJGik5OqkeZxx2ksFWXeCGGSdaQgLzaWWqL8oo43yBu6xPfyAq0ilTQ3r4wVkb5oLDsyO7UR_5YfzpGT8cvIoYgr3n8ep2AHfUNKQORqGkN6vygR7wTnl8"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "This is often done through \"gentle\" suggestions that carry the implicit threat of rejection.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "missouri.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEWRqNRet7TkkQBJ16mL0G0A5vDBG-ppVsaDepSRJJhCZ0NeCt3QKIIgC6NIbpkLhfjSNm85Ugn6EC0WPNm3AF9B9KH3XVqa02zpyxZK-EtiVmzLZkNNYQUHUEv7dfV_k650R29OuCgQaPpRLUa1vD-VU--w3dgS3BBbdujyZSs5iPgoKSLW_Lh0qF9SmSSMCL9PA=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGF4qmQHxAvGuG8dcxchMQ5LVNTp8Z9aeJa6Xk7A6C1stU340mZHys9ZtIDtScXcd1uXWFYnD0LKHBJGik5OqkeZxx2ksFWXeCGGSdaQgLzaWWqL8oo43yBu6xPfyAq0ilTQ3r4wVkb5oLDsyO7UR_5YfzpGT8cvIoYgr3n8ep2AHfUNKQORqGkN6vygR7wTnl8"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "*  **Reviewer Coercion:** Reviewers may request citations to their own work to inflate their personal h-index.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emerald.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE-oi-etiFRyRd5eBq7W59J_1IePBQmSSzY3BBQibRiz5vb5mU6UPvnNfESPnUgnnBdqPx_wfpFRWaeB7ws_uUC_8LQ7JCC5_tfPcFrd0n1K5Ip3Cqzbs6SsLCa-_krPedI4JOvOzGzWTYyWR5U4btTyIBmqi9l62lCMR0otUTTXUBcOBM="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5c0739m6ihYchGGrJz_0d_pWfoqUJWkjHwhn0zYs_qNG5V7EiaMWBYKpoHkt_zy82edSZ9_l2vvaAJbtY16SJbIS0dTaznTxLrWdPTR_eBKXF3EKeK7vVoPYvtieeux6xp_g-ZA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "While some requests are legitimate, \"coercive\" requests are characterized by a lack of relevance and a focus on a single author's body of work.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emerald.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE-oi-etiFRyRd5eBq7W59J_1IePBQmSSzY3BBQibRiz5vb5mU6UPvnNfESPnUgnnBdqPx_wfpFRWaeB7ws_uUC_8LQ7JCC5_tfPcFrd0n1K5Ip3Cqzbs6SsLCa-_krPedI4JOvOzGzWTYyWR5U4btTyIBmqi9l62lCMR0otUTTXUBcOBM="
+        ],
+        [
+          "elifesciences.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEFng3e-tiiq_roE74835cPX-4cHlCcu78yLw_K0pmKasQ5Yj1J-mG809hRkKG00OchC5srPIGVWMqjKlSH-rkLDU8CZ6n_KVgNPCj7iw6aIKJokBd3FGfLxoQ38nWgRMGrhMpLw65tVwvzRcFdlbg="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "*  **Targeting Vulnerability:** Evidence suggests that coercive tactics disproportionately target junior researchers, those from non-English speaking countries, and lower-ranking academics who are less likely to push back against unethical requests.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "emerald.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE-oi-etiFRyRd5eBq7W59J_1IePBQmSSzY3BBQibRiz5vb5mU6UPvnNfESPnUgnnBdqPx_wfpFRWaeB7ws_uUC_8LQ7JCC5_tfPcFrd0n1K5Ip3Cqzbs6SsLCa-_krPedI4JOvOzGzWTYyWR5U4btTyIBmqi9l62lCMR0otUTTXUBcOBM="
+        ],
+        [
+          "wikipedia.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5c0739m6ihYchGGrJz_0d_pWfoqUJWkjHwhn0zYs_qNG5V7EiaMWBYKpoHkt_zy82edSZ9_l2vvaAJbtY16SJbIS0dTaznTxLrWdPTR_eBKXF3EKeK7vVoPYvtieeux6xp_g-ZA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## 3. Citation Cartels and Rings",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "Citation cartels (or rings) represent a coordinated effort where groups of authors or journals agree to cite each other's work disproportionately to manipulate metrics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "proof-reading-service.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmTZoeOokEVq7cFwTCeEbtxQh6V4x3v04PkCS2Unh57DcnPo9lKQjStKBLEZYEH4GIVxdhD-F-MGjuQMvcrXhqAtjWAhRhwwJ-2UpSzc8jLT2TlBIZ95JNAK0Yq7_MwdnhZqciwBmp4dO1Hp0tc29HZ7KJqsJEcvhvYhw8ZqSYXFGH-S6U_cWa_F5tK99M6TTgeBXFF1rR9aBrqd2BUrDez-5lVYOxBrGaBgifABCvbyjbmexMTUti"
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGIp5k4LpR7Iti6UYYwrWTBtDzvCVwOxaon7TQzwHCmiMSLYEKgur48_x4GlDstTtputn-4RuFIfwr70nw4FaI63pZbPjMytVRplpJu6dtu1j6cyVP9rJ75zOzImBoMI7u7qQcF3m80"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "Unlike self-citation, which is easily detected, cartels are designed to mimic organic citation patterns, making them harder to identify.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "proof-reading-service.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmTZoeOokEVq7cFwTCeEbtxQh6V4x3v04PkCS2Unh57DcnPo9lKQjStKBLEZYEH4GIVxdhD-F-MGjuQMvcrXhqAtjWAhRhwwJ-2UpSzc8jLT2TlBIZ95JNAK0Yq7_MwdnhZqciwBmp4dO1Hp0tc29HZ7KJqsJEcvhvYhw8ZqSYXFGH-S6U_cWa_F5tK99M6TTgeBXFF1rR9aBrqd2BUrDez-5lVYOxBrGaBgifABCvbyjbmexMTUti"
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGIp5k4LpR7Iti6UYYwrWTBtDzvCVwOxaon7TQzwHCmiMSLYEKgur48_x4GlDstTtputn-4RuFIfwr70nw4FaI63pZbPjMytVRplpJu6dtu1j6cyVP9rJ75zOzImBoMI7u7qQcF3m80"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### 3.1 Journal-Level Cartels (Citation Stacking)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "Citation stacking involves journals exchanging citations to mutually boost their Impact Factors.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "*  **The Cell Transplantation Case:** In 2012, it was revealed that *Medical Science Monitor* published a review article citing 445 papers from *Cell Transplantation*, which significantly inflated the latter's Impact Factor.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sspnet.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF3YtVSp4c3FI5ND-dSZi2B-gE2Abzz_Ajua4N3bvpKhz7iw51BQB1Ku0dlxQ1YLE1ecNSzRu5k3bfbKoc_bmr2milUSp0f7nnmqePJVsdy5TcVI2DxxYS1babKGv5osb86c9nKsv9QXFFbbA-f_JbVkCvkJOKpsUrc4zvGpTtvsdP4-ac="
+        ],
+        [
+          "enago.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxZeLnVtzfmjmVzpzPD0Pr9VasymA0p6o8UcP32ad1gZlsjN2lJA37zt6mYAf-Q5T7k5g0ejQK0S0ex3HqhHE5pcNycgase6235eB72ftBVtw59R3MSK3wJVGUNajS0qBgS81-qtDsqbn_7MCoGX20LiWCGrzId920Waoc-6CYva6y_RnorvpI"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "This led to the suppression of these journals from citation reports.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "sspnet.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF3YtVSp4c3FI5ND-dSZi2B-gE2Abzz_Ajua4N3bvpKhz7iw51BQB1Ku0dlxQ1YLE1ecNSzRu5k3bfbKoc_bmr2milUSp0f7nnmqePJVsdy5TcVI2DxxYS1babKGv5osb86c9nKsv9QXFFbbA-f_JbVkCvkJOKpsUrc4zvGpTtvsdP4-ac="
+        ],
+        [
+          "enago.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFxZeLnVtzfmjmVzpzPD0Pr9VasymA0p6o8UcP32ad1gZlsjN2lJA37zt6mYAf-Q5T7k5g0ejQK0S0ex3HqhHE5pcNycgase6235eB72ftBVtw59R3MSK3wJVGUNajS0qBgS81-qtDsqbn_7MCoGX20LiWCGrzId920Waoc-6CYva6y_RnorvpI"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_4",
+      "section_idx": 7,
+      "idx_in_section": 4,
+      "text": "*  **Thomson Reuters/Clarivate Suppressions:** In 2013, 37 journals were suppressed, and 66 were banned for citation stacking.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cwts.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG_Y6NwNhcSQjQv6FviP7nDBMewoYZ_uCPoNPHVJbS5UeSmy61N29Ri4vffSkDhgKTX_ISjFrHdfMeRYfu_nhN8ORRvsb2gHy76fSvDX7V-t9otTvsXvAI4y22IPyB6bA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_5",
+      "section_idx": 7,
+      "idx_in_section": 5,
+      "text": "In 2016, 18 journals were suppressed for anomalous citation patterns.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cwts.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG_Y6NwNhcSQjQv6FviP7nDBMewoYZ_uCPoNPHVJbS5UeSmy61N29Ri4vffSkDhgKTX_ISjFrHdfMeRYfu_nhN8ORRvsb2gHy76fSvDX7V-t9otTvsXvAI4y22IPyB6bA=="
+        ],
+        [
+          "enago.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGOiZ16RaF_nCrDGAuXmUhhMu88teGFcBDK3r3bqUtan_iIDdK04WsVbiIqPvxRfg7y4R285BRCTs4Op-_WKVmlsZKkSNEZkryff3tHKtAQbWieQ21l3ep3tcjDkJJ-g0ui1MvS7MqThP-9TTEtRg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_6",
+      "section_idx": 7,
+      "idx_in_section": 6,
+      "text": "*  **Brazilian Citation Cartel:** A specific cartel involving Brazilian journals was detected by algorithms designed to spot citation stacking, where donor journals provided excessive citations to recipient journals to manipulate JIF calculations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cwts.nl",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG_Y6NwNhcSQjQv6FviP7nDBMewoYZ_uCPoNPHVJbS5UeSmy61N29Ri4vffSkDhgKTX_ISjFrHdfMeRYfu_nhN8ORRvsb2gHy76fSvDX7V-t9otTvsXvAI4y22IPyB6bA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "### 3.2 Author-Level Cartels",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "*  **Mathematics Community Crisis:** Recent investigations have uncovered \"cliques\" of mathematicians, particularly at institutions in China and Saudi Arabia, who artificially boost colleagues' citation counts.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hkust.edu.hk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEiojytEUwRlCQHTFBrEefJM0hQYQ7pkPhYKymuUobISmVHt0xB4mmWm5pvsR-LJXCBvssOV0qcqKVf83QBHmfZJLSs1Ok5nfWarG-JZunk4JOWuT9FiiCutVKD-HGYYh9aJ-Ngm-2WGxV7ZcGRvRSiv7xjkvf_qv_aMps4iccnmJqj6w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "In 2023, a network of approximately 100 researchers co-authored 17 papers that generated nearly 400 citations in a single year, heavily relying on self-citations and co-author citations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "chronicle.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGHdwuh0hmeg798z7gKU3PDQqQ3SYH7aniczUrJ_ocRhYPyqEPFzCI-94Yb3cMyBq7RV1Bxa7V5UIRXpEu2zuNxc3EA5caeU5Na0ieVbf1oX6ScHhOFdnw_p0pUewt0hfq6xCQiien_krbMfSY3Zqmo_Ro3IbpJBBWa4A=="
+        ],
+        [
+          "soton.ac.uk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFX-xdKNGBANC3jRBuGmPhugdawu25mkW3G-Njcb01K0ZcWMd-a6MXI_FoWNjO-pWNN7rpk6L1kw1CDN3geJm2xXTI3LH1yljinRK1b2VdRuc9I0J_vVSmylZzWqsRNNLTFKIFtihP6qbUR52N2hAMXjh1gePyJN_MIvaB-uCvx38HhyzqgsBK6S-MCD7sYwpe6mCTWLg=="
+        ],
+        [
+          "hkust.edu.hk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEiojytEUwRlCQHTFBrEefJM0hQYQ7pkPhYKymuUobISmVHt0xB4mmWm5pvsR-LJXCBvssOV0qcqKVf83QBHmfZJLSs1Ok5nfWarG-JZunk4JOWuT9FiiCutVKD-HGYYh9aJ-Ngm-2WGxV7ZcGRvRSiv7xjkvf_qv_aMps4iccnmJqj6w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_3",
+      "section_idx": 8,
+      "idx_in_section": 3,
+      "text": "This manipulation was severe enough to exclude the entire field of mathematics from Clarivate's \"Highly Cited Researchers\" list in certain instances.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hkust.edu.hk",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEiojytEUwRlCQHTFBrEefJM0hQYQ7pkPhYKymuUobISmVHt0xB4mmWm5pvsR-LJXCBvssOV0qcqKVf83QBHmfZJLSs1Ok5nfWarG-JZunk4JOWuT9FiiCutVKD-HGYYh9aJ-Ngm-2WGxV7ZcGRvRSiv7xjkvf_qv_aMps4iccnmJqj6w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_4",
+      "section_idx": 8,
+      "idx_in_section": 4,
+      "text": "*  **Detection Challenges:** While algorithms can detect \"anomalous citation groups\" (donor and recipient journals), proving intent remains difficult.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGIp5k4LpR7Iti6UYYwrWTBtDzvCVwOxaon7TQzwHCmiMSLYEKgur48_x4GlDstTtputn-4RuFIfwr70nw4FaI63pZbPjMytVRplpJu6dtu1j6cyVP9rJ75zOzImBoMI7u7qQcF3m80"
+        ],
+        [
+          "frontiersin.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEbCkZ4mIlRh9aZEaRv9vQ3CkgCCr-AtRr6I-i48I7txpEHiSgYkNOJj3Yo6q4DLqj6qLhHwNyZtoj1Vt5cuZfiXafi-kQ-T_OUbxYdO1q-5qDJ2yHWQ2dN7L6hcmZEM2wt6gfTIfUf5QdbNHswFefzfvf0nbYDwDUl_cZafOd0G1ZqfH1IyBJJw0_LiU0A2E1DoUyzXWAvUK8WF0h7w0Ju"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_5",
+      "section_idx": 8,
+      "idx_in_section": 5,
+      "text": "However, patterns where citations are concentrated heavily within a closed loop of authors are a primary red flag.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGIp5k4LpR7Iti6UYYwrWTBtDzvCVwOxaon7TQzwHCmiMSLYEKgur48_x4GlDstTtputn-4RuFIfwr70nw4FaI63pZbPjMytVRplpJu6dtu1j6cyVP9rJ75zOzImBoMI7u7qQcF3m80"
+        ],
+        [
+          "frontiersin.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEbCkZ4mIlRh9aZEaRv9vQ3CkgCCr-AtRr6I-i48I7txpEHiSgYkNOJj3Yo6q4DLqj6qLhHwNyZtoj1Vt5cuZfiXafi-kQ-T_OUbxYdO1q-5qDJ2yHWQ2dN7L6hcmZEM2wt6gfTIfUf5QdbNHswFefzfvf0nbYDwDUl_cZafOd0G1ZqfH1IyBJJw0_LiU0A2E1DoUyzXWAvUK8WF0h7w0Ju"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "## 4. Industrialized Gaming: Paper Mills and Special Issues",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "The most significant recent development in citation gaming is the industrialization of fraud through \"paper mills\"\u2014organizations that produce and sell fake research manuscripts\u2014and the exploitation of \"Special Issues\" in open-access journals.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    }
+  ]
+}

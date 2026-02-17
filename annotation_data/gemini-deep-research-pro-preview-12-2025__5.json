@@ -1,0 +1,2243 @@
+{
+  "model_name": "gemini-deep-research-pro-preview-12-2025",
+  "example_id": "5",
+  "question": "Please provide a detailed answer to the following question:\n\nIn robotics, what are the leading methods for learning terrain traversibility costs automatically from robot experience?",
+  "answer": "# Automated Learning of Terrain Traversability Costs in Robotics: A Comprehensive Review of Self-Supervised and Experiential Methods\n\n**Key Points**\n*   **Shift from Geometry to Experience:** Traditional geometric methods (analyzing slope and step height) are insufficient for complex off-road environments (e.g., distinguishing tall grass from concrete walls). The field has shifted toward **self-supervised learning (SSL)**, where robots learn traversability costs by physically interacting with the terrain [cite: 1, 2].\n*   **Hindsight and Self-Labeling:** Leading frameworks like **BADGR** and **RoadRunner** utilize \"hindsight\" labeling\u2014using the robot's successful past trajectories to label terrain as traversable and collisions/shocks as non-traversable, enabling end-to-end training without human annotation [cite: 1, 3].\n*   **Proprioceptive Feedback:** For legged and wheeled robots, **proprioception** (IMU, joint torques, current consumption) serves as the \"ground truth\" for how terrain feels (slippage, roughness). Methods like **ProNav** and **CNN-LSTM** fusion networks correlate visual data with these internal sensations to predict costs at a distance [cite: 4, 5, 6].\n*   **Online Adaptation:** To handle domain shifts (e.g., moving from forest to desert), recent systems like **ALTER** and **SALON** employ online learning. They leverage near-range sensors (LiDAR) or foundation models (like DINOv2) to retrain visual models in real-time, adapting to new environments in seconds [cite: 7, 8].\n*   **Contrastive Learning:** Advanced techniques now use contrastive losses to refine feature spaces, distinguishing between safe and unsafe terrain embeddings even when negative labels (explicit failures) are sparse [cite: 9, 10].\n\n---\n\n## 1. Introduction\n\nIn the domain of autonomous field robotics, the ability to accurately estimate terrain traversability is a fundamental prerequisite for safe and efficient navigation. Traversability estimation involves determining the suitability of a specific terrain for a robot to drive or walk over, considering the complex interaction dynamics between the robot's mechanical capabilities and the environment's physical properties [cite: 8, 11].\n\nHistorically, traversability analysis relied heavily on **geometric methods**. These approaches utilize exteroceptive sensors, such as LiDAR or stereo cameras, to construct 2.5D elevation maps or 3D voxel grids. Algorithms then analyze these maps for geometric features\u2014such as slope, step height, and roughness\u2014to assign traversability costs [cite: 12, 13]. While effective in structured or rigid environments, geometric methods often fail in unstructured, off-road settings. A classic failure mode is \"vegetation ambiguity,\" where a geometric system perceives tall grass as a solid obstacle (similar to a wall) because it cannot distinguish between rigid and non-rigid obstacles [cite: 1, 2].\n\nTo overcome these limitations, the state-of-the-art has pivoted toward **experiential learning** and **self-supervised learning (SSL)**. Instead of relying on handcrafted rules or manual human annotations (which are labor-intensive and often inaccurate), modern robots learn traversability costs automatically from their own experience. By correlating exteroceptive inputs (what the robot sees) with proprioceptive feedback (what the robot feels) and navigation outcomes (success vs. failure), these systems develop robust, data-driven cost functions [cite: 14, 15].\n\nThis report details the leading methods for this automatic learning process, categorized into self-supervised hindsight learning, proprioceptive-visual fusion, online adaptation, and contrastive representation learning.\n\n---\n\n## 2. Self-Supervised Learning from Hindsight\n\nThe most prominent methodology for learning traversability automatically is **hindsight supervision**. The core premise is that if a robot successfully traverses a patch of terrain, that terrain is, by definition, traversable. Conversely, if the robot experiences a collision, high vibration, or entrapment, the terrain is non-traversable or high-cost. This allows the robot to generate its own training labels automatically.\n\n### 2.1. End-to-End Navigation Systems (BADGR)\nThe **Berkeley Autonomous Driving Ground Robot (BADGR)** represents a seminal approach in end-to-end self-supervised navigation. Unlike modular systems that build maps and then plan, BADGR learns a direct predictive model from raw observations to future outcomes [cite: 1, 2].\n\n*   **Data Collection:** The robot explores the environment using a random or heuristic policy. It records a stream of images, commanded actions, and resulting events (position, collision, bumpiness).\n*   **Self-Labeling:** The system automatically labels the data. For example, if the IMU detects high vertical acceleration, the associated image patch is labeled as \"bumpy.\" If the bumper sensor triggers, it is labeled as a \"collision.\"\n*   **Predictive Model:** BADGR trains a neural network to predict future events based on the current image and a sequence of future actions. During deployment, the robot samples thousands of action sequences, predicts their outcomes using the trained model, and selects the action sequence that minimizes cost (e.g., avoids collisions and bumpiness) [cite: 16, 17].\n\n**Significance:** BADGR demonstrated that a robot could learn to navigate tall grass (which looks like an obstacle but is traversable) and avoid concrete paths (which look flat but might be bumpy or undesirable based on the objective) purely from experience, without geometric heuristics [cite: 1].\n\n### 2.2. Sensor Fusion and Mapping (RoadRunner)\nWhile BADGR focuses on end-to-end control, **RoadRunner** and its successor **RoadRunner M&M** (Multi-range & Multi-resolution) focus on generating accurate traversability maps by fusing Camera and LiDAR data, supervised by hindsight [cite: 3, 18].\n\n*   **Architecture:** RoadRunner utilizes a sensor fusion architecture similar to those in autonomous driving (e.g., BEV-Fusion). It takes images and LiDAR voxel maps as input and projects them into a common Bird's Eye View (BEV) representation [cite: 19, 20].\n*   **Hindsight Supervision:** The system is trained using \"hindsight\" signals generated from an existing, reliable (but perhaps slow or short-range) traversability stack (like X-Racer) and satellite Digital Elevation Maps (DEM). As the robot drives, it accumulates accurate geometric and semantic information about the terrain it just passed over. This high-fidelity \"past\" data is used to supervise the network's predictions for the \"future\" terrain seen in the camera images [cite: 18, 21].\n*   **Capabilities:** RoadRunner M&M predicts traversability and elevation at multiple ranges (up to 100m) and resolutions. It achieves a 30% improvement in traversability estimation over baseline geometric methods and can predict costs in regions where LiDAR is sparse by leveraging visual textures learned from experience [cite: 22, 23].\n\n### 2.3. Trajectory Projection and Reconstruction\nAnother class of methods, exemplified by the work of **Schmid et al.** and **Seo et al.**, uses reconstruction error as a proxy for traversability [cite: 24, 25].\n\n*   **Methodology:** These systems project the vehicle's past wheel trajectories into the camera images. The image regions corresponding to the wheel paths are considered \"safe\" (positive samples).\n*   **Anomaly Detection:** An autoencoder or a Generative Adversarial Network (GAN) is trained to reconstruct these \"safe\" terrain patches. During inference, the system attempts to reconstruct the terrain ahead.\n*   **Cost Assignment:** If the reconstruction error is low, the terrain is similar to previously traversed safe terrain (low cost). If the reconstruction error is high (an anomaly), the terrain is likely unsafe or unknown (high cost). This effectively turns traversability learning into a one-class classification or anomaly detection problem [cite: 26, 27].\n\n---\n\n## 3. Proprioceptive Learning: \"Feeling\" the Terrain\n\nVisual and geometric data are often insufficient to determine surface properties like soil compliance, friction, or hidden obstacles. **Proprioceptive learning** addresses this by using the robot's internal sensors to measure the physical interaction with the terrain, creating a \"ground truth\" that is then associated with visual features.\n\n### 3.1. Proprioception for Legged Robots (ProNav)\nLegged robots face unique challenges, such as leg entrapment in vegetation or instability on granular soils. **ProNav** is a leading framework specifically designed for legged robot traversability using proprioception [cite: 4, 5].\n\n*   **Signals Used:** ProNav utilizes joint encoders (position), force sensors (ground reaction forces), and current sensors (energy consumption).\n*   **Metrics:** It computes metrics for **stability** (variance in body pose), **resistance** (current consumption relative to motion), and **entrapment risk** (discrepancies in expected vs. actual leg trajectories).\n*   **Learning:** The system uses these signals to assess traversability in real-time. It can predict imminent crashes or instability and adapt the robot's gait (e.g., lifting legs higher in tall grass) to minimize energy consumption and maximize stability [cite: 28, 29].\n*   **Performance:** ProNav has shown up to a 40% improvement in success rate and a 15.1% reduction in energy consumption compared to purely exteroceptive methods in dense vegetation [cite: 4, 30].\n\n### 3.2. Visual-Proprioceptive Fusion (CNN-LSTM)\nTo predict traversability *before* entering a terrain, robots must learn to associate the \"look\" of the terrain with its \"feel.\" This is often achieved through **CNN-LSTM** architectures [cite: 31, 32].\n\n*   **Architecture:** A Convolutional Neural Network (CNN) extracts spatial features from camera images or local map patches. Simultaneously, a Long Short-Term Memory (LSTM) network processes time-series proprioceptive data (IMU acceleration, wheel slip, velocity) [cite: 6].\n*   **Training:** The network is trained to predict the proprioceptive cost (e.g., vibration level, risk of getting stuck) from the visual input. The \"label\" is the actual vibration experienced when the robot drove over that specific patch of terrain [cite: 14, 33].\n*   **Risk-Aware Labeling:** Some approaches, such as those by **Zhu et al.** and **Kim et al.**, utilize statistical measures like **Value at Risk (VaR)** on the z-axis acceleration data to generate continuous risk scores (0 to 1) rather than binary traversable/non-traversable labels. This allows for fine-grained costmaps that distinguish between smooth concrete, gravel, and rough rocky trails [cite: 31, 34].\n\n### 3.3. Vibration and Acoustic Analysis\nBeyond standard IMU data, researchers have explored using acoustic sensors (microphones near wheels) and specialized vibration analysis to classify terrain.\n*   **Acoustic Features:** The sound of wheel-terrain interaction varies significantly between sand, asphalt, and grass. Self-supervised frameworks use these audio signatures to cluster terrain types and then train visual classifiers to recognize these types from images [cite: 11, 35].\n*   **Vibration Classification:** Methods like **CACTI** use accelerometer data to classify terrain into categories (sand, gravel, clay) and associate these with visual textures. This is particularly useful for identifying non-geometric hazards like soft sand that might cause immobilization [cite: 36, 37].\n\n---\n\n## 4. Online Adaptation and Continuous Learning\n\nA major limitation of offline learning is **domain shift**. A model trained in a forest may fail in a desert. To address this, leading methods now employ **online adaptation**, where the robot continuously updates its traversability model during the mission.\n\n### 4.1. ALTER: LiDAR-to-Vision Adaptation\n**ALTER** (Adaptive Learning for Traversability Estimation with Robustness) is a framework designed for high-speed off-road driving that adapts visual models using LiDAR supervision [cite: 8].\n\n*   **Concept:** LiDAR provides reliable geometric traversability estimates at short range (e.g., <30m) but becomes sparse and noisy at long range. Cameras provide dense data at long range but are unreliable if the environment changes (e.g., lighting, texture).\n*   **Mechanism:** ALTER uses the reliable near-range LiDAR data to generate self-supervised labels for the current terrain. It then retrains (fine-tunes) the visual model *on-the-fly* using these labels.\n*   **Outcome:** This allows the visual model to \"learn\" that the current texture of \"tall grass\" is traversable (based on LiDAR feedback from under the wheels) and extend that prediction to the long range (100m). ALTER demonstrates up to 52.5% improvement over LiDAR-only estimates in new environments [cite: 38, 39].\n\n### 4.2. SALON: Fast Adaptation with Foundation Models\n**SALON** (Self-supervised Adaptive Learning for Off-road Navigation) pushes the speed of adaptation further, enabling robots to adapt within seconds of entering a new environment [cite: 7, 40].\n\n*   **Visual Foundation Models (VFMs):** SALON leverages pre-trained foundation models like **DINOv2** for feature extraction. These models provide robust, generalizable visual features that require less training to adapt than training a CNN from scratch [cite: 41, 42].\n*   **Proprioceptive Supervision:** Similar to other methods, it uses proprioceptive signals (IMU) to label terrain roughness.\n*   **Smart Buffer Management:** To prevent \"catastrophic forgetting\" (where the robot forgets how to drive on previous terrains), SALON manages a data buffer that retains diverse examples of past terrains while prioritizing new experiences.\n*   **Performance:** SALON can differentiate between key terrains (e.g., short grass vs. lethal trees) within 10 seconds of exposure, matching the performance of methods trained on 100-1000x more data [cite: 41, 43].\n\n### 4.3. WayFAST and Predictive Control\n**WayFAST** integrates online learning with Model Predictive Control (MPC). It uses a structured visual model to predict traction coefficients and traversability costs. The system continuously updates its weights based on the error between the predicted robot state and the actual state measured by odometry, effectively learning the terrain's physical properties (like slip) in real-time to optimize high-speed navigation [cite: 35, 44].\n\n---\n\n## 5. Contrastive and Representation Learning\n\nA challenge in self-supervised traversability is the **Positive-Unlabeled (PU)** problem. The robot knows that the path it traversed is safe (Positive), but it does not explicitly know if the untraversed areas are unsafe or just unvisited (Unlabeled).\n\n### 5.1. Contrastive Label Disambiguation\nRecent works, such as those by **Xue et al.**, utilize **contrastive learning** to address this ambiguity [cite: 9, 45].\n\n*   **Method:** The framework generates \"pseudo-labels\" from driving experience. It then uses a contrastive loss function to organize the feature space.\n*   **Embedding Separation:** The loss function encourages the network to pull the embeddings of traversed terrain patches (positive anchors) closer together while pushing away embeddings of visually distinct, untraversed patches (negatives).\n*   **Iterative Refinement:** Through iterative interaction between representation learning and pseudo-label updating, the system gradually disambiguates the unlabeled data, effectively learning to distinguish between safe and unsafe terrain without explicit negative labels (like collisions) [cite: 9, 46].\n\n### 5.2. Multimodal Contrastive Learning\nApproaches like **STERLING** and methods described by **Sathyamoorthy et al.** use contrastive learning to align multimodal representations. For example, they align the visual embedding of a terrain patch with the acoustic or proprioceptive embedding of that same patch. This forces the visual model to learn features that are relevant to the physical properties of the terrain (e.g., \"roughness\") rather than just visual appearance (e.g., \"color\") [cite: 10, 47].\n\n---\n\n## 6. Inverse Reinforcement Learning (IRL)\n\nWhile SSL focuses on classifying terrain, **Inverse Reinforcement Learning (IRL)** focuses on learning the underlying *cost function* that explains observed behavior.\n\n*   **Deep MaxEnt IRL:** Researchers like **Zhu et al.** apply Deep Maximum Entropy IRL to learn traversability costs from expert demonstrations. The robot observes a human driving and infers a cost map that makes the human's trajectory optimal [cite: 48, 49].\n*   **Kinematic Constraints:** To handle the complexity of off-road driving, these methods often incorporate kinematic constraints into the learning process (e.g., using RL ConvNets), ensuring that the learned cost map accounts for the vehicle's physical limitations (turning radius, slope limits) [cite: 13, 50].\n*   **Scalability:** While effective, IRL typically requires expert demonstration, which is less scalable than pure self-supervision. However, recent hybrid approaches use self-supervised driving (where the robot drives cautiously) as the \"expert\" demonstration to train more aggressive policies [cite: 51].\n\n---\n\n## 7. Conclusion\n\nThe field of robotic terrain traversability has moved decisively away from static, rule-based geometric analysis toward dynamic, data-driven learning. The leading methods share a common philosophy: **experience is the best teacher.**\n\n1.  **Hindsight Supervision** (BADGR, RoadRunner) allows robots to turn every kilometer driven into valuable training data, enabling end-to-end learning of complex environments.\n2.  **Proprioceptive Fusion** (ProNav, CNN-LSTM) grounds visual perception in physical reality, allowing robots to \"see\" how terrain will \"feel.\"\n3.  **Online Adaptation** (ALTER, SALON) solves the critical problem of generalization, allowing robots to deploy into novel environments and adapt their safety metrics in seconds using foundation models and real-time feedback.\n4.  **Contrastive Learning** refines these representations, allowing for subtle distinctions between terrain types without requiring explicit failure data.\n\nFuture research is increasingly focusing on **multimodal foundation models** that can integrate vision, LiDAR, and language/semantics to provide not just traversability costs, but semantic reasoning (e.g., \"avoid the mud because it looks deep\") to further enhance off-road autonomy [cite: 7, 52].",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": "# Automated Learning of Terrain Traversability Costs in Robotics: A Comprehensive Review of Self-Supervised and Experiential Methods",
+      "header_level": 1,
+      "text": "# Automated Learning of Terrain Traversability Costs in Robotics: A Comprehensive Review of Self-Supervised and Experiential Methods\n\n**Key Points**\n*   **Shift from Geometry to Experience:** Traditional geometric methods (analyzing slope and step height) are insufficient for complex off-road environments (e.g., distinguishing tall grass from concrete walls). The field has shifted toward **self-supervised learning (SSL)**, where robots learn traversability costs by physically interacting with the terrain [cite: 1, 2].\n*   **Hindsight and Self-Labeling:** Leading frameworks like **BADGR** and **RoadRunner** utilize \"hindsight\" labeling\u2014using the robot's successful past trajectories to label terrain as traversable and collisions/shocks as non-traversable, enabling end-to-end training without human annotation [cite: 1, 3].\n*   **Proprioceptive Feedback:** For legged and wheeled robots, **proprioception** (IMU, joint torques, current consumption) serves as the \"ground truth\" for how terrain feels (slippage, roughness). Methods like **ProNav** and **CNN-LSTM** fusion networks correlate visual data with these internal sensations to predict costs at a distance [cite: 4, 5, 6].\n*   **Online Adaptation:** To handle domain shifts (e.g., moving from forest to desert), recent systems like **ALTER** and **SALON** employ online learning. They leverage near-range sensors (LiDAR) or foundation models (like DINOv2) to retrain visual models in real-time, adapting to new environments in seconds [cite: 7, 8].\n*   **Contrastive Learning:** Advanced techniques now use contrastive losses to refine feature spaces, distinguishing between safe and unsafe terrain embeddings even when negative labels (explicit failures) are sparse [cite: 9, 10].\n\n---\n\n",
+      "start": 0,
+      "end": 1754
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## 1. Introduction",
+      "header_level": 2,
+      "text": "## 1. Introduction\n\nIn the domain of autonomous field robotics, the ability to accurately estimate terrain traversability is a fundamental prerequisite for safe and efficient navigation. Traversability estimation involves determining the suitability of a specific terrain for a robot to drive or walk over, considering the complex interaction dynamics between the robot's mechanical capabilities and the environment's physical properties [cite: 8, 11].\n\nHistorically, traversability analysis relied heavily on **geometric methods**. These approaches utilize exteroceptive sensors, such as LiDAR or stereo cameras, to construct 2.5D elevation maps or 3D voxel grids. Algorithms then analyze these maps for geometric features\u2014such as slope, step height, and roughness\u2014to assign traversability costs [cite: 12, 13]. While effective in structured or rigid environments, geometric methods often fail in unstructured, off-road settings. A classic failure mode is \"vegetation ambiguity,\" where a geometric system perceives tall grass as a solid obstacle (similar to a wall) because it cannot distinguish between rigid and non-rigid obstacles [cite: 1, 2].\n\nTo overcome these limitations, the state-of-the-art has pivoted toward **experiential learning** and **self-supervised learning (SSL)**. Instead of relying on handcrafted rules or manual human annotations (which are labor-intensive and often inaccurate), modern robots learn traversability costs automatically from their own experience. By correlating exteroceptive inputs (what the robot sees) with proprioceptive feedback (what the robot feels) and navigation outcomes (success vs. failure), these systems develop robust, data-driven cost functions [cite: 14, 15].\n\nThis report details the leading methods for this automatic learning process, categorized into self-supervised hindsight learning, proprioceptive-visual fusion, online adaptation, and contrastive representation learning.\n\n---\n\n",
+      "start": 1754,
+      "end": 3698
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 2. Self-Supervised Learning from Hindsight",
+      "header_level": 2,
+      "text": "## 2. Self-Supervised Learning from Hindsight\n\nThe most prominent methodology for learning traversability automatically is **hindsight supervision**. The core premise is that if a robot successfully traverses a patch of terrain, that terrain is, by definition, traversable. Conversely, if the robot experiences a collision, high vibration, or entrapment, the terrain is non-traversable or high-cost. This allows the robot to generate its own training labels automatically.\n\n",
+      "start": 3698,
+      "end": 4172
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "### 2.1. End-to-End Navigation Systems (BADGR)",
+      "header_level": 3,
+      "text": "### 2.1. End-to-End Navigation Systems (BADGR)\nThe **Berkeley Autonomous Driving Ground Robot (BADGR)** represents a seminal approach in end-to-end self-supervised navigation. Unlike modular systems that build maps and then plan, BADGR learns a direct predictive model from raw observations to future outcomes [cite: 1, 2].\n\n*   **Data Collection:** The robot explores the environment using a random or heuristic policy. It records a stream of images, commanded actions, and resulting events (position, collision, bumpiness).\n*   **Self-Labeling:** The system automatically labels the data. For example, if the IMU detects high vertical acceleration, the associated image patch is labeled as \"bumpy.\" If the bumper sensor triggers, it is labeled as a \"collision.\"\n*   **Predictive Model:** BADGR trains a neural network to predict future events based on the current image and a sequence of future actions. During deployment, the robot samples thousands of action sequences, predicts their outcomes using the trained model, and selects the action sequence that minimizes cost (e.g., avoids collisions and bumpiness) [cite: 16, 17].\n\n**Significance:** BADGR demonstrated that a robot could learn to navigate tall grass (which looks like an obstacle but is traversable) and avoid concrete paths (which look flat but might be bumpy or undesirable based on the objective) purely from experience, without geometric heuristics [cite: 1].\n\n",
+      "start": 4172,
+      "end": 5604
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### 2.2. Sensor Fusion and Mapping (RoadRunner)",
+      "header_level": 3,
+      "text": "### 2.2. Sensor Fusion and Mapping (RoadRunner)\nWhile BADGR focuses on end-to-end control, **RoadRunner** and its successor **RoadRunner M&M** (Multi-range & Multi-resolution) focus on generating accurate traversability maps by fusing Camera and LiDAR data, supervised by hindsight [cite: 3, 18].\n\n*   **Architecture:** RoadRunner utilizes a sensor fusion architecture similar to those in autonomous driving (e.g., BEV-Fusion). It takes images and LiDAR voxel maps as input and projects them into a common Bird's Eye View (BEV) representation [cite: 19, 20].\n*   **Hindsight Supervision:** The system is trained using \"hindsight\" signals generated from an existing, reliable (but perhaps slow or short-range) traversability stack (like X-Racer) and satellite Digital Elevation Maps (DEM). As the robot drives, it accumulates accurate geometric and semantic information about the terrain it just passed over. This high-fidelity \"past\" data is used to supervise the network's predictions for the \"future\" terrain seen in the camera images [cite: 18, 21].\n*   **Capabilities:** RoadRunner M&M predicts traversability and elevation at multiple ranges (up to 100m) and resolutions. It achieves a 30% improvement in traversability estimation over baseline geometric methods and can predict costs in regions where LiDAR is sparse by leveraging visual textures learned from experience [cite: 22, 23].\n\n",
+      "start": 5604,
+      "end": 6998
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### 2.3. Trajectory Projection and Reconstruction",
+      "header_level": 3,
+      "text": "### 2.3. Trajectory Projection and Reconstruction\nAnother class of methods, exemplified by the work of **Schmid et al.** and **Seo et al.**, uses reconstruction error as a proxy for traversability [cite: 24, 25].\n\n*   **Methodology:** These systems project the vehicle's past wheel trajectories into the camera images. The image regions corresponding to the wheel paths are considered \"safe\" (positive samples).\n*   **Anomaly Detection:** An autoencoder or a Generative Adversarial Network (GAN) is trained to reconstruct these \"safe\" terrain patches. During inference, the system attempts to reconstruct the terrain ahead.\n*   **Cost Assignment:** If the reconstruction error is low, the terrain is similar to previously traversed safe terrain (low cost). If the reconstruction error is high (an anomaly), the terrain is likely unsafe or unknown (high cost). This effectively turns traversability learning into a one-class classification or anomaly detection problem [cite: 26, 27].\n\n---\n\n",
+      "start": 6998,
+      "end": 7988
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## 3. Proprioceptive Learning: \"Feeling\" the Terrain",
+      "header_level": 2,
+      "text": "## 3. Proprioceptive Learning: \"Feeling\" the Terrain\n\nVisual and geometric data are often insufficient to determine surface properties like soil compliance, friction, or hidden obstacles. **Proprioceptive learning** addresses this by using the robot's internal sensors to measure the physical interaction with the terrain, creating a \"ground truth\" that is then associated with visual features.\n\n",
+      "start": 7988,
+      "end": 8384
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "### 3.1. Proprioception for Legged Robots (ProNav)",
+      "header_level": 3,
+      "text": "### 3.1. Proprioception for Legged Robots (ProNav)\nLegged robots face unique challenges, such as leg entrapment in vegetation or instability on granular soils. **ProNav** is a leading framework specifically designed for legged robot traversability using proprioception [cite: 4, 5].\n\n*   **Signals Used:** ProNav utilizes joint encoders (position), force sensors (ground reaction forces), and current sensors (energy consumption).\n*   **Metrics:** It computes metrics for **stability** (variance in body pose), **resistance** (current consumption relative to motion), and **entrapment risk** (discrepancies in expected vs. actual leg trajectories).\n*   **Learning:** The system uses these signals to assess traversability in real-time. It can predict imminent crashes or instability and adapt the robot's gait (e.g., lifting legs higher in tall grass) to minimize energy consumption and maximize stability [cite: 28, 29].\n*   **Performance:** ProNav has shown up to a 40% improvement in success rate and a 15.1% reduction in energy consumption compared to purely exteroceptive methods in dense vegetation [cite: 4, 30].\n\n",
+      "start": 8384,
+      "end": 9505
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": "### 3.2. Visual-Proprioceptive Fusion (CNN-LSTM)",
+      "header_level": 3,
+      "text": "### 3.2. Visual-Proprioceptive Fusion (CNN-LSTM)\nTo predict traversability *before* entering a terrain, robots must learn to associate the \"look\" of the terrain with its \"feel.\" This is often achieved through **CNN-LSTM** architectures [cite: 31, 32].\n\n*   **Architecture:** A Convolutional Neural Network (CNN) extracts spatial features from camera images or local map patches. Simultaneously, a Long Short-Term Memory (LSTM) network processes time-series proprioceptive data (IMU acceleration, wheel slip, velocity) [cite: 6].\n*   **Training:** The network is trained to predict the proprioceptive cost (e.g., vibration level, risk of getting stuck) from the visual input. The \"label\" is the actual vibration experienced when the robot drove over that specific patch of terrain [cite: 14, 33].\n*   **Risk-Aware Labeling:** Some approaches, such as those by **Zhu et al.** and **Kim et al.**, utilize statistical measures like **Value at Risk (VaR)** on the z-axis acceleration data to generate continuous risk scores (0 to 1) rather than binary traversable/non-traversable labels. This allows for fine-grained costmaps that distinguish between smooth concrete, gravel, and rough rocky trails [cite: 31, 34].\n\n",
+      "start": 9505,
+      "end": 10716
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "### 3.3. Vibration and Acoustic Analysis",
+      "header_level": 3,
+      "text": "### 3.3. Vibration and Acoustic Analysis\nBeyond standard IMU data, researchers have explored using acoustic sensors (microphones near wheels) and specialized vibration analysis to classify terrain.\n*   **Acoustic Features:** The sound of wheel-terrain interaction varies significantly between sand, asphalt, and grass. Self-supervised frameworks use these audio signatures to cluster terrain types and then train visual classifiers to recognize these types from images [cite: 11, 35].\n*   **Vibration Classification:** Methods like **CACTI** use accelerometer data to classify terrain into categories (sand, gravel, clay) and associate these with visual textures. This is particularly useful for identifying non-geometric hazards like soft sand that might cause immobilization [cite: 36, 37].\n\n---\n\n",
+      "start": 10716,
+      "end": 11515
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "## 4. Online Adaptation and Continuous Learning",
+      "header_level": 2,
+      "text": "## 4. Online Adaptation and Continuous Learning\n\nA major limitation of offline learning is **domain shift**. A model trained in a forest may fail in a desert. To address this, leading methods now employ **online adaptation**, where the robot continuously updates its traversability model during the mission.\n\n",
+      "start": 11515,
+      "end": 11824
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "### 4.1. ALTER: LiDAR-to-Vision Adaptation",
+      "header_level": 3,
+      "text": "### 4.1. ALTER: LiDAR-to-Vision Adaptation\n**ALTER** (Adaptive Learning for Traversability Estimation with Robustness) is a framework designed for high-speed off-road driving that adapts visual models using LiDAR supervision [cite: 8].\n\n*   **Concept:** LiDAR provides reliable geometric traversability estimates at short range (e.g., <30m) but becomes sparse and noisy at long range. Cameras provide dense data at long range but are unreliable if the environment changes (e.g., lighting, texture).\n*   **Mechanism:** ALTER uses the reliable near-range LiDAR data to generate self-supervised labels for the current terrain. It then retrains (fine-tunes) the visual model *on-the-fly* using these labels.\n*   **Outcome:** This allows the visual model to \"learn\" that the current texture of \"tall grass\" is traversable (based on LiDAR feedback from under the wheels) and extend that prediction to the long range (100m). ALTER demonstrates up to 52.5% improvement over LiDAR-only estimates in new environments [cite: 38, 39].\n\n",
+      "start": 11824,
+      "end": 12848
+    },
+    {
+      "idx": 12,
+      "section_type": "text",
+      "header": "### 4.2. SALON: Fast Adaptation with Foundation Models",
+      "header_level": 3,
+      "text": "### 4.2. SALON: Fast Adaptation with Foundation Models\n**SALON** (Self-supervised Adaptive Learning for Off-road Navigation) pushes the speed of adaptation further, enabling robots to adapt within seconds of entering a new environment [cite: 7, 40].\n\n*   **Visual Foundation Models (VFMs):** SALON leverages pre-trained foundation models like **DINOv2** for feature extraction. These models provide robust, generalizable visual features that require less training to adapt than training a CNN from scratch [cite: 41, 42].\n*   **Proprioceptive Supervision:** Similar to other methods, it uses proprioceptive signals (IMU) to label terrain roughness.\n*   **Smart Buffer Management:** To prevent \"catastrophic forgetting\" (where the robot forgets how to drive on previous terrains), SALON manages a data buffer that retains diverse examples of past terrains while prioritizing new experiences.\n*   **Performance:** SALON can differentiate between key terrains (e.g., short grass vs. lethal trees) within 10 seconds of exposure, matching the performance of methods trained on 100-1000x more data [cite: 41, 43].\n\n",
+      "start": 12848,
+      "end": 13957
+    },
+    {
+      "idx": 13,
+      "section_type": "text",
+      "header": "### 4.3. WayFAST and Predictive Control",
+      "header_level": 3,
+      "text": "### 4.3. WayFAST and Predictive Control\n**WayFAST** integrates online learning with Model Predictive Control (MPC). It uses a structured visual model to predict traction coefficients and traversability costs. The system continuously updates its weights based on the error between the predicted robot state and the actual state measured by odometry, effectively learning the terrain's physical properties (like slip) in real-time to optimize high-speed navigation [cite: 35, 44].\n\n---\n\n",
+      "start": 13957,
+      "end": 14442
+    },
+    {
+      "idx": 14,
+      "section_type": "text",
+      "header": "## 5. Contrastive and Representation Learning",
+      "header_level": 2,
+      "text": "## 5. Contrastive and Representation Learning\n\nA challenge in self-supervised traversability is the **Positive-Unlabeled (PU)** problem. The robot knows that the path it traversed is safe (Positive), but it does not explicitly know if the untraversed areas are unsafe or just unvisited (Unlabeled).\n\n",
+      "start": 14442,
+      "end": 14742
+    },
+    {
+      "idx": 15,
+      "section_type": "text",
+      "header": "### 5.1. Contrastive Label Disambiguation",
+      "header_level": 3,
+      "text": "### 5.1. Contrastive Label Disambiguation\nRecent works, such as those by **Xue et al.**, utilize **contrastive learning** to address this ambiguity [cite: 9, 45].\n\n*   **Method:** The framework generates \"pseudo-labels\" from driving experience. It then uses a contrastive loss function to organize the feature space.\n*   **Embedding Separation:** The loss function encourages the network to pull the embeddings of traversed terrain patches (positive anchors) closer together while pushing away embeddings of visually distinct, untraversed patches (negatives).\n*   **Iterative Refinement:** Through iterative interaction between representation learning and pseudo-label updating, the system gradually disambiguates the unlabeled data, effectively learning to distinguish between safe and unsafe terrain without explicit negative labels (like collisions) [cite: 9, 46].\n\n",
+      "start": 14742,
+      "end": 15611
+    },
+    {
+      "idx": 16,
+      "section_type": "text",
+      "header": "### 5.2. Multimodal Contrastive Learning",
+      "header_level": 3,
+      "text": "### 5.2. Multimodal Contrastive Learning\nApproaches like **STERLING** and methods described by **Sathyamoorthy et al.** use contrastive learning to align multimodal representations. For example, they align the visual embedding of a terrain patch with the acoustic or proprioceptive embedding of that same patch. This forces the visual model to learn features that are relevant to the physical properties of the terrain (e.g., \"roughness\") rather than just visual appearance (e.g., \"color\") [cite: 10, 47].\n\n---\n\n",
+      "start": 15611,
+      "end": 16123
+    },
+    {
+      "idx": 17,
+      "section_type": "text",
+      "header": "## 6. Inverse Reinforcement Learning (IRL)",
+      "header_level": 2,
+      "text": "## 6. Inverse Reinforcement Learning (IRL)\n\nWhile SSL focuses on classifying terrain, **Inverse Reinforcement Learning (IRL)** focuses on learning the underlying *cost function* that explains observed behavior.\n\n*   **Deep MaxEnt IRL:** Researchers like **Zhu et al.** apply Deep Maximum Entropy IRL to learn traversability costs from expert demonstrations. The robot observes a human driving and infers a cost map that makes the human's trajectory optimal [cite: 48, 49].\n*   **Kinematic Constraints:** To handle the complexity of off-road driving, these methods often incorporate kinematic constraints into the learning process (e.g., using RL ConvNets), ensuring that the learned cost map accounts for the vehicle's physical limitations (turning radius, slope limits) [cite: 13, 50].\n*   **Scalability:** While effective, IRL typically requires expert demonstration, which is less scalable than pure self-supervision. However, recent hybrid approaches use self-supervised driving (where the robot drives cautiously) as the \"expert\" demonstration to train more aggressive policies [cite: 51].\n\n---\n\n",
+      "start": 16123,
+      "end": 17224
+    },
+    {
+      "idx": 18,
+      "section_type": "text",
+      "header": "## 7. Conclusion",
+      "header_level": 2,
+      "text": "## 7. Conclusion\n\nThe field of robotic terrain traversability has moved decisively away from static, rule-based geometric analysis toward dynamic, data-driven learning. The leading methods share a common philosophy: **experience is the best teacher.**\n\n1.  **Hindsight Supervision** (BADGR, RoadRunner) allows robots to turn every kilometer driven into valuable training data, enabling end-to-end learning of complex environments.\n2.  **Proprioceptive Fusion** (ProNav, CNN-LSTM) grounds visual perception in physical reality, allowing robots to \"see\" how terrain will \"feel.\"\n3.  **Online Adaptation** (ALTER, SALON) solves the critical problem of generalization, allowing robots to deploy into novel environments and adapt their safety metrics in seconds using foundation models and real-time feedback.\n4.  **Contrastive Learning** refines these representations, allowing for subtle distinctions between terrain types without requiring explicit failure data.\n\nFuture research is increasingly focusing on **multimodal foundation models** that can integrate vision, LiDAR, and language/semantics to provide not just traversability costs, but semantic reasoning (e.g., \"avoid the mud because it looks deep\") to further enhance off-road autonomy [cite: 7, 52].",
+      "start": 17224,
+      "end": 18482
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "# Automated Learning of Terrain Traversability Costs in Robotics: A Comprehensive Review of Self-Supervised and Experiential Methods",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "**Key Points**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "text": "*  **Shift from Geometry to Experience:** Traditional geometric methods (analyzing slope and step height) are insufficient for complex off-road environments (e.g., distinguishing tall grass from concrete walls).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "0_3",
+      "section_idx": 0,
+      "idx_in_section": 3,
+      "text": "The field has shifted toward **self-supervised learning (SSL)**, where robots learn traversability costs by physically interacting with the terrain.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "0_4",
+      "section_idx": 0,
+      "idx_in_section": 4,
+      "text": "*  **Hindsight and Self-Labeling:** Leading frameworks like **BADGR** and **RoadRunner** utilize \"hindsight\" labeling\u2014using the robot's successful past trajectories to label terrain as traversable and collisions/shocks as non-traversable, enabling end-to-end training without human annotation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEK9h0N7go4-ms94Irf22WZcmZ4g6rwboTkUMrJZXp_O_CnRTsx1ezDa8LWM-iX6if7nIBDNMH5oKLL7wSXGQ2EnU71Pbt0-HB3PijykIZemqbGABP5xLek2TBz6oB2z2JnqzBQQVEiiCjrjY9KpBovN1gv7cQZonOHTiHqggZZv6JWhCgIcYwIu-47iO-i0MEK2sJHXdh3AkI4PChe8ZEvIuOKn5hHUpwaJfx0-qYa8qLUckQWrCkm0lmGCLSDCNJwIUwTzebqEnnORr7AtCVMabx7xCxz"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "0_5",
+      "section_idx": 0,
+      "idx_in_section": 5,
+      "text": "*  **Proprioceptive Feedback:** For legged and wheeled robots, **proprioception** (IMU, joint torques, current consumption) serves as the \"ground truth\" for how terrain feels (slippage, roughness).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIkqkoULIEETj92VdZT6HmPZKvKxARqR-yDW5RlTMTqHBAOAAUdd2lDmQxoeD0PU1meJjXTzT2-NqdaIjXOCXYb3KD_vAr6qfMyM4Q1hkaUP0-ryRKEyq4U1M5DI1gdfaFfC9cCBFFuimVZL95ivNAYZnf"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZtJaK2QhIo4Twgub-vfZ9nUw70AAZr6Db4AwiO6Gty0e6FtZIyCFRlBfDBtITNwXC3BW3XnREJ_GdYKdXLEOxQLh3SCC20liSsEkSY9A_sJHE4ovJ1w=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJeGCY3cNEqjhoBtmJQyH283shfNL5wptSR6vNLu6_9T4b_1N911QhdldNFyZ6KLbKmSppX2_EyG6H0qRBcTTiFwELnW3yfwn1SB0EEsMZxIuZUifnFLMFVw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "0_6",
+      "section_idx": 0,
+      "idx_in_section": 6,
+      "text": "Methods like **ProNav** and **CNN-LSTM** fusion networks correlate visual data with these internal sensations to predict costs at a distance.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIkqkoULIEETj92VdZT6HmPZKvKxARqR-yDW5RlTMTqHBAOAAUdd2lDmQxoeD0PU1meJjXTzT2-NqdaIjXOCXYb3KD_vAr6qfMyM4Q1hkaUP0-ryRKEyq4U1M5DI1gdfaFfC9cCBFFuimVZL95ivNAYZnf"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZtJaK2QhIo4Twgub-vfZ9nUw70AAZr6Db4AwiO6Gty0e6FtZIyCFRlBfDBtITNwXC3BW3XnREJ_GdYKdXLEOxQLh3SCC20liSsEkSY9A_sJHE4ovJ1w=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJeGCY3cNEqjhoBtmJQyH283shfNL5wptSR6vNLu6_9T4b_1N911QhdldNFyZ6KLbKmSppX2_EyG6H0qRBcTTiFwELnW3yfwn1SB0EEsMZxIuZUifnFLMFVw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "0_7",
+      "section_idx": 0,
+      "idx_in_section": 7,
+      "text": "*  **Online Adaptation:** To handle domain shifts (e.g., moving from forest to desert), recent systems like **ALTER** and **SALON** employ online learning.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYQNnodWuRO2SvFpuwFL3Y_1TnVbRhNoA9kdGR7gT7U4Jqfmb0B2KpBj5ygWPxpH4dPKQQX98cxKOu_HW9TA3Xdx7A09gOTaV_WzS7vz1suGnN1OjU8g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhJdgejrMTnIHIEwyo_n0e645WzdKiPLAd9et24L6esObwh0V7voAG36D3-_d-Doir8blfswt02v067qsKCtrggeNv62EpJS7UM0bRU6dOJUwghjq7CSOPyQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "0_8",
+      "section_idx": 0,
+      "idx_in_section": 8,
+      "text": "They leverage near-range sensors (LiDAR) or foundation models (like DINOv2) to retrain visual models in real-time, adapting to new environments in seconds.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTr5ikjoOTgulW2WS2ex6DERTS9caQob2Q6bvWDN08sJGEUk2180SBsMOB2IUnniclOICdlQJlNmfUhuETeOmJVS8r2dct9UjZc7hDjBUr7HeAl8ERuhRzXGwZ35reNBQE3I4QyulLQWMzHURL7oq0ZEd1kIzh6qY9kXBFbYw9Uw=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUKvpLa1Cvltn4mjLrc8RCFCkhy2pUwBvO4ZbBZcD_0B5lnXTjHqK464uCHfH2-GsYAYTA_Ao_mfUY1SKLueU7ywi4MHvsWubcJPKZAG0mp-JIVXNUxA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "0_9",
+      "section_idx": 0,
+      "idx_in_section": 9,
+      "text": "*  **Contrastive Learning:** Advanced techniques now use contrastive losses to refine feature spaces, distinguishing between safe and unsafe terrain embeddings even when negative labels (explicit failures) are sparse .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYQNnodWuRO2SvFpuwFL3Y_1TnVbRhNoA9kdGR7gT7U4Jqfmb0B2KpBj5ygWPxpH4dPKQQX98cxKOu_HW9TA3Xdx7A09gOTaV_WzS7vz1suGnN1OjU8g=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhJdgejrMTnIHIEwyo_n0e645WzdKiPLAd9et24L6esObwh0V7voAG36D3-_d-Doir8blfswt02v067qsKCtrggeNv62EpJS7UM0bRU6dOJUwghjq7CSOPyQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "## 4. Online Adaptation and Continuous Learning",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "A major limitation of offline learning is **domain shift**.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "A model trained in a forest may fail in a desert.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "To address this, leading methods now employ **online adaptation**, where the robot continuously updates its traversability model during the mission.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "### 4.1. ALTER: LiDAR-to-Vision Adaptation",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUKvpLa1Cvltn4mjLrc8RCFCkhy2pUwBvO4ZbBZcD_0B5lnXTjHqK464uCHfH2-GsYAYTA_Ao_mfUY1SKLueU7ywi4MHvsWubcJPKZAG0mp-JIVXNUxA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "**ALTER** (Adaptive Learning for Traversability Estimation with Robustness) is a framework designed for high-speed off-road driving that adapts visual models using LiDAR supervision.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUKvpLa1Cvltn4mjLrc8RCFCkhy2pUwBvO4ZbBZcD_0B5lnXTjHqK464uCHfH2-GsYAYTA_Ao_mfUY1SKLueU7ywi4MHvsWubcJPKZAG0mp-JIVXNUxA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "*  **Concept:** LiDAR provides reliable geometric traversability estimates at short range (e.g., <30m) but becomes sparse and noisy at long range.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "Cameras provide dense data at long range but are unreliable if the environment changes (e.g., lighting, texture).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "*  **Mechanism:** ALTER uses the reliable near-range LiDAR data to generate self-supervised labels for the current terrain.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "It then retrains (fine-tunes) the visual model *on-the-fly* using these labels.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "text": "*  **Outcome:** This allows the visual model to \"learn\" that the current texture of \"tall grass\" is traversable (based on LiDAR feedback from under the wheels) and extend that prediction to the long range (100m).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHABzKsvslQAQLHwN73UFfom3-bBGbZErxjQMFIUaEgFOeROdWU-ClOoEJifE-i1mT5omlr3zEAVMT3bRNXk0tS01OioRpsb0jjvBGNxHlkZlmhMZ5Hjd9Glw=="
+        ],
+        [
+          "cmu.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHQ6tvrws9qG_OQeP5K3IHAwPNSuqzNraFJxwlAAFtgFYGyaNtnCzkBANGgh8Oo9YjmBSIYAHQ97hccJNGTqI671RlOXCybwDISQdVCUj98Nj5yfb2XZJsRYJe4mOYhMfiG3ygicaMDkgh_vX0v1dewGCDqdxfAwf276LdfMn4="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_7",
+      "section_idx": 11,
+      "idx_in_section": 7,
+      "text": "ALTER demonstrates up to 52.5% improvement over LiDAR-only estimates in new environments.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHABzKsvslQAQLHwN73UFfom3-bBGbZErxjQMFIUaEgFOeROdWU-ClOoEJifE-i1mT5omlr3zEAVMT3bRNXk0tS01OioRpsb0jjvBGNxHlkZlmhMZ5Hjd9Glw=="
+        ],
+        [
+          "cmu.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHQ6tvrws9qG_OQeP5K3IHAwPNSuqzNraFJxwlAAFtgFYGyaNtnCzkBANGgh8Oo9YjmBSIYAHQ97hccJNGTqI671RlOXCybwDISQdVCUj98Nj5yfb2XZJsRYJe4mOYhMfiG3ygicaMDkgh_vX0v1dewGCDqdxfAwf276LdfMn4="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_0",
+      "section_idx": 12,
+      "idx_in_section": 0,
+      "text": "### 4.2. SALON: Fast Adaptation with Foundation Models",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTr5ikjoOTgulW2WS2ex6DERTS9caQob2Q6bvWDN08sJGEUk2180SBsMOB2IUnniclOICdlQJlNmfUhuETeOmJVS8r2dct9UjZc7hDjBUr7HeAl8ERuhRzXGwZ35reNBQE3I4QyulLQWMzHURL7oq0ZEd1kIzh6qY9kXBFbYw9Uw=="
+        ],
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG-vXUNcSRcRFAys2F1qaRkE7BQsjlN8sSwvZPuIGRLQ4q_5WYRA0HOhrlRIbK5ZFuzLn3bKKjE2IZObHyUPVK6J1FTKj5vYaKHO2H5o9NkwPQA"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_1",
+      "section_idx": 12,
+      "idx_in_section": 1,
+      "text": "**SALON** (Self-supervised Adaptive Learning for Off-road Navigation) pushes the speed of adaptation further, enabling robots to adapt within seconds of entering a new environment.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTr5ikjoOTgulW2WS2ex6DERTS9caQob2Q6bvWDN08sJGEUk2180SBsMOB2IUnniclOICdlQJlNmfUhuETeOmJVS8r2dct9UjZc7hDjBUr7HeAl8ERuhRzXGwZ35reNBQE3I4QyulLQWMzHURL7oq0ZEd1kIzh6qY9kXBFbYw9Uw=="
+        ],
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG-vXUNcSRcRFAys2F1qaRkE7BQsjlN8sSwvZPuIGRLQ4q_5WYRA0HOhrlRIbK5ZFuzLn3bKKjE2IZObHyUPVK6J1FTKj5vYaKHO2H5o9NkwPQA"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_2",
+      "section_idx": 12,
+      "idx_in_section": 2,
+      "text": "*  **Visual Foundation Models (VFMs):** SALON leverages pre-trained foundation models like **DINOv2** for feature extraction.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmsBw0ucUkSe5tcx6JeunRH-FkfCD6B8GZmxyDMrZxYPj3lGDVgK6Xljvwil3IVDHE7tKXCZ4P8Jk7StiH1qa2hdRTbl_Xk6pICye3AmhUNN205nfbymHsuNP1zviacuToWAJYng9Bq5aM290s7JPgEGoOr6j1K3rvdHrGQyILmMc7dRQASRBlCIVyyYVU3JA1PkdbZHJyoyOG7tEMDeZfhTkVQ6hm-cc="
+        ],
+        [
+          "themoonlight.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFWnZGLIgwaELiLkzYpDK3pzrskhVrxhGVSba5Q-PLyPhwyW7ybm39pst9jvsGLa74ZFzS6GniPgrtNQRMIv9lCeyw_irzMRk_JSh6c99MQQ4qMDL5qnZKDu-PGdvTaBbwO8hBl7S4WIzd8RAWK9JZKvTTanFAAPSaAs3Z-WleQV6d7K_HshK91mDXoV3GiOs5LwCFH-1S4-oR1rQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_3",
+      "section_idx": 12,
+      "idx_in_section": 3,
+      "text": "These models provide robust, generalizable visual features that require less training to adapt than training a CNN from scratch.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmsBw0ucUkSe5tcx6JeunRH-FkfCD6B8GZmxyDMrZxYPj3lGDVgK6Xljvwil3IVDHE7tKXCZ4P8Jk7StiH1qa2hdRTbl_Xk6pICye3AmhUNN205nfbymHsuNP1zviacuToWAJYng9Bq5aM290s7JPgEGoOr6j1K3rvdHrGQyILmMc7dRQASRBlCIVyyYVU3JA1PkdbZHJyoyOG7tEMDeZfhTkVQ6hm-cc="
+        ],
+        [
+          "themoonlight.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFWnZGLIgwaELiLkzYpDK3pzrskhVrxhGVSba5Q-PLyPhwyW7ybm39pst9jvsGLa74ZFzS6GniPgrtNQRMIv9lCeyw_irzMRk_JSh6c99MQQ4qMDL5qnZKDu-PGdvTaBbwO8hBl7S4WIzd8RAWK9JZKvTTanFAAPSaAs3Z-WleQV6d7K_HshK91mDXoV3GiOs5LwCFH-1S4-oR1rQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_4",
+      "section_idx": 12,
+      "idx_in_section": 4,
+      "text": "*  **Proprioceptive Supervision:** Similar to other methods, it uses proprioceptive signals (IMU) to label terrain roughness.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_5",
+      "section_idx": 12,
+      "idx_in_section": 5,
+      "text": "*  **Smart Buffer Management:** To prevent \"catastrophic forgetting\" (where the robot forgets how to drive on previous terrains), SALON manages a data buffer that retains diverse examples of past terrains while prioritizing new experiences.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmsBw0ucUkSe5tcx6JeunRH-FkfCD6B8GZmxyDMrZxYPj3lGDVgK6Xljvwil3IVDHE7tKXCZ4P8Jk7StiH1qa2hdRTbl_Xk6pICye3AmhUNN205nfbymHsuNP1zviacuToWAJYng9Bq5aM290s7JPgEGoOr6j1K3rvdHrGQyILmMc7dRQASRBlCIVyyYVU3JA1PkdbZHJyoyOG7tEMDeZfhTkVQ6hm-cc="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5djWvdCs68e4uO8ILEVU6d3XMEoGTxul_8YpCt8kvLiKtSKLlwiiXQZSWs43ATzKK_sya7zG0RGuWQyqQ5hc1OHm5rTVyN-DHLksIVMRzgKvfxJr2dA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "12_6",
+      "section_idx": 12,
+      "idx_in_section": 6,
+      "text": "*  **Performance:** SALON can differentiate between key terrains (e.g., short grass vs. lethal trees) within 10 seconds of exposure, matching the performance of methods trained on 100-1000x more data.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHmsBw0ucUkSe5tcx6JeunRH-FkfCD6B8GZmxyDMrZxYPj3lGDVgK6Xljvwil3IVDHE7tKXCZ4P8Jk7StiH1qa2hdRTbl_Xk6pICye3AmhUNN205nfbymHsuNP1zviacuToWAJYng9Bq5aM290s7JPgEGoOr6j1K3rvdHrGQyILmMc7dRQASRBlCIVyyYVU3JA1PkdbZHJyoyOG7tEMDeZfhTkVQ6hm-cc="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5djWvdCs68e4uO8ILEVU6d3XMEoGTxul_8YpCt8kvLiKtSKLlwiiXQZSWs43ATzKK_sya7zG0RGuWQyqQ5hc1OHm5rTVyN-DHLksIVMRzgKvfxJr2dA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_0",
+      "section_idx": 13,
+      "idx_in_section": 0,
+      "text": "### 4.3. WayFAST and Predictive Control",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGW41mY85Fd5t82i0YpPu3ZYSqvKBfhjT7c0qJgJqCXeBCdpa7tKy6H5EJjZW-mSkaOGjEuzaPgb51iZCYEkEjRkuGLK_QoT8YHtjUxZjRwCHU4UQImP_cGdefSr8_or0p0I4zeoVUjEc8_lsH_-T4h1FBU2g=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4EoEF-cTx3xjWej9W83RGHt-eHkuNIo7P4-FQWJCcBC2tz9t6acSdDMN2HCgV1tC9_F_gJp8cb6nyaZDDa5Q58bRY2knDlp8ANO6R2A14sboNonhS30K_ndIkMwpsBI8VgzvwIQIuKlWuqZ6izg9bJ7wuqGBY7ufcl6xY6yt-Hzpr6Nw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "13_1",
+      "section_idx": 13,
+      "idx_in_section": 1,
+      "text": "**WayFAST** integrates online learning with Model Predictive Control (MPC).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGW41mY85Fd5t82i0YpPu3ZYSqvKBfhjT7c0qJgJqCXeBCdpa7tKy6H5EJjZW-mSkaOGjEuzaPgb51iZCYEkEjRkuGLK_QoT8YHtjUxZjRwCHU4UQImP_cGdefSr8_or0p0I4zeoVUjEc8_lsH_-T4h1FBU2g=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4EoEF-cTx3xjWej9W83RGHt-eHkuNIo7P4-FQWJCcBC2tz9t6acSdDMN2HCgV1tC9_F_gJp8cb6nyaZDDa5Q58bRY2knDlp8ANO6R2A14sboNonhS30K_ndIkMwpsBI8VgzvwIQIuKlWuqZ6izg9bJ7wuqGBY7ufcl6xY6yt-Hzpr6Nw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_2",
+      "section_idx": 13,
+      "idx_in_section": 2,
+      "text": "It uses a structured visual model to predict traction coefficients and traversability costs.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGW41mY85Fd5t82i0YpPu3ZYSqvKBfhjT7c0qJgJqCXeBCdpa7tKy6H5EJjZW-mSkaOGjEuzaPgb51iZCYEkEjRkuGLK_QoT8YHtjUxZjRwCHU4UQImP_cGdefSr8_or0p0I4zeoVUjEc8_lsH_-T4h1FBU2g=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4EoEF-cTx3xjWej9W83RGHt-eHkuNIo7P4-FQWJCcBC2tz9t6acSdDMN2HCgV1tC9_F_gJp8cb6nyaZDDa5Q58bRY2knDlp8ANO6R2A14sboNonhS30K_ndIkMwpsBI8VgzvwIQIuKlWuqZ6izg9bJ7wuqGBY7ufcl6xY6yt-Hzpr6Nw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "13_3",
+      "section_idx": 13,
+      "idx_in_section": 3,
+      "text": "The system continuously updates its weights based on the error between the predicted robot state and the actual state measured by odometry, effectively learning the terrain's physical properties (like slip) in real-time to optimize high-speed navigation .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGW41mY85Fd5t82i0YpPu3ZYSqvKBfhjT7c0qJgJqCXeBCdpa7tKy6H5EJjZW-mSkaOGjEuzaPgb51iZCYEkEjRkuGLK_QoT8YHtjUxZjRwCHU4UQImP_cGdefSr8_or0p0I4zeoVUjEc8_lsH_-T4h1FBU2g=="
+        ],
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4EoEF-cTx3xjWej9W83RGHt-eHkuNIo7P4-FQWJCcBC2tz9t6acSdDMN2HCgV1tC9_F_gJp8cb6nyaZDDa5Q58bRY2knDlp8ANO6R2A14sboNonhS30K_ndIkMwpsBI8VgzvwIQIuKlWuqZ6izg9bJ7wuqGBY7ufcl6xY6yt-Hzpr6Nw="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "14_0",
+      "section_idx": 14,
+      "idx_in_section": 0,
+      "text": "## 5. Contrastive and Representation Learning",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_1",
+      "section_idx": 14,
+      "idx_in_section": 1,
+      "text": "A challenge in self-supervised traversability is the **Positive-Unlabeled (PU)** problem.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "14_2",
+      "section_idx": 14,
+      "idx_in_section": 2,
+      "text": "The robot knows that the path it traversed is safe (Positive), but it does not explicitly know if the untraversed areas are unsafe or just unvisited (Unlabeled).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_0",
+      "section_idx": 15,
+      "idx_in_section": 0,
+      "text": "### 5.1. Contrastive Label Disambiguation",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYQNnodWuRO2SvFpuwFL3Y_1TnVbRhNoA9kdGR7gT7U4Jqfmb0B2KpBj5ygWPxpH4dPKQQX98cxKOu_HW9TA3Xdx7A09gOTaV_WzS7vz1suGnN1OjU8g=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGHtOiHXKpsY0B4rGR0_162dczhbf8b7FGAorlVpr3XESkyvbag2x_9HLdBjRAqriQ141i_OZ1_lkBNxG1VhYOZOsMHxwqMQkE6f8kGr7zjb63fgH7EWdpgYkqraHuqRJhPpUQLx4Ub4EsdY-lYqjZNqfBo8ySTgItQWoVo4lDlyQEUyANSIZYT2HecTpTZE2ocXRmZTnBZc_C2uIUHEfoDfDdPDJkbk6vCFeY9pRyLOKMjOoDqQ4dL2xOntO91-ljZ-4TflgsHo_gFZDExtbHnkpNml0Zehw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_1",
+      "section_idx": 15,
+      "idx_in_section": 1,
+      "text": "Recent works, such as those by **Xue et al.**, utilize **contrastive learning** to address this ambiguity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYQNnodWuRO2SvFpuwFL3Y_1TnVbRhNoA9kdGR7gT7U4Jqfmb0B2KpBj5ygWPxpH4dPKQQX98cxKOu_HW9TA3Xdx7A09gOTaV_WzS7vz1suGnN1OjU8g=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGHtOiHXKpsY0B4rGR0_162dczhbf8b7FGAorlVpr3XESkyvbag2x_9HLdBjRAqriQ141i_OZ1_lkBNxG1VhYOZOsMHxwqMQkE6f8kGr7zjb63fgH7EWdpgYkqraHuqRJhPpUQLx4Ub4EsdY-lYqjZNqfBo8ySTgItQWoVo4lDlyQEUyANSIZYT2HecTpTZE2ocXRmZTnBZc_C2uIUHEfoDfDdPDJkbk6vCFeY9pRyLOKMjOoDqQ4dL2xOntO91-ljZ-4TflgsHo_gFZDExtbHnkpNml0Zehw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "15_2",
+      "section_idx": 15,
+      "idx_in_section": 2,
+      "text": "*  **Method:** The framework generates \"pseudo-labels\" from driving experience.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_3",
+      "section_idx": 15,
+      "idx_in_section": 3,
+      "text": "It then uses a contrastive loss function to organize the feature space.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_4",
+      "section_idx": 15,
+      "idx_in_section": 4,
+      "text": "*  **Embedding Separation:** The loss function encourages the network to pull the embeddings of traversed terrain patches (positive anchors) closer together while pushing away embeddings of visually distinct, untraversed patches (negatives).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYQNnodWuRO2SvFpuwFL3Y_1TnVbRhNoA9kdGR7gT7U4Jqfmb0B2KpBj5ygWPxpH4dPKQQX98cxKOu_HW9TA3Xdx7A09gOTaV_WzS7vz1suGnN1OjU8g=="
+        ],
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGVIaNrbQ3_GSoTKy7fg8f-3nvhvu6vOt9UEEbPZUJM19Xra6YEd60tSQwvTGqFlec-P4SZ2J-bnwJKLVLHwPR777DaacewWibAyhUHvrf04XPYFbJynb8giG_NWG9yiLqQQ9oLxW_INuQ9oYiPaFrNJQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "15_5",
+      "section_idx": 15,
+      "idx_in_section": 5,
+      "text": "*  **Iterative Refinement:** Through iterative interaction between representation learning and pseudo-label updating, the system gradually disambiguates the unlabeled data, effectively learning to distinguish between safe and unsafe terrain without explicit negative labels (like collisions).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYQNnodWuRO2SvFpuwFL3Y_1TnVbRhNoA9kdGR7gT7U4Jqfmb0B2KpBj5ygWPxpH4dPKQQX98cxKOu_HW9TA3Xdx7A09gOTaV_WzS7vz1suGnN1OjU8g=="
+        ],
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGVIaNrbQ3_GSoTKy7fg8f-3nvhvu6vOt9UEEbPZUJM19Xra6YEd60tSQwvTGqFlec-P4SZ2J-bnwJKLVLHwPR777DaacewWibAyhUHvrf04XPYFbJynb8giG_NWG9yiLqQQ9oLxW_INuQ9oYiPaFrNJQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_0",
+      "section_idx": 16,
+      "idx_in_section": 0,
+      "text": "### 5.2. Multimodal Contrastive Learning",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhJdgejrMTnIHIEwyo_n0e645WzdKiPLAd9et24L6esObwh0V7voAG36D3-_d-Doir8blfswt02v067qsKCtrggeNv62EpJS7UM0bRU6dOJUwghjq7CSOPyQ=="
+        ],
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEO7_BfJmzIaCjxE7RiddOzSjjl_3GzBH0KuqkBK4A0MRCsxvRJ2EWZNJM-Ibyasyc55LIYcVal2c-8ZVgBL71D9zsmTe_DiXdU_J4PCl-XfbPKMoUgWZriW26nQJjoiOxhOow4dsFXRAgrip6C94LgY5pD2gH6JQiCoTiMLg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "16_1",
+      "section_idx": 16,
+      "idx_in_section": 1,
+      "text": "Approaches like **STERLING** and methods described by **Sathyamoorthy et al.** use contrastive learning to align multimodal representations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhJdgejrMTnIHIEwyo_n0e645WzdKiPLAd9et24L6esObwh0V7voAG36D3-_d-Doir8blfswt02v067qsKCtrggeNv62EpJS7UM0bRU6dOJUwghjq7CSOPyQ=="
+        ],
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEO7_BfJmzIaCjxE7RiddOzSjjl_3GzBH0KuqkBK4A0MRCsxvRJ2EWZNJM-Ibyasyc55LIYcVal2c-8ZVgBL71D9zsmTe_DiXdU_J4PCl-XfbPKMoUgWZriW26nQJjoiOxhOow4dsFXRAgrip6C94LgY5pD2gH6JQiCoTiMLg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_2",
+      "section_idx": 16,
+      "idx_in_section": 2,
+      "text": "For example, they align the visual embedding of a terrain patch with the acoustic or proprioceptive embedding of that same patch.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhJdgejrMTnIHIEwyo_n0e645WzdKiPLAd9et24L6esObwh0V7voAG36D3-_d-Doir8blfswt02v067qsKCtrggeNv62EpJS7UM0bRU6dOJUwghjq7CSOPyQ=="
+        ],
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEO7_BfJmzIaCjxE7RiddOzSjjl_3GzBH0KuqkBK4A0MRCsxvRJ2EWZNJM-Ibyasyc55LIYcVal2c-8ZVgBL71D9zsmTe_DiXdU_J4PCl-XfbPKMoUgWZriW26nQJjoiOxhOow4dsFXRAgrip6C94LgY5pD2gH6JQiCoTiMLg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "16_3",
+      "section_idx": 16,
+      "idx_in_section": 3,
+      "text": "This forces the visual model to learn features that are relevant to the physical properties of the terrain (e.g., \"roughness\") rather than just visual appearance (e.g., \"color\") .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhJdgejrMTnIHIEwyo_n0e645WzdKiPLAd9et24L6esObwh0V7voAG36D3-_d-Doir8blfswt02v067qsKCtrggeNv62EpJS7UM0bRU6dOJUwghjq7CSOPyQ=="
+        ],
+        [
+          "openreview.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEO7_BfJmzIaCjxE7RiddOzSjjl_3GzBH0KuqkBK4A0MRCsxvRJ2EWZNJM-Ibyasyc55LIYcVal2c-8ZVgBL71D9zsmTe_DiXdU_J4PCl-XfbPKMoUgWZriW26nQJjoiOxhOow4dsFXRAgrip6C94LgY5pD2gH6JQiCoTiMLg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_0",
+      "section_idx": 17,
+      "idx_in_section": 0,
+      "text": "## 6. Inverse Reinforcement Learning (IRL)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_1",
+      "section_idx": 17,
+      "idx_in_section": 1,
+      "text": "While SSL focuses on classifying terrain, **Inverse Reinforcement Learning (IRL)** focuses on learning the underlying *cost function* that explains observed behavior.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_2",
+      "section_idx": 17,
+      "idx_in_section": 2,
+      "text": "*  **Deep MaxEnt IRL:** Researchers like **Zhu et al.** apply Deep Maximum Entropy IRL to learn traversability costs from expert demonstrations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFywGWBNEvvQFPxbf-Nmskew_PNzibEu_Ih3meAJeHVhnNvR-DuBZti-fEzqkkEtg8B4RDcT8WRzaG2i_QXn8CK9w_Ml9oughiseZw9udn52qmLeGTShhceSYrJwpZfFMqtTc4mlGhzy9A08f-Np2m2JsNaGBEa7Df3vzeQ3kV9zUW8x-4="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjgKlt46nsMuxKfzfzhMmgqsgvf3JI9DFvgKXODE5chqB5MRwaDv2uMIQt3aFvBqbQyjU3h2_PG-gf67-CUf3QNiuwjnIwVwRmumFHEyhMsqEwwt0-bA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_3",
+      "section_idx": 17,
+      "idx_in_section": 3,
+      "text": "The robot observes a human driving and infers a cost map that makes the human's trajectory optimal.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "semanticscholar.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFywGWBNEvvQFPxbf-Nmskew_PNzibEu_Ih3meAJeHVhnNvR-DuBZti-fEzqkkEtg8B4RDcT8WRzaG2i_QXn8CK9w_Ml9oughiseZw9udn52qmLeGTShhceSYrJwpZfFMqtTc4mlGhzy9A08f-Np2m2JsNaGBEa7Df3vzeQ3kV9zUW8x-4="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEjgKlt46nsMuxKfzfzhMmgqsgvf3JI9DFvgKXODE5chqB5MRwaDv2uMIQt3aFvBqbQyjU3h2_PG-gf67-CUf3QNiuwjnIwVwRmumFHEyhMsqEwwt0-bA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_4",
+      "section_idx": 17,
+      "idx_in_section": 4,
+      "text": "*  **Kinematic Constraints:** To handle the complexity of off-road driving, these methods often incorporate kinematic constraints into the learning process (e.g., using RL ConvNets), ensuring that the learned cost map accounts for the vehicle's physical limitations (turning radius, slope limits).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH-d0fOFeaZw3LFn4gJxmnD-4WU4kD0TGVWbimsPtWRhrnHwSKykAx8LBqXeNu379f_jjDqaTzofoDQsiwxBkehVtttBFkvU5sCJwL3xjl8ZdTpJeozadqAN-jcmpnQxJK3sLHfO-5N1K5UeZGir4XNBiq45es="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHJipEb_re1htOV5_t_-q6BtTieMuBrayfOsp1GJRWBVUrlGTZtViZvWdQHY-VTfsVV3ZFRfAQLToZkqeiN1jgGiyS__8TSGUPqwuSP_5C8KMZvNgQ3S2VtBAJoE4AcqnX80inAwPRIkl51HxtaKDmXU_U6Oc24a-sc0BOQKNhCciXl7eSrTuvtdbDVutfhqWcsEu1cZrBbFz4J26u4OJWbKWRCAjBv5LLlg6pfYxQZpAYyA72oGLKDYnfagYQeXFVUiTaktKK6fE4RZpvGFee-odrTKhzuE7pWNBQ-flF8PUEZaQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "17_5",
+      "section_idx": 17,
+      "idx_in_section": 5,
+      "text": "*  **Scalability:** While effective, IRL typically requires expert demonstration, which is less scalable than pure self-supervision.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH_GLl19BKT2S9lCPlZRHY8YPymLcvNu7-nChqyndkB1W63iAed2-rCDEgFTNR_IC_LUHjUW0tN6fAoB61QrE0CTQOOKUV4y2iso_NYRvr33dG8_MM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "17_6",
+      "section_idx": 17,
+      "idx_in_section": 6,
+      "text": "However, recent hybrid approaches use self-supervised driving (where the robot drives cautiously) as the \"expert\" demonstration to train more aggressive policies .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH_GLl19BKT2S9lCPlZRHY8YPymLcvNu7-nChqyndkB1W63iAed2-rCDEgFTNR_IC_LUHjUW0tN6fAoB61QrE0CTQOOKUV4y2iso_NYRvr33dG8_MM="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "18_0",
+      "section_idx": 18,
+      "idx_in_section": 0,
+      "text": "## 7. Conclusion",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_1",
+      "section_idx": 18,
+      "idx_in_section": 1,
+      "text": "The field of robotic terrain traversability has moved decisively away from static, rule-based geometric analysis toward dynamic, data-driven learning.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_2",
+      "section_idx": 18,
+      "idx_in_section": 2,
+      "text": "The leading methods share a common philosophy: **experience is the best teacher.**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_3",
+      "section_idx": 18,
+      "idx_in_section": 3,
+      "text": "1. **Hindsight Supervision** (BADGR, RoadRunner) allows robots to turn every kilometer driven into valuable training data, enabling end-to-end learning of complex environments.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_4",
+      "section_idx": 18,
+      "idx_in_section": 4,
+      "text": "2. **Proprioceptive Fusion** (ProNav, CNN-LSTM) grounds visual perception in physical reality, allowing robots to \"see\" how terrain will \"feel.\"",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_5",
+      "section_idx": 18,
+      "idx_in_section": 5,
+      "text": "3. **Online Adaptation** (ALTER, SALON) solves the critical problem of generalization, allowing robots to deploy into novel environments and adapt their safety metrics in seconds using foundation models and real-time feedback.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_6",
+      "section_idx": 18,
+      "idx_in_section": 6,
+      "text": "4. **Contrastive Learning** refines these representations, allowing for subtle distinctions between terrain types without requiring explicit failure data.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTr5ikjoOTgulW2WS2ex6DERTS9caQob2Q6bvWDN08sJGEUk2180SBsMOB2IUnniclOICdlQJlNmfUhuETeOmJVS8r2dct9UjZc7hDjBUr7HeAl8ERuhRzXGwZ35reNBQE3I4QyulLQWMzHURL7oq0ZEd1kIzh6qY9kXBFbYw9Uw=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHy46bmN11B2N0DBwDnVjUVPZDy40jZCnERTLo7D-eFq_mRyCOK7Bz02WqhOOAXf5gJjrwXfVx_BJBezN6fEr2aVD9I8W9vjDJdSiQpD8mqZ7-OkE1Srg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "18_7",
+      "section_idx": 18,
+      "idx_in_section": 7,
+      "text": "Future research is increasingly focusing on **multimodal foundation models** that can integrate vision, LiDAR, and language/semantics to provide not just traversability costs, but semantic reasoning (e.g., \"avoid the mud because it looks deep\") to further enhance off-road autonomy.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "theairlab.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTr5ikjoOTgulW2WS2ex6DERTS9caQob2Q6bvWDN08sJGEUk2180SBsMOB2IUnniclOICdlQJlNmfUhuETeOmJVS8r2dct9UjZc7hDjBUr7HeAl8ERuhRzXGwZ35reNBQE3I4QyulLQWMzHURL7oq0ZEd1kIzh6qY9kXBFbYw9Uw=="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHy46bmN11B2N0DBwDnVjUVPZDy40jZCnERTLo7D-eFq_mRyCOK7Bz02WqhOOAXf5gJjrwXfVx_BJBezN6fEr2aVD9I8W9vjDJdSiQpD8mqZ7-OkE1Srg=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "## 1. Introduction",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "In the domain of autonomous field robotics, the ability to accurately estimate terrain traversability is a fundamental prerequisite for safe and efficient navigation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUKvpLa1Cvltn4mjLrc8RCFCkhy2pUwBvO4ZbBZcD_0B5lnXTjHqK464uCHfH2-GsYAYTA_Ao_mfUY1SKLueU7ywi4MHvsWubcJPKZAG0mp-JIVXNUxA=="
+        ],
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF8CRXaWlBeKFJqcy-CD9bs6HhfNyfsyE8r06DpoVL4dQMxOpEG6Yl8QCnAk4sy8QmtixCcRrvQkNUWY5qgtawc7ZcvWOq6HpFgJesdAxX_WT_o1nG7h9NYe1EgjIjvKPm-3a5KlQ7SkYFEkVRPJ1J9Z9A2"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_10",
+      "section_idx": 1,
+      "idx_in_section": 10,
+      "text": "By correlating exteroceptive inputs (what the robot sees) with proprioceptive feedback (what the robot feels) and navigation outcomes (success vs. failure), these systems develop robust, data-driven cost functions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cmu.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEe-FNt-Ps8sZsN_V6O3v7Wq7GfkPfzLMgVAQmlSPhldlGc8ScJWMFSGvJftQYb_4PxPdPiAk7_AZEHulq9DiZPR788_tgG-uskr4zI454X5A1fs2VZ3BlhBARHuIl27BSHkSTPh0r-jALYVpp4X64HaXVdUElOKYh37AtfobCh9jC5U5rpfVSFDeDQxM0ZVjLkkGgHfYN6qlj57HsKsU0="
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQERYFnWIEpLQHRQsi7Mg0Ei7giDTqAHN-hM5-m2oyYHyZ6aQjSrkRcOq_iuTLDCe8oRVYoLvpDYGH4RUV5cfLZUGzw_lemqN-BO1zjLRinB9dltHzl7_SZ89w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_11",
+      "section_idx": 1,
+      "idx_in_section": 11,
+      "text": "This report details the leading methods for this automatic learning process, categorized into self-supervised hindsight learning, proprioceptive-visual fusion, online adaptation, and contrastive representation learning.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "Traversability estimation involves determining the suitability of a specific terrain for a robot to drive or walk over, considering the complex interaction dynamics between the robot's mechanical capabilities and the environment's physical properties.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUKvpLa1Cvltn4mjLrc8RCFCkhy2pUwBvO4ZbBZcD_0B5lnXTjHqK464uCHfH2-GsYAYTA_Ao_mfUY1SKLueU7ywi4MHvsWubcJPKZAG0mp-JIVXNUxA=="
+        ],
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF8CRXaWlBeKFJqcy-CD9bs6HhfNyfsyE8r06DpoVL4dQMxOpEG6Yl8QCnAk4sy8QmtixCcRrvQkNUWY5qgtawc7ZcvWOq6HpFgJesdAxX_WT_o1nG7h9NYe1EgjIjvKPm-3a5KlQ7SkYFEkVRPJ1J9Z9A2"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "Historically, traversability analysis relied heavily on **geometric methods**.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_4",
+      "section_idx": 1,
+      "idx_in_section": 4,
+      "text": "These approaches utilize exteroceptive sensors, such as LiDAR or stereo cameras, to construct 2.5D elevation maps or 3D voxel grids.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "Algorithms then analyze these maps for geometric features\u2014such as slope, step height, and roughness\u2014to assign traversability costs.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF8Z4jOnIl8KymVkUT7PpvNCOMo3wFelb92Gk0eL8UvUtDMOruL1X11S44UNrWCV6yeoUM8Q2z4YuzwmHzxR17LoC55wwiXYEr-VehIwaMtvVFGbbmJM0-fo9YKhDXXiCkW"
+        ],
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH-d0fOFeaZw3LFn4gJxmnD-4WU4kD0TGVWbimsPtWRhrnHwSKykAx8LBqXeNu379f_jjDqaTzofoDQsiwxBkehVtttBFkvU5sCJwL3xjl8ZdTpJeozadqAN-jcmpnQxJK3sLHfO-5N1K5UeZGir4XNBiq45es="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_6",
+      "section_idx": 1,
+      "idx_in_section": 6,
+      "text": "While effective in structured or rigid environments, geometric methods often fail in unstructured, off-road settings.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_7",
+      "section_idx": 1,
+      "idx_in_section": 7,
+      "text": "A classic failure mode is \"vegetation ambiguity,\" where a geometric system perceives tall grass as a solid obstacle (similar to a wall) because it cannot distinguish between rigid and non-rigid obstacles.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_8",
+      "section_idx": 1,
+      "idx_in_section": 8,
+      "text": "To overcome these limitations, the state-of-the-art has pivoted toward **experiential learning** and **self-supervised learning (SSL)**.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_9",
+      "section_idx": 1,
+      "idx_in_section": 9,
+      "text": "Instead of relying on handcrafted rules or manual human annotations (which are labor-intensive and often inaccurate), modern robots learn traversability costs automatically from their own experience.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 2. Self-Supervised Learning from Hindsight",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "The most prominent methodology for learning traversability automatically is **hindsight supervision**.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "The core premise is that if a robot successfully traverses a patch of terrain, that terrain is, by definition, traversable.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "Conversely, if the robot experiences a collision, high vibration, or entrapment, the terrain is non-traversable or high-cost.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "This allows the robot to generate its own training labels automatically.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "### 2.1. End-to-End Navigation Systems (BADGR)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "The **Berkeley Autonomous Driving Ground Robot (BADGR)** represents a seminal approach in end-to-end self-supervised navigation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_10",
+      "section_idx": 3,
+      "idx_in_section": 10,
+      "text": "**Significance:** BADGR demonstrated that a robot could learn to navigate tall grass (which looks like an obstacle but is traversable) and avoid concrete paths (which look flat but might be bumpy or undesirable based on the objective) purely from experience, without geometric heuristics.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "Unlike modular systems that build maps and then plan, BADGR learns a direct predictive model from raw observations to future outcomes.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ],
+        [
+          "google.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEuHRhj7sfCu8yN0RomsHr-t_9VJVA70BPMAzhs1eIFCHetbPS4pSKF_SDh1F6AuLITJCKzGdTuUuKTO9h4E3EQ13QOJlo3IdOQG9QSseCTWWfEYBFv8dP9GA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_3",
+      "section_idx": 3,
+      "idx_in_section": 3,
+      "text": "*  **Data Collection:** The robot explores the environment using a random or heuristic policy.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_4",
+      "section_idx": 3,
+      "idx_in_section": 4,
+      "text": "It records a stream of images, commanded actions, and resulting events (position, collision, bumpiness).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_5",
+      "section_idx": 3,
+      "idx_in_section": 5,
+      "text": "*  **Self-Labeling:** The system automatically labels the data.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_6",
+      "section_idx": 3,
+      "idx_in_section": 6,
+      "text": "For example, if the IMU detects high vertical acceleration, the associated image patch is labeled as \"bumpy.\"",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_7",
+      "section_idx": 3,
+      "idx_in_section": 7,
+      "text": "If the bumper sensor triggers, it is labeled as a \"collision.\"",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_8",
+      "section_idx": 3,
+      "idx_in_section": 8,
+      "text": "*  **Predictive Model:** BADGR trains a neural network to predict future events based on the current image and a sequence of future actions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "berkeley.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGua3XsDwa-zJoRfCtWqpH1WFTp9PPMOct2EEZvgGK99jppKiE5RszgB45Z6wdZTnIJ96licM9fCWbDSv5AY_h-vM_eWM_KL26B07BthIgPsc4_CGGpxWoY5u4H2DDypQgsSHZlDbs="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_9",
+      "section_idx": 3,
+      "idx_in_section": 9,
+      "text": "During deployment, the robot samples thousands of action sequences, predicts their outcomes using the trained model, and selects the action sequence that minimizes cost (e.g., avoids collisions and bumpiness).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4nLmCkZCFiCtaAa5k-LSHHOfq9bPSwA-XD2cUMrNhGcjefKdMcKdwmXb2IiHnUEuArWc_xccyIXsSt0iCi2L6xioGXgHVGNJwwBPlrIHGk5nzC_PWuCykmCmeyMADyAR3cit3ZyfnfIewW8NsDJuDmAo0eC7FxnQ="
+        ],
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEXGlKQxroF6V4QIl6U6J0ifB53gbRU2TWP9PzS59qW0cwADwnTneXemYvJxVDmrOSsA6z3i0GClkswx6tahEbvgmGicQfr6Xof3V5O2D9TPTrld-kvUSPrzXtkbnO2U3nV"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### 2.2. Sensor Fusion and Mapping (RoadRunner)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEK9h0N7go4-ms94Irf22WZcmZ4g6rwboTkUMrJZXp_O_CnRTsx1ezDa8LWM-iX6if7nIBDNMH5oKLL7wSXGQ2EnU71Pbt0-HB3PijykIZemqbGABP5xLek2TBz6oB2z2JnqzBQQVEiiCjrjY9KpBovN1gv7cQZonOHTiHqggZZv6JWhCgIcYwIu-47iO-i0MEK2sJHXdh3AkI4PChe8ZEvIuOKn5hHUpwaJfx0-qYa8qLUckQWrCkm0lmGCLSDCNJwIUwTzebqEnnORr7AtCVMabx7xCxz"
+        ],
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCSCIZj-dK-wTouKWYXCvoOz9vfuYvJbzFJ2_20ZBiB2Oaa7EYcf8HH-ZjZw8VaEmtBn_1faBG6yrAIIqr6fO4cvmP2BUGvGeFyhXp6kkpXdv9VC7q5k46hQi1Pfu4Ffu_"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "While BADGR focuses on end-to-end control, **RoadRunner** and its successor **RoadRunner M&M** (Multi-range & Multi-resolution) focus on generating accurate traversability maps by fusing Camera and LiDAR data, supervised by hindsight.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEK9h0N7go4-ms94Irf22WZcmZ4g6rwboTkUMrJZXp_O_CnRTsx1ezDa8LWM-iX6if7nIBDNMH5oKLL7wSXGQ2EnU71Pbt0-HB3PijykIZemqbGABP5xLek2TBz6oB2z2JnqzBQQVEiiCjrjY9KpBovN1gv7cQZonOHTiHqggZZv6JWhCgIcYwIu-47iO-i0MEK2sJHXdh3AkI4PChe8ZEvIuOKn5hHUpwaJfx0-qYa8qLUckQWrCkm0lmGCLSDCNJwIUwTzebqEnnORr7AtCVMabx7xCxz"
+        ],
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCSCIZj-dK-wTouKWYXCvoOz9vfuYvJbzFJ2_20ZBiB2Oaa7EYcf8HH-ZjZw8VaEmtBn_1faBG6yrAIIqr6fO4cvmP2BUGvGeFyhXp6kkpXdv9VC7q5k46hQi1Pfu4Ffu_"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "*  **Architecture:** RoadRunner utilizes a sensor fusion architecture similar to those in autonomous driving (e.g., BEV-Fusion).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGhUVnEkauXokW2Rd9tnh0pLHJx2Z3BGd4H5tO2dO9KD-qcAdJt27tcnUce1blgMm9qAtIy8dzAAVmicMSOT6D7iWf2EdWtC6f0y1Ke1U4LOvdTf1LbL00="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpFN2OCuncSIYWLoQtd1w3kef0EDzQDdI8_-9KRczvYuGacYK_ROz7GqeddkSFLiS0EfS_1xrNic75AawamTrHb5-UxqgqukvrIermpzJoDzQf1xTwdycyXiWlptmaHBqZ4gfSotfTNlh1RrVQk8j35-0EABq0mpRc9H3gQxxtqk-IX2nJ6JWuVSLTZMKq28tnmsGFTlad2-39htB_CMD84sdQKRqk_28AH0fIXbnH_EArUsnivAJYPQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "It takes images and LiDAR voxel maps as input and projects them into a common Bird's Eye View (BEV) representation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGhUVnEkauXokW2Rd9tnh0pLHJx2Z3BGd4H5tO2dO9KD-qcAdJt27tcnUce1blgMm9qAtIy8dzAAVmicMSOT6D7iWf2EdWtC6f0y1Ke1U4LOvdTf1LbL00="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpFN2OCuncSIYWLoQtd1w3kef0EDzQDdI8_-9KRczvYuGacYK_ROz7GqeddkSFLiS0EfS_1xrNic75AawamTrHb5-UxqgqukvrIermpzJoDzQf1xTwdycyXiWlptmaHBqZ4gfSotfTNlh1RrVQk8j35-0EABq0mpRc9H3gQxxtqk-IX2nJ6JWuVSLTZMKq28tnmsGFTlad2-39htB_CMD84sdQKRqk_28AH0fIXbnH_EArUsnivAJYPQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "*  **Hindsight Supervision:** The system is trained using \"hindsight\" signals generated from an existing, reliable (but perhaps slow or short-range) traversability stack (like X-Racer) and satellite Digital Elevation Maps (DEM).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCSCIZj-dK-wTouKWYXCvoOz9vfuYvJbzFJ2_20ZBiB2Oaa7EYcf8HH-ZjZw8VaEmtBn_1faBG6yrAIIqr6fO4cvmP2BUGvGeFyhXp6kkpXdv9VC7q5k46hQi1Pfu4Ffu_"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGOUDefRdIVC2fofce_MxJc1XltGe6o29oSxMXJA4outwRAeWK7_aeLhUh0MmE0xO3H400fhNgm3zQWkFhY8AjWXVUIn10GVEmbMlNPKc8NHqh_bZCkOI3-RQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "As the robot drives, it accumulates accurate geometric and semantic information about the terrain it just passed over.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCSCIZj-dK-wTouKWYXCvoOz9vfuYvJbzFJ2_20ZBiB2Oaa7EYcf8HH-ZjZw8VaEmtBn_1faBG6yrAIIqr6fO4cvmP2BUGvGeFyhXp6kkpXdv9VC7q5k46hQi1Pfu4Ffu_"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGOUDefRdIVC2fofce_MxJc1XltGe6o29oSxMXJA4outwRAeWK7_aeLhUh0MmE0xO3H400fhNgm3zQWkFhY8AjWXVUIn10GVEmbMlNPKc8NHqh_bZCkOI3-RQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": "This high-fidelity \"past\" data is used to supervise the network's predictions for the \"future\" terrain seen in the camera images.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGCSCIZj-dK-wTouKWYXCvoOz9vfuYvJbzFJ2_20ZBiB2Oaa7EYcf8HH-ZjZw8VaEmtBn_1faBG6yrAIIqr6fO4cvmP2BUGvGeFyhXp6kkpXdv9VC7q5k46hQi1Pfu4Ffu_"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGOUDefRdIVC2fofce_MxJc1XltGe6o29oSxMXJA4outwRAeWK7_aeLhUh0MmE0xO3H400fhNgm3zQWkFhY8AjWXVUIn10GVEmbMlNPKc8NHqh_bZCkOI3-RQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "*  **Capabilities:** RoadRunner M&M predicts traversability and elevation at multiple ranges (up to 100m) and resolutions.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE9jWTCsrb87Q4ntiknwV_NxCPKJGEHum52L9R4lp0DSYAC5VYW6J5jKMFEgg_jdeZnbltn6LSNFKvt3n5Pu7oK9WWbEwI2cXQVFUO7pzzissnYAdnrW-DbyDxtGK8Id4UoENky4Q=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG88Xqbn-ojdQtiP7SJ50GVoSc4vao4Wvyc0F0adOxYi-Fpgw-7S-UbUHRUelnl4LHLnbGBWl4_783BLr_oGgY4AcJfDj-M_thLsffWn3-_qNIyTC7BmFEbgpqyl2b8toPcLfRO8vPGJYxi2Iq90Dmh5c9pkhMmpsiY44RtcXtLVlElMmbM-QI2aT5nYzjn2C3WizCYq3Opfg3VbUI3pDekHYALTDhf9nL2iHxTc0TmyKIw5U8qHVcv4cS0KCofxbMcgH49lE7m9x9o_G8Qv2tMrqCR76WVSA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "text": "It achieves a 30% improvement in traversability estimation over baseline geometric methods and can predict costs in regions where LiDAR is sparse by leveraging visual textures learned from experience.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE9jWTCsrb87Q4ntiknwV_NxCPKJGEHum52L9R4lp0DSYAC5VYW6J5jKMFEgg_jdeZnbltn6LSNFKvt3n5Pu7oK9WWbEwI2cXQVFUO7pzzissnYAdnrW-DbyDxtGK8Id4UoENky4Q=="
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG88Xqbn-ojdQtiP7SJ50GVoSc4vao4Wvyc0F0adOxYi-Fpgw-7S-UbUHRUelnl4LHLnbGBWl4_783BLr_oGgY4AcJfDj-M_thLsffWn3-_qNIyTC7BmFEbgpqyl2b8toPcLfRO8vPGJYxi2Iq90Dmh5c9pkhMmpsiY44RtcXtLVlElMmbM-QI2aT5nYzjn2C3WizCYq3Opfg3VbUI3pDekHYALTDhf9nL2iHxTc0TmyKIw5U8qHVcv4cS0KCofxbMcgH49lE7m9x9o_G8Qv2tMrqCR76WVSA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### 2.3. Trajectory Projection and Reconstruction",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG6m6CAFB6m-jdEgBOnD_218o9QNoePf8384t8b46ibc9WOUOdqxgqahl6MloWkywOyShLY5ZvqGZ51q1LnG-Bx9FZopw-Xki7E662dZ_ZhtI_rF53zzWwCQHmReVorZtWs"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJQDLAqG1_3OT3y4p60-vB-8MQRi8oZIpRDKpSvjzjYcuIRCY4QTx5yeMSkNpUcg8GasmqYsMvaZB8o5sOy8FjFUN11fdd1hYmVbuznXHxMA1G19lmWZpISFyxu0is7fzfE1SCnmg9wKgyadKZA6Mckt04NU5_0EfbTvmYTKER5ArHGzpBaWB0ieZ4BZe8YSLF0U1v9UoXpl-Ux82jOcRUKuD6YuU75d2mxgtNeoqi-SqcBp7_uCPABoLa"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "Another class of methods, exemplified by the work of **Schmid et al.** and **Seo et al.**, uses reconstruction error as a proxy for traversability.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "youtube.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG6m6CAFB6m-jdEgBOnD_218o9QNoePf8384t8b46ibc9WOUOdqxgqahl6MloWkywOyShLY5ZvqGZ51q1LnG-Bx9FZopw-Xki7E662dZ_ZhtI_rF53zzWwCQHmReVorZtWs"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJQDLAqG1_3OT3y4p60-vB-8MQRi8oZIpRDKpSvjzjYcuIRCY4QTx5yeMSkNpUcg8GasmqYsMvaZB8o5sOy8FjFUN11fdd1hYmVbuznXHxMA1G19lmWZpISFyxu0is7fzfE1SCnmg9wKgyadKZA6Mckt04NU5_0EfbTvmYTKER5ArHGzpBaWB0ieZ4BZe8YSLF0U1v9UoXpl-Ux82jOcRUKuD6YuU75d2mxgtNeoqi-SqcBp7_uCPABoLa"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "*  **Methodology:** These systems project the vehicle's past wheel trajectories into the camera images.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "The image regions corresponding to the wheel paths are considered \"safe\" (positive samples).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "*  **Anomaly Detection:** An autoencoder or a Generative Adversarial Network (GAN) is trained to reconstruct these \"safe\" terrain patches.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "During inference, the system attempts to reconstruct the terrain ahead.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_6",
+      "section_idx": 5,
+      "idx_in_section": 6,
+      "text": "*  **Cost Assignment:** If the reconstruction error is low, the terrain is similar to previously traversed safe terrain (low cost).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "barr.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENS_QORegrZgMLSpDbqoR9JseGpLZrnafVK7VZmU7IlzcMLYjGHzYGf_Xs-Wutx9WPsEt5itXvQsbbR5tzMLwQjHptRWsQ_qxw_06bpt9WFEryHhgVIg-0jBnniwRx0uKOLPc2kFrdWghsuLl1lMcws5hdJJsftUgAsXZ-TwERwBiO3bnnq_oWv-PVSrwP-ubYQoJzVzDQYIO_XmQnMLqtxdiua-8gK_qHTjU5Tvref7olqaEJ0N-1hZtBUawXvoz1J-o="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYUuetTyXmxKqM2Sffm0DLP8kRCFevEEfjN69Xt9mGLK6-FgToJH_r13_MG39Xds-cnvwQYZDe4uZrBEqym93dUzW7vSGlSCdBVjbJUIOChmcV5p7spryZo7GhQITUj0o4QEcBpe_ty6-X8mV7ssGb_0SUJdWA3c40pMoY_gyxHbhjMRbsqP23jjqXvl4lJlWjP4VlW5RIDBR39g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_7",
+      "section_idx": 5,
+      "idx_in_section": 7,
+      "text": "If the reconstruction error is high (an anomaly), the terrain is likely unsafe or unknown (high cost).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "barr.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENS_QORegrZgMLSpDbqoR9JseGpLZrnafVK7VZmU7IlzcMLYjGHzYGf_Xs-Wutx9WPsEt5itXvQsbbR5tzMLwQjHptRWsQ_qxw_06bpt9WFEryHhgVIg-0jBnniwRx0uKOLPc2kFrdWghsuLl1lMcws5hdJJsftUgAsXZ-TwERwBiO3bnnq_oWv-PVSrwP-ubYQoJzVzDQYIO_XmQnMLqtxdiua-8gK_qHTjU5Tvref7olqaEJ0N-1hZtBUawXvoz1J-o="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYUuetTyXmxKqM2Sffm0DLP8kRCFevEEfjN69Xt9mGLK6-FgToJH_r13_MG39Xds-cnvwQYZDe4uZrBEqym93dUzW7vSGlSCdBVjbJUIOChmcV5p7spryZo7GhQITUj0o4QEcBpe_ty6-X8mV7ssGb_0SUJdWA3c40pMoY_gyxHbhjMRbsqP23jjqXvl4lJlWjP4VlW5RIDBR39g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_8",
+      "section_idx": 5,
+      "idx_in_section": 8,
+      "text": "This effectively turns traversability learning into a one-class classification or anomaly detection problem .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "barr.ai",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQENS_QORegrZgMLSpDbqoR9JseGpLZrnafVK7VZmU7IlzcMLYjGHzYGf_Xs-Wutx9WPsEt5itXvQsbbR5tzMLwQjHptRWsQ_qxw_06bpt9WFEryHhgVIg-0jBnniwRx0uKOLPc2kFrdWghsuLl1lMcws5hdJJsftUgAsXZ-TwERwBiO3bnnq_oWv-PVSrwP-ubYQoJzVzDQYIO_XmQnMLqtxdiua-8gK_qHTjU5Tvref7olqaEJ0N-1hZtBUawXvoz1J-o="
+        ],
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEYUuetTyXmxKqM2Sffm0DLP8kRCFevEEfjN69Xt9mGLK6-FgToJH_r13_MG39Xds-cnvwQYZDe4uZrBEqym93dUzW7vSGlSCdBVjbJUIOChmcV5p7spryZo7GhQITUj0o4QEcBpe_ty6-X8mV7ssGb_0SUJdWA3c40pMoY_gyxHbhjMRbsqP23jjqXvl4lJlWjP4VlW5RIDBR39g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## 3. Proprioceptive Learning: \"Feeling\" the Terrain",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "Visual and geometric data are often insufficient to determine surface properties like soil compliance, friction, or hidden obstacles.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "**Proprioceptive learning** addresses this by using the robot's internal sensors to measure the physical interaction with the terrain, creating a \"ground truth\" that is then associated with visual features.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "### 3.1. Proprioception for Legged Robots (ProNav)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIkqkoULIEETj92VdZT6HmPZKvKxARqR-yDW5RlTMTqHBAOAAUdd2lDmQxoeD0PU1meJjXTzT2-NqdaIjXOCXYb3KD_vAr6qfMyM4Q1hkaUP0-ryRKEyq4U1M5DI1gdfaFfC9cCBFFuimVZL95ivNAYZnf"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZtJaK2QhIo4Twgub-vfZ9nUw70AAZr6Db4AwiO6Gty0e6FtZIyCFRlBfDBtITNwXC3BW3XnREJ_GdYKdXLEOxQLh3SCC20liSsEkSY9A_sJHE4ovJ1w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "Legged robots face unique challenges, such as leg entrapment in vegetation or instability on granular soils.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIkqkoULIEETj92VdZT6HmPZKvKxARqR-yDW5RlTMTqHBAOAAUdd2lDmQxoeD0PU1meJjXTzT2-NqdaIjXOCXYb3KD_vAr6qfMyM4Q1hkaUP0-ryRKEyq4U1M5DI1gdfaFfC9cCBFFuimVZL95ivNAYZnf"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZtJaK2QhIo4Twgub-vfZ9nUw70AAZr6Db4AwiO6Gty0e6FtZIyCFRlBfDBtITNwXC3BW3XnREJ_GdYKdXLEOxQLh3SCC20liSsEkSY9A_sJHE4ovJ1w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_2",
+      "section_idx": 7,
+      "idx_in_section": 2,
+      "text": "**ProNav** is a leading framework specifically designed for legged robot traversability using proprioception.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIkqkoULIEETj92VdZT6HmPZKvKxARqR-yDW5RlTMTqHBAOAAUdd2lDmQxoeD0PU1meJjXTzT2-NqdaIjXOCXYb3KD_vAr6qfMyM4Q1hkaUP0-ryRKEyq4U1M5DI1gdfaFfC9cCBFFuimVZL95ivNAYZnf"
+        ],
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZtJaK2QhIo4Twgub-vfZ9nUw70AAZr6Db4AwiO6Gty0e6FtZIyCFRlBfDBtITNwXC3BW3XnREJ_GdYKdXLEOxQLh3SCC20liSsEkSY9A_sJHE4ovJ1w=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_3",
+      "section_idx": 7,
+      "idx_in_section": 3,
+      "text": "*  **Signals Used:** ProNav utilizes joint encoders (position), force sensors (ground reaction forces), and current sensors (energy consumption).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_4",
+      "section_idx": 7,
+      "idx_in_section": 4,
+      "text": "*  **Metrics:** It computes metrics for **stability** (variance in body pose), **resistance** (current consumption relative to motion), and **entrapment risk** (discrepancies in expected vs. actual leg trajectories).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_5",
+      "section_idx": 7,
+      "idx_in_section": 5,
+      "text": "*  **Learning:** The system uses these signals to assess traversability in real-time.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIkqkoULIEETj92VdZT6HmPZKvKxARqR-yDW5RlTMTqHBAOAAUdd2lDmQxoeD0PU1meJjXTzT2-NqdaIjXOCXYb3KD_vAr6qfMyM4Q1hkaUP0-ryRKEyq4U1M5DI1gdfaFfC9cCBFFuimVZL95ivNAYZnf"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxCywujeEaD0wggGqqZ2CKmuq6AVSC3txse9yJeR97TMGsj7pilRP-IVi7zSAUlz-lCu5L7SyplF9F93bxb_zEAx5qN_dVSQ_ZReht-2NXL_Es1_gjTdE5-rTi6GhqbaHTdkN36RCxrd_I2AFd8zVp_iG7wLSKj62obcav2StCqAO7VsSI-A4azg2uJggcxcAa_xBft6TPmfUw6g2bKvzFPfA5yyIPT4rG4YXnM7CZ-xYAWYx6vjYM4dkfh0lW0xmKLNmrsU6aF67AjaFF"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_6",
+      "section_idx": 7,
+      "idx_in_section": 6,
+      "text": "It can predict imminent crashes or instability and adapt the robot's gait (e.g., lifting legs higher in tall grass) to minimize energy consumption and maximize stability.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "scispace.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFD7L9oceObErKsRpAhyAmGOrET0vYVsaB8AarAmVUOz0BHD5Jws4ypFYQ-iB3jYaKxquYeLBqzqOJK99MfVCzAfITS4WgfT4M-Vby2QpGUMoInox0yXBg3k9EjIbPiiiWHY4VFD0sg2S4gpxdA6VnAIGy57VPlz7rvhmUl23ENT2WvRZJMAtzkJQdo186AM805RgrhBLFPqg=="
+        ],
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEowQvKgXbT9VeP1cxVgeGgraKLOb21TDvz203kkd8iAKVkAZLEl0xHbA7C0VIq09tSWoqCBlleLNSVG1Fm0hwTD7VO0TQ8IWFbWftU0H9kwUgSL7jP2mE-4SmBZld7vY5RSnYbTwNPtGEE7Y9rLwjUR-naQQ=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "7_7",
+      "section_idx": 7,
+      "idx_in_section": 7,
+      "text": "*  **Performance:** ProNav has shown up to a 40% improvement in success rate and a 15.1% reduction in energy consumption compared to purely exteroceptive methods in dense vegetation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHIkqkoULIEETj92VdZT6HmPZKvKxARqR-yDW5RlTMTqHBAOAAUdd2lDmQxoeD0PU1meJjXTzT2-NqdaIjXOCXYb3KD_vAr6qfMyM4Q1hkaUP0-ryRKEyq4U1M5DI1gdfaFfC9cCBFFuimVZL95ivNAYZnf"
+        ],
+        [
+          "researchgate.net",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxCywujeEaD0wggGqqZ2CKmuq6AVSC3txse9yJeR97TMGsj7pilRP-IVi7zSAUlz-lCu5L7SyplF9F93bxb_zEAx5qN_dVSQ_ZReht-2NXL_Es1_gjTdE5-rTi6GhqbaHTdkN36RCxrd_I2AFd8zVp_iG7wLSKj62obcav2StCqAO7VsSI-A4azg2uJggcxcAa_xBft6TPmfUw6g2bKvzFPfA5yyIPT4rG4YXnM7CZ-xYAWYx6vjYM4dkfh0lW0xmKLNmrsU6aF67AjaFF"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "### 3.2. Visual-Proprioceptive Fusion (CNN-LSTM)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEp0FimG6CUbWrP6F4dzW2igAHKkqnm4jYdKA5CPlc-ccc-DcPAYHgxhA5Mlsi7iv2DNgS4UgXktr83N0Eq14vFnf_fPttMyskk160R6upXN7dXU5y5U6q4AQ=="
+        ],
+        [
+          "alphaxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF-9Jav6TV7v-04v-Q9IFVURfL3cAvVoG753IJaw1glrxqCwVO6yVsMPvmo1j47zdTwWFikO-duJ901NkAU9WmxDXpQCO-JLmV4tVK4foHnSnhX8H7hsbzXlwa0TROGLf44ChtC"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_1",
+      "section_idx": 8,
+      "idx_in_section": 1,
+      "text": "To predict traversability *before* entering a terrain, robots must learn to associate the \"look\" of the terrain with its \"feel.\"",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEp0FimG6CUbWrP6F4dzW2igAHKkqnm4jYdKA5CPlc-ccc-DcPAYHgxhA5Mlsi7iv2DNgS4UgXktr83N0Eq14vFnf_fPttMyskk160R6upXN7dXU5y5U6q4AQ=="
+        ],
+        [
+          "alphaxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF-9Jav6TV7v-04v-Q9IFVURfL3cAvVoG753IJaw1glrxqCwVO6yVsMPvmo1j47zdTwWFikO-duJ901NkAU9WmxDXpQCO-JLmV4tVK4foHnSnhX8H7hsbzXlwa0TROGLf44ChtC"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_2",
+      "section_idx": 8,
+      "idx_in_section": 2,
+      "text": "This is often achieved through **CNN-LSTM** architectures.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEp0FimG6CUbWrP6F4dzW2igAHKkqnm4jYdKA5CPlc-ccc-DcPAYHgxhA5Mlsi7iv2DNgS4UgXktr83N0Eq14vFnf_fPttMyskk160R6upXN7dXU5y5U6q4AQ=="
+        ],
+        [
+          "alphaxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF-9Jav6TV7v-04v-Q9IFVURfL3cAvVoG753IJaw1glrxqCwVO6yVsMPvmo1j47zdTwWFikO-duJ901NkAU9WmxDXpQCO-JLmV4tVK4foHnSnhX8H7hsbzXlwa0TROGLf44ChtC"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_3",
+      "section_idx": 8,
+      "idx_in_section": 3,
+      "text": "*  **Architecture:** A Convolutional Neural Network (CNN) extracts spatial features from camera images or local map patches.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJeGCY3cNEqjhoBtmJQyH283shfNL5wptSR6vNLu6_9T4b_1N911QhdldNFyZ6KLbKmSppX2_EyG6H0qRBcTTiFwELnW3yfwn1SB0EEsMZxIuZUifnFLMFVw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_4",
+      "section_idx": 8,
+      "idx_in_section": 4,
+      "text": "Simultaneously, a Long Short-Term Memory (LSTM) network processes time-series proprioceptive data (IMU acceleration, wheel slip, velocity).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJeGCY3cNEqjhoBtmJQyH283shfNL5wptSR6vNLu6_9T4b_1N911QhdldNFyZ6KLbKmSppX2_EyG6H0qRBcTTiFwELnW3yfwn1SB0EEsMZxIuZUifnFLMFVw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_5",
+      "section_idx": 8,
+      "idx_in_section": 5,
+      "text": "*  **Training:** The network is trained to predict the proprioceptive cost (e.g., vibration level, risk of getting stuck) from the visual input.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cmu.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEe-FNt-Ps8sZsN_V6O3v7Wq7GfkPfzLMgVAQmlSPhldlGc8ScJWMFSGvJftQYb_4PxPdPiAk7_AZEHulq9DiZPR788_tgG-uskr4zI454X5A1fs2VZ3BlhBARHuIl27BSHkSTPh0r-jALYVpp4X64HaXVdUElOKYh37AtfobCh9jC5U5rpfVSFDeDQxM0ZVjLkkGgHfYN6qlj57HsKsU0="
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEY-uXlnT31lhLMbvcdJiVy2z9byZ5ffUXuuMPWu2rZnEYybEZyyhTcO_IoIKXARPgflGfSsYcjLMtWHMtk8KekGurdsxactDGO4FlBzSHBSKmBs97lOyw0fA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_6",
+      "section_idx": 8,
+      "idx_in_section": 6,
+      "text": "The \"label\" is the actual vibration experienced when the robot drove over that specific patch of terrain.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "cmu.edu",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEe-FNt-Ps8sZsN_V6O3v7Wq7GfkPfzLMgVAQmlSPhldlGc8ScJWMFSGvJftQYb_4PxPdPiAk7_AZEHulq9DiZPR788_tgG-uskr4zI454X5A1fs2VZ3BlhBARHuIl27BSHkSTPh0r-jALYVpp4X64HaXVdUElOKYh37AtfobCh9jC5U5rpfVSFDeDQxM0ZVjLkkGgHfYN6qlj57HsKsU0="
+        ],
+        [
+          "github.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEY-uXlnT31lhLMbvcdJiVy2z9byZ5ffUXuuMPWu2rZnEYybEZyyhTcO_IoIKXARPgflGfSsYcjLMtWHMtk8KekGurdsxactDGO4FlBzSHBSKmBs97lOyw0fA=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_7",
+      "section_idx": 8,
+      "idx_in_section": 7,
+      "text": "*  **Risk-Aware Labeling:** Some approaches, such as those by **Zhu et al.** and **Kim et al.**, utilize statistical measures like **Value at Risk (VaR)** on the z-axis acceleration data to generate continuous risk scores (0 to 1) rather than binary traversable/non-traversable labels.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEp0FimG6CUbWrP6F4dzW2igAHKkqnm4jYdKA5CPlc-ccc-DcPAYHgxhA5Mlsi7iv2DNgS4UgXktr83N0Eq14vFnf_fPttMyskk160R6upXN7dXU5y5U6q4AQ=="
+        ],
+        [
+          "themoonlight.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEunlbQawSy3jYRShEUrO1Foc0Sz0SfM-XGFDWkHSl3YkHwimb86zk4nDV0NHXfHp1RgLWamviieflsnLx1P5yCB8FU_qo5Eg7KIQaD3eN5VNbtRC4ZmYXX7lB17j-nnKpdbAqXCteaT1gjTcO_xfKizVlnL-urMuJ4gLtLP8_F6OQhgTu55hDTEvNV5jhMcF4B52v4g7RSsX_wPYA-VCeajpvYmw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "8_8",
+      "section_idx": 8,
+      "idx_in_section": 8,
+      "text": "This allows for fine-grained costmaps that distinguish between smooth concrete, gravel, and rough rocky trails.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "arxiv.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEp0FimG6CUbWrP6F4dzW2igAHKkqnm4jYdKA5CPlc-ccc-DcPAYHgxhA5Mlsi7iv2DNgS4UgXktr83N0Eq14vFnf_fPttMyskk160R6upXN7dXU5y5U6q4AQ=="
+        ],
+        [
+          "themoonlight.io",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEunlbQawSy3jYRShEUrO1Foc0Sz0SfM-XGFDWkHSl3YkHwimb86zk4nDV0NHXfHp1RgLWamviieflsnLx1P5yCB8FU_qo5Eg7KIQaD3eN5VNbtRC4ZmYXX7lB17j-nnKpdbAqXCteaT1gjTcO_xfKizVlnL-urMuJ4gLtLP8_F6OQhgTu55hDTEvNV5jhMcF4B52v4g7RSsX_wPYA-VCeajpvYmw=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "### 3.3. Vibration and Acoustic Analysis",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "Beyond standard IMU data, researchers have explored using acoustic sensors (microphones near wheels) and specialized vibration analysis to classify terrain.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "*  **Acoustic Features:** The sound of wheel-terrain interaction varies significantly between sand, asphalt, and grass.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF8CRXaWlBeKFJqcy-CD9bs6HhfNyfsyE8r06DpoVL4dQMxOpEG6Yl8QCnAk4sy8QmtixCcRrvQkNUWY5qgtawc7ZcvWOq6HpFgJesdAxX_WT_o1nG7h9NYe1EgjIjvKPm-3a5KlQ7SkYFEkVRPJ1J9Z9A2"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGW41mY85Fd5t82i0YpPu3ZYSqvKBfhjT7c0qJgJqCXeBCdpa7tKy6H5EJjZW-mSkaOGjEuzaPgb51iZCYEkEjRkuGLK_QoT8YHtjUxZjRwCHU4UQImP_cGdefSr8_or0p0I4zeoVUjEc8_lsH_-T4h1FBU2g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "Self-supervised frameworks use these audio signatures to cluster terrain types and then train visual classifiers to recognize these types from images.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ieee.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF8CRXaWlBeKFJqcy-CD9bs6HhfNyfsyE8r06DpoVL4dQMxOpEG6Yl8QCnAk4sy8QmtixCcRrvQkNUWY5qgtawc7ZcvWOq6HpFgJesdAxX_WT_o1nG7h9NYe1EgjIjvKPm-3a5KlQ7SkYFEkVRPJ1J9Z9A2"
+        ],
+        [
+          "github.com",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGW41mY85Fd5t82i0YpPu3ZYSqvKBfhjT7c0qJgJqCXeBCdpa7tKy6H5EJjZW-mSkaOGjEuzaPgb51iZCYEkEjRkuGLK_QoT8YHtjUxZjRwCHU4UQImP_cGdefSr8_or0p0I4zeoVUjEc8_lsH_-T4h1FBU2g=="
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_4",
+      "section_idx": 9,
+      "idx_in_section": 4,
+      "text": "*  **Vibration Classification:** Methods like **CACTI** use accelerometer data to classify terrain into categories (sand, gravel, clay) and associate these with visual textures.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "frontiersin.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQED9o1k-A8wFMuV8Nk2i45vae3HoWjWo1ANBb6Bw6KS7jayP2Et52-R9fCPW5lhN071lr2AkM-sRILkJ217-Kg8HAOtotsHz2cCJ5DjxbJIn6jM2IfV6EZF_VKKAqWxr1pXD9c6SKhDJxqLPvEssK0GpfAe6OG_k82PkRZVtOXILtNZcOtyZzD7uQf9PY5YriocBg=="
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTt7_Toq0cklhFquKAOPIQFdv7rt2qBqphu5ca9tT0RusGb32LnG2Mf5Fdc9sTA8r0KWv_UuXzO-CHKZG22tbEOg82swiJSj6OuBV6dRoxC2cVkD47D3iDueL6ODTGnu495FvawG4R"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "9_5",
+      "section_idx": 9,
+      "idx_in_section": 5,
+      "text": "This is particularly useful for identifying non-geometric hazards like soft sand that might cause immobilization .\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "frontiersin.org",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQED9o1k-A8wFMuV8Nk2i45vae3HoWjWo1ANBb6Bw6KS7jayP2Et52-R9fCPW5lhN071lr2AkM-sRILkJ217-Kg8HAOtotsHz2cCJ5DjxbJIn6jM2IfV6EZF_VKKAqWxr1pXD9c6SKhDJxqLPvEssK0GpfAe6OG_k82PkRZVtOXILtNZcOtyZzD7uQf9PY5YriocBg=="
+        ],
+        [
+          "nih.gov",
+          "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTt7_Toq0cklhFquKAOPIQFdv7rt2qBqphu5ca9tT0RusGb32LnG2Mf5Fdc9sTA8r0KWv_UuXzO-CHKZG22tbEOg82swiJSj6OuBV6dRoxC2cVkD47D3iDueL6ODTGnu495FvawG4R"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    }
+  ]
+}

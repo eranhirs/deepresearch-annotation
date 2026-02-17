@@ -1,0 +1,1071 @@
+{
+  "model_name": "gpt-5-search-api",
+  "example_id": "2",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat are leading methods for generating hard examples of the boolean satisfiability problem, and what are their strengths and weaknesses?",
+  "answer": "When studying or benchmarking SAT (Boolean satisfiability) solvers, it\u2019s crucial to have \u201chard\u201d problem instances\u2014those that are computationally difficult\u2014both for satisfiable and unsatisfiable cases. There are several major techniques for generating such instances. Below, each method is described along with its strengths and weaknesses, combining theoretical basis and empirical evidence.\n\n---\n\n## 1. Random \\(k\\)-SAT near phase transition\n\n**Description:**  \nGenerate a random CNF formula with \\(n\\) variables and \\(m\\) clauses each of size \\(k\\), then adjust the ratio \\(m/n\\) so that you are near the \u201csatisfiability threshold\u201d \\(\\alpha_k\\), the critical ratio where random formulas go from being likely satisfiable to likely unsatisfiable. For example, for \\(k=3\\), \\(\\alpha_3 \\approx 4.25\\). ([lix.polytechnique.fr](https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai))\n\n**Strengths:**\n- **Tunability**: The difficulty tends to spike in narrow ranges of clause-to-variable ratio, so hardness can be controlled by selecting ratios near \\(\\alpha_k\\). ([lix.polytechnique.fr](https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai))\n- **Simplicity and reproducibility**: It\u2019s easy to implement and well-studied in both theoretical and empirical contexts.\n\n**Weaknesses:**\n- **Variance**: Near the threshold, many instances are still easy; hardness isn\u2019t guaranteed. \n- **Limited structure**: Random instances often lack structural features that make industrial or application-based SAT instances difficult for different solver families.\n- **Satisfiable vs. unsatisfiable imbalance**: If you want hard satisfiable instances, random \\(k\\)-SAT near the transition gives many unsatisfiable ones, which may not serve certain tests.\n\n---\n\n## 2. Structured or crafted instance generators\n\nThese include models that embed specific combinatorial or graph-theoretic structure, or generate SAT problems with features like communities, constraints\u2019 overlap, etc.\n\n**Examples & techniques:**\n\n- **Community Attachment model**: Variables partitioned into communities; clauses either within one community or across communities, with a probability parameter. This yields formulas with modularity reminiscent of many real-world problems. ([sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0004370216300649?utm_source=openai))  \n- **Balanced SAT / No-Triangle SAT**: \u201cBalanced SAT\u201d aims to spread clauses uniformly and minimize clustering. \u201cNo-Triangle SAT\u201d further tries to prevent small cycles (triangles) in the clause-variable incidence graph, which yields higher hardness. Empirically, No-Triangle SAT produces hardest instances over a range of clause densities for fixed \\(k\\). ([arxiv.org](https://arxiv.org/abs/1903.03592?utm_source=openai))\n\n**Strengths:**\n- **Realism**: These instances can mimic structural properties found in application domains like planning, verification, and cryptography. \n- **Controlled difficulty**: Parameters such as clause distributions, community overlap, or graph clustering metrics give levers to adjust hardness. \n- **Solver differentiation**: Structured instances tend to expose strengths or weaknesses of solvers (e.g., CDCL vs. local search) depending on type of structure. \n\n**Weaknesses:**\n- **Complexity of design**: Requires deeper insight into what structural features actually make instances hard in practice. Developers must often experiment with parameters. \n- **Potential bias**: The particular structure chosen might favor/disfavor certain solver types, limiting generality. \n- **Cost of generation**: More sophisticated structure (balancing, avoiding triangles, ensuring desired community overlap) can imply non-trivial computational overhead for generation.\n\n---\n\n## 3. Planting / hidden solution methods\n\n**Description:**  \nOne picks a random assignment (hides or plants a solution), then generates clauses in such a way that this assignment is guaranteed to satisfy the formula. Adjustments are often made so that the planted solution is not \u201ceasily discoverable\u201d\u2014for example, by also planting the complementary assignment, or by biasing clause selection to avoid \u201cpull\u201d toward the planted assignment. ([catalyzex.com](https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai))\n\n**Strengths:**\n- **Guaranteed satisfiability**: Ensures the instance is satisfiable, useful for testing incomplete methods.  \n- **Adjustable hardness**: By controlling the concentration of clauses that are satisfied by the planted assignment and how visible it is, you can tune hardness for different solver strategies. ([catalyzex.com](https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai))  \n- **Statistical physics insights**: These constructions allow theory-derived phase diagrams and insights into solution-space structure, backbone properties, clustering etc. ([sciencedirect.com](https://www.sciencedirect.com/science/article/abs/pii/S0378437122009256?utm_source=openai))\n\n**Weaknesses:**\n- **Bias towards planted assignment**: If done na\u00efvely, many clues toward the hidden assignment remain, making them easy for solvers or local search to find.  \n- **Artifacts of generation**: Special statistical or structural features from planting may not appear in \u201cnatural\u201d hard instances. Solvers may overfit to performance on these planted instances without broader generalization.  \n- **Balancing act**: Making the planted assignment hidden enough increases generation complexity and sometimes sacrifices the ability to tune or guarantee hardness.\n\n---\n\n## 4. Loop/frustration-based methods\n\n**Description:**  \nConstruct instances using \u201cloops\u201d or frustrated cycles (originating from spin-glass or physics-based models). Clauses or constraints are arranged so that along cycles, they create conflict (\u201cfrustration\u201d), making local consistency difficult. One variant is generating weighted MAX-2-SAT formulas with frustrated loops, where a parameter like frustration index controls hardness. ([arxiv.org](https://arxiv.org/abs/1905.05334?utm_source=openai))\n\n**Strengths:**\n- **Tunable hardness via frustration measures**: By increasing frustration (e.g. more conflicting couplings around cycles), search becomes harder.  \n- **Strong performance vs local search and incomplete methods**: Such instances tend to stall incomplete solvers, exposing their inability to escape local minima.  \n\n**Weaknesses:**\n- **May be less difficult for complete solvers** or those with aggressive clause learning and look-aheads that can detect the loops more globally.  \n- **Artifact risk**: The loop structure may create structures unnatural to typical application instances. Also, the \u201chardness\u201d captured may mainly be against specific algorithmic weaknesses (like local minima) rather than general hardness.  \n- **Parameter sensitivity**: Too little frustration yields easy instances; too much may make contradictions obvious and hence easy in the unsatisfiable case.\n\n---\n\n## 5. Generation via empirical hardness models and learning-based methods (including adversarial/evolutionary)\n\n**Description:**  \nUse machine learning or metaheuristics (e.g. evolutionary algorithms) to generate instances that maximize some measured hardness metric. Recent neural graph-based generators (e.g. G2SAT) or core-based methods (e.g. HardCore) learn from existing hard instances, predict hardness (or cores), and then generate or evolve instances accordingly. ([snap.stanford.edu](https://snap.stanford.edu/g2sat/?utm_source=openai))\n\n**Strengths:**\n- **Solver-tailored hardness**: These methods can produce benchmarks that are especially hard for certain types of solvers by leveraging feedback loops.  \n- **Preservation of realistic traits**: Learning from real-world or competition benchmark sets, generated instances can preserve structural properties that make SAT truly hard in practice.  \n- **Dynamic generation**: Ability to adapt during generation, avoid degeneracies (easy substructures), and iteratively refine hardness.  \n\n**Weaknesses:**\n- **High computational cost**: Training models, evaluating solver runtimes during evolution, detecting cores etc., can be very resource-intensive.  \n- **Risk of overfitting to known solvers**: If benchmarks are generated using performance profiles of a fixed set of solvers, new or unfamiliar solvers may not find them hard.  \n- **Interpretability**: Hard to know *why* an instance is hard (i.e., which structural features cause exponential blowup). This can limit theoretical insight.\n\n---\n\n## Comparing the methods\u2014summary table\n\n| Method | Produces Hard Satisfiable or Unsatisfiable | Difficulty Control | Realism / Structural Resemblance | Cost to Generate | Risk of Bias |\n|---|---|---|---|---|---|\n| Random \\(k\\)-SAT near threshold | Both, but often unsatisfiable | High (via \\(m/n\\)) | Low (structure is randomness) | Low | Instances may not be representative of industrial cases |\n| Structured / crafted models | Both | Moderate to high (via structural parameters) | High if well designed | Moderate | Designed structure may favor certain solver styles |\n| Planting methods | Mainly satisfiable | Good (tune how hidden the planted solution is) | Moderate | Moderate | Clues toward planted solution, unnatural distribution of solutions |\n| Frustration / loop-based | Often unsatisfiable or MAX-SAT hardness | Good via frustration, loop density | Moderate | Moderate to high (ensuring frustration) | May align with local search weaknesses more than full search |\n| Learning / evolutionary | Both | Very high (guided by solver feedback) | Potentially high | Very high (requires solver runs, training models) | Overfitting, less transferable hardness |\n\n---\n\n## Practical advice: choosing or combining methods\n\n- For **benchmarking general-purpose solvers**, mix several instance types: random near thresholds, structured, and solver-tailor-learned ones, to avoid one solver dominating due to its design bias.  \n- If testing **incomplete (heuristic or local search) solvers**, focus more on satisfiable but hard instances, such as planting with hidden assignments or frustration-based models.  \n- For **complete/unsatisfiability proving solvers**, it's good to include hard unsatisfiable instances (e.g. structured contradictory cores, loop or random-k-SAT beyond threshold).  \n\n- When designing generators, always measure hardness across multiple solver architectures (CDCL, look-ahead, local search) to ensure the hardness generalizes.\n\n---\n\nIn conclusion, there is no single best method for generating \u201chard\u201d SAT instances\u2014each technique has trade-offs among control, realism, adaptability, and generation cost. Combining methods, or using automated learning/evolution atop structured or planted base models, often yields benchmarks that are the most challenging and valuable from both practical and theoretical perspectives.",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "When studying or benchmarking SAT (Boolean satisfiability) solvers, it\u2019s crucial to have \u201chard\u201d problem instances\u2014those that are computationally difficult\u2014both for satisfiable and unsatisfiable cases. There are several major techniques for generating such instances. Below, each method is described along with its strengths and weaknesses, combining theoretical basis and empirical evidence.\n\n---\n\n",
+      "start": 0,
+      "end": 398
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## 1. Random \\(k\\)-SAT near phase transition",
+      "header_level": 2,
+      "text": "## 1. Random \\(k\\)-SAT near phase transition\n\n**Description:**  \nGenerate a random CNF formula with \\(n\\) variables and \\(m\\) clauses each of size \\(k\\), then adjust the ratio \\(m/n\\) so that you are near the \u201csatisfiability threshold\u201d \\(\\alpha_k\\), the critical ratio where random formulas go from being likely satisfiable to likely unsatisfiable. For example, for \\(k=3\\), \\(\\alpha_3 \\approx 4.25\\). ([lix.polytechnique.fr](https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai))\n\n**Strengths:**\n- **Tunability**: The difficulty tends to spike in narrow ranges of clause-to-variable ratio, so hardness can be controlled by selecting ratios near \\(\\alpha_k\\). ([lix.polytechnique.fr](https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai))\n- **Simplicity and reproducibility**: It\u2019s easy to implement and well-studied in both theoretical and empirical contexts.\n\n**Weaknesses:**\n- **Variance**: Near the threshold, many instances are still easy; hardness isn\u2019t guaranteed. \n- **Limited structure**: Random instances often lack structural features that make industrial or application-based SAT instances difficult for different solver families.\n- **Satisfiable vs. unsatisfiable imbalance**: If you want hard satisfiable instances, random \\(k\\)-SAT near the transition gives many unsatisfiable ones, which may not serve certain tests.\n\n---\n\n",
+      "start": 398,
+      "end": 1835
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "## 2. Structured or crafted instance generators",
+      "header_level": 2,
+      "text": "## 2. Structured or crafted instance generators\n\nThese include models that embed specific combinatorial or graph-theoretic structure, or generate SAT problems with features like communities, constraints\u2019 overlap, etc.\n\n**Examples & techniques:**\n\n- **Community Attachment model**: Variables partitioned into communities; clauses either within one community or across communities, with a probability parameter. This yields formulas with modularity reminiscent of many real-world problems. ([sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0004370216300649?utm_source=openai))  \n- **Balanced SAT / No-Triangle SAT**: \u201cBalanced SAT\u201d aims to spread clauses uniformly and minimize clustering. \u201cNo-Triangle SAT\u201d further tries to prevent small cycles (triangles) in the clause-variable incidence graph, which yields higher hardness. Empirically, No-Triangle SAT produces hardest instances over a range of clause densities for fixed \\(k\\). ([arxiv.org](https://arxiv.org/abs/1903.03592?utm_source=openai))\n\n**Strengths:**\n- **Realism**: These instances can mimic structural properties found in application domains like planning, verification, and cryptography. \n- **Controlled difficulty**: Parameters such as clause distributions, community overlap, or graph clustering metrics give levers to adjust hardness. \n- **Solver differentiation**: Structured instances tend to expose strengths or weaknesses of solvers (e.g., CDCL vs. local search) depending on type of structure. \n\n**Weaknesses:**\n- **Complexity of design**: Requires deeper insight into what structural features actually make instances hard in practice. Developers must often experiment with parameters. \n- **Potential bias**: The particular structure chosen might favor/disfavor certain solver types, limiting generality. \n- **Cost of generation**: More sophisticated structure (balancing, avoiding triangles, ensuring desired community overlap) can imply non-trivial computational overhead for generation.\n\n---\n\n",
+      "start": 1835,
+      "end": 3826
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "## 3. Planting / hidden solution methods",
+      "header_level": 2,
+      "text": "## 3. Planting / hidden solution methods\n\n**Description:**  \nOne picks a random assignment (hides or plants a solution), then generates clauses in such a way that this assignment is guaranteed to satisfy the formula. Adjustments are often made so that the planted solution is not \u201ceasily discoverable\u201d\u2014for example, by also planting the complementary assignment, or by biasing clause selection to avoid \u201cpull\u201d toward the planted assignment. ([catalyzex.com](https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai))\n\n**Strengths:**\n- **Guaranteed satisfiability**: Ensures the instance is satisfiable, useful for testing incomplete methods.  \n- **Adjustable hardness**: By controlling the concentration of clauses that are satisfied by the planted assignment and how visible it is, you can tune hardness for different solver strategies. ([catalyzex.com](https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai))  \n- **Statistical physics insights**: These constructions allow theory-derived phase diagrams and insights into solution-space structure, backbone properties, clustering etc. ([sciencedirect.com](https://www.sciencedirect.com/science/article/abs/pii/S0378437122009256?utm_source=openai))\n\n**Weaknesses:**\n- **Bias towards planted assignment**: If done na\u00efvely, many clues toward the hidden assignment remain, making them easy for solvers or local search to find.  \n- **Artifacts of generation**: Special statistical or structural features from planting may not appear in \u201cnatural\u201d hard instances. Solvers may overfit to performance on these planted instances without broader generalization.  \n- **Balancing act**: Making the planted assignment hidden enough increases generation complexity and sometimes sacrifices the ability to tune or guarantee hardness.\n\n---\n\n",
+      "start": 3826,
+      "end": 5669
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "## 4. Loop/frustration-based methods",
+      "header_level": 2,
+      "text": "## 4. Loop/frustration-based methods\n\n**Description:**  \nConstruct instances using \u201cloops\u201d or frustrated cycles (originating from spin-glass or physics-based models). Clauses or constraints are arranged so that along cycles, they create conflict (\u201cfrustration\u201d), making local consistency difficult. One variant is generating weighted MAX-2-SAT formulas with frustrated loops, where a parameter like frustration index controls hardness. ([arxiv.org](https://arxiv.org/abs/1905.05334?utm_source=openai))\n\n**Strengths:**\n- **Tunable hardness via frustration measures**: By increasing frustration (e.g. more conflicting couplings around cycles), search becomes harder.  \n- **Strong performance vs local search and incomplete methods**: Such instances tend to stall incomplete solvers, exposing their inability to escape local minima.  \n\n**Weaknesses:**\n- **May be less difficult for complete solvers** or those with aggressive clause learning and look-aheads that can detect the loops more globally.  \n- **Artifact risk**: The loop structure may create structures unnatural to typical application instances. Also, the \u201chardness\u201d captured may mainly be against specific algorithmic weaknesses (like local minima) rather than general hardness.  \n- **Parameter sensitivity**: Too little frustration yields easy instances; too much may make contradictions obvious and hence easy in the unsatisfiable case.\n\n---\n\n",
+      "start": 5669,
+      "end": 7073
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "## 5. Generation via empirical hardness models and learning-based methods (including adversarial/evolutionary)",
+      "header_level": 2,
+      "text": "## 5. Generation via empirical hardness models and learning-based methods (including adversarial/evolutionary)\n\n**Description:**  \nUse machine learning or metaheuristics (e.g. evolutionary algorithms) to generate instances that maximize some measured hardness metric. Recent neural graph-based generators (e.g. G2SAT) or core-based methods (e.g. HardCore) learn from existing hard instances, predict hardness (or cores), and then generate or evolve instances accordingly. ([snap.stanford.edu](https://snap.stanford.edu/g2sat/?utm_source=openai))\n\n**Strengths:**\n- **Solver-tailored hardness**: These methods can produce benchmarks that are especially hard for certain types of solvers by leveraging feedback loops.  \n- **Preservation of realistic traits**: Learning from real-world or competition benchmark sets, generated instances can preserve structural properties that make SAT truly hard in practice.  \n- **Dynamic generation**: Ability to adapt during generation, avoid degeneracies (easy substructures), and iteratively refine hardness.  \n\n**Weaknesses:**\n- **High computational cost**: Training models, evaluating solver runtimes during evolution, detecting cores etc., can be very resource-intensive.  \n- **Risk of overfitting to known solvers**: If benchmarks are generated using performance profiles of a fixed set of solvers, new or unfamiliar solvers may not find them hard.  \n- **Interpretability**: Hard to know *why* an instance is hard (i.e., which structural features cause exponential blowup). This can limit theoretical insight.\n\n---\n\n",
+      "start": 7073,
+      "end": 8628
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## Comparing the methods\u2014summary table",
+      "header_level": 2,
+      "text": "## Comparing the methods\u2014summary table\n\n",
+      "start": 8628,
+      "end": 8668
+    },
+    {
+      "idx": 7,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Method | Produces Hard Satisfiable or Unsatisfiable | Difficulty Control | Realism / Structural Resemblance | Cost to Generate | Risk of Bias |\n|---|---|---|---|---|---|\n| Random \\(k\\)-SAT near threshold | Both, but often unsatisfiable | High (via \\(m/n\\)) | Low (structure is randomness) | Low | Instances may not be representative of industrial cases |\n| Structured / crafted models | Both | Moderate to high (via structural parameters) | High if well designed | Moderate | Designed structure may favor certain solver styles |\n| Planting methods | Mainly satisfiable | Good (tune how hidden the planted solution is) | Moderate | Moderate | Clues toward planted solution, unnatural distribution of solutions |\n| Frustration / loop-based | Often unsatisfiable or MAX-SAT hardness | Good via frustration, loop density | Moderate | Moderate to high (ensuring frustration) | May align with local search weaknesses more than full search |\n| Learning / evolutionary | Both | Very high (guided by solver feedback) | Potentially high | Very high (requires solver runs, training models) | Overfitting, less transferable hardness |",
+      "start": 8668,
+      "end": 9793
+    },
+    {
+      "idx": 8,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "\n---\n\n",
+      "start": 9793,
+      "end": 9799
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": "## Practical advice: choosing or combining methods",
+      "header_level": 2,
+      "text": "## Practical advice: choosing or combining methods\n\n- For **benchmarking general-purpose solvers**, mix several instance types: random near thresholds, structured, and solver-tailor-learned ones, to avoid one solver dominating due to its design bias.  \n- If testing **incomplete (heuristic or local search) solvers**, focus more on satisfiable but hard instances, such as planting with hidden assignments or frustration-based models.  \n- For **complete/unsatisfiability proving solvers**, it's good to include hard unsatisfiable instances (e.g. structured contradictory cores, loop or random-k-SAT beyond threshold).  \n\n- When designing generators, always measure hardness across multiple solver architectures (CDCL, look-ahead, local search) to ensure the hardness generalizes.\n\n---\n\nIn conclusion, there is no single best method for generating \u201chard\u201d SAT instances\u2014each technique has trade-offs among control, realism, adaptability, and generation cost. Combining methods, or using automated learning/evolution atop structured or planted base models, often yields benchmarks that are the most challenging and valuable from both practical and theoretical perspectives.",
+      "start": 9799,
+      "end": 10968
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "When studying or benchmarking SAT (Boolean satisfiability) solvers, it\u2019s crucial to have \u201chard\u201d problem instances\u2014those that are computationally difficult\u2014both for satisfiable and unsatisfiable cases.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "There are several major techniques for generating such instances.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "text": "Below, each method is described along with its strengths and weaknesses, combining theoretical basis and empirical evidence.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "## 1. Random \\(k\\)-SAT near phase transition",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_1",
+      "section_idx": 1,
+      "idx_in_section": 1,
+      "text": "**Description:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "CSE301",
+          "https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_10",
+      "section_idx": 1,
+      "idx_in_section": 10,
+      "text": "- **Variance**: Near the threshold, many instances are still easy; hardness isn\u2019t guaranteed.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "1_11",
+      "section_idx": 1,
+      "idx_in_section": 11,
+      "text": "- **Limited structure**: Random instances often lack structural features that make industrial or application-based SAT instances difficult for different solver families.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_12",
+      "section_idx": 1,
+      "idx_in_section": 12,
+      "text": "- **Satisfiable vs. unsatisfiable imbalance**: If you want hard satisfiable instances, random \\(k\\)-SAT near the transition gives many unsatisfiable ones, which may not serve certain tests.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_2",
+      "section_idx": 1,
+      "idx_in_section": 2,
+      "text": "Generate a random CNF formula with \\(n\\) variables and \\(m\\) clauses each of size \\(k\\), then adjust the ratio \\(m/n\\) so that you are near the \u201csatisfiability threshold\u201d \\(\\alpha_k\\), the critical ratio where random formulas go from being likely satisfiable to likely unsatisfiable.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "CSE301",
+          "https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_3",
+      "section_idx": 1,
+      "idx_in_section": 3,
+      "text": "For example, for \\(k=3\\), \\(\\alpha_3 \\approx 4.25\\).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "CSE301",
+          "https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_5",
+      "section_idx": 1,
+      "idx_in_section": 5,
+      "text": "**Strengths:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "CSE301",
+          "https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_6",
+      "section_idx": 1,
+      "idx_in_section": 6,
+      "text": "- **Tunability**: The difficulty tends to spike in narrow ranges of clause-to-variable ratio, so hardness can be controlled by selecting ratios near \\(\\alpha_k\\).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "CSE301",
+          "https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_8",
+      "section_idx": 1,
+      "idx_in_section": 8,
+      "text": "- **Simplicity and reproducibility**: It\u2019s easy to implement and well-studied in both theoretical and empirical contexts.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "CSE301",
+          "https://www.lix.polytechnique.fr/~zeilberger/teaching/CSE301/2021/MySAT/README.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_9",
+      "section_idx": 1,
+      "idx_in_section": 9,
+      "text": "**Weaknesses:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "## 2. Structured or crafted instance generators",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "These include models that embed specific combinatorial or graph-theoretic structure, or generate SAT problems with features like communities, constraints\u2019 overlap, etc.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_10",
+      "section_idx": 2,
+      "idx_in_section": 10,
+      "text": "**Strengths:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_11",
+      "section_idx": 2,
+      "idx_in_section": 11,
+      "text": "- **Realism**: These instances can mimic structural properties found in application domains like planning, verification, and cryptography.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_12",
+      "section_idx": 2,
+      "idx_in_section": 12,
+      "text": "- **Controlled difficulty**: Parameters such as clause distributions, community overlap, or graph clustering metrics give levers to adjust hardness.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_13",
+      "section_idx": 2,
+      "idx_in_section": 13,
+      "text": "- **Solver differentiation**: Structured instances tend to expose strengths or weaknesses of solvers (e.g., CDCL vs. local search) depending on type of structure.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_14",
+      "section_idx": 2,
+      "idx_in_section": 14,
+      "text": "**Weaknesses:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_15",
+      "section_idx": 2,
+      "idx_in_section": 15,
+      "text": "- **Complexity of design**: Requires deeper insight into what structural features actually make instances hard in practice.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_16",
+      "section_idx": 2,
+      "idx_in_section": 16,
+      "text": "Developers must often experiment with parameters.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_17",
+      "section_idx": 2,
+      "idx_in_section": 17,
+      "text": "- **Potential bias**: The particular structure chosen might favor/disfavor certain solver types, limiting generality.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_18",
+      "section_idx": 2,
+      "idx_in_section": 18,
+      "text": "- **Cost of generation**: More sophisticated structure (balancing, avoiding triangles, ensuring desired community overlap) can imply non-trivial computational overhead for generation.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "**Examples & techniques:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_3",
+      "section_idx": 2,
+      "idx_in_section": 3,
+      "text": "- **Community Attachment model**: Variables partitioned into communities; clauses either within one community or across communities, with a probability parameter.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating SAT instances with community structure - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0004370216300649?utm_source=openai"
+        ],
+        [
+          "Generating Difficult SAT Instances by Preventing Triangles",
+          "https://arxiv.org/abs/1903.03592?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "This yields formulas with modularity reminiscent of many real-world problems.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating SAT instances with community structure - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0004370216300649?utm_source=openai"
+        ],
+        [
+          "Generating Difficult SAT Instances by Preventing Triangles",
+          "https://arxiv.org/abs/1903.03592?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_6",
+      "section_idx": 2,
+      "idx_in_section": 6,
+      "text": "- **Balanced SAT / No-Triangle SAT**: \u201cBalanced SAT\u201d aims to spread clauses uniformly and minimize clustering.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating SAT instances with community structure - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0004370216300649?utm_source=openai"
+        ],
+        [
+          "Generating Difficult SAT Instances by Preventing Triangles",
+          "https://arxiv.org/abs/1903.03592?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_7",
+      "section_idx": 2,
+      "idx_in_section": 7,
+      "text": "\u201cNo-Triangle SAT\u201d further tries to prevent small cycles (triangles) in the clause-variable incidence graph, which yields higher hardness.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating SAT instances with community structure - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0004370216300649?utm_source=openai"
+        ],
+        [
+          "Generating Difficult SAT Instances by Preventing Triangles",
+          "https://arxiv.org/abs/1903.03592?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_8",
+      "section_idx": 2,
+      "idx_in_section": 8,
+      "text": "Empirically, No-Triangle SAT produces hardest instances over a range of clause densities for fixed \\(k\\).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating SAT instances with community structure - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/pii/S0004370216300649?utm_source=openai"
+        ],
+        [
+          "Generating Difficult SAT Instances by Preventing Triangles",
+          "https://arxiv.org/abs/1903.03592?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "## 3. Planting / hidden solution methods",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "**Description:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Hard Satisfiable Formulas by Hiding Solutions Deceptively",
+          "https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_11",
+      "section_idx": 3,
+      "idx_in_section": 11,
+      "text": "**Weaknesses:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_12",
+      "section_idx": 3,
+      "idx_in_section": 12,
+      "text": "- **Bias towards planted assignment**: If done na\u00efvely, many clues toward the hidden assignment remain, making them easy for solvers or local search to find.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_13",
+      "section_idx": 3,
+      "idx_in_section": 13,
+      "text": "- **Artifacts of generation**: Special statistical or structural features from planting may not appear in \u201cnatural\u201d hard instances.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_14",
+      "section_idx": 3,
+      "idx_in_section": 14,
+      "text": "Solvers may overfit to performance on these planted instances without broader generalization.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_15",
+      "section_idx": 3,
+      "idx_in_section": 15,
+      "text": "- **Balancing act**: Making the planted assignment hidden enough increases generation complexity and sometimes sacrifices the ability to tune or guarantee hardness.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_16",
+      "section_idx": 3,
+      "idx_in_section": 16,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "One picks a random assignment (hides or plants a solution), then generates clauses in such a way that this assignment is guaranteed to satisfy the formula.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Hard Satisfiable Formulas by Hiding Solutions Deceptively",
+          "https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_3",
+      "section_idx": 3,
+      "idx_in_section": 3,
+      "text": "Adjustments are often made so that the planted solution is not \u201ceasily discoverable\u201d\u2014for example, by also planting the complementary assignment, or by biasing clause selection to avoid \u201cpull\u201d toward the planted assignment.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Hard Satisfiable Formulas by Hiding Solutions Deceptively",
+          "https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_5",
+      "section_idx": 3,
+      "idx_in_section": 5,
+      "text": "**Strengths:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Hard Satisfiable Formulas by Hiding Solutions Deceptively",
+          "https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai"
+        ],
+        [
+          "Generating hard satisfiable instances by planting into random constraint satisfaction problem model with growing constraint scope length - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/abs/pii/S0378437122009256?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_6",
+      "section_idx": 3,
+      "idx_in_section": 6,
+      "text": "- **Guaranteed satisfiability**: Ensures the instance is satisfiable, useful for testing incomplete methods.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Hard Satisfiable Formulas by Hiding Solutions Deceptively",
+          "https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai"
+        ],
+        [
+          "Generating hard satisfiable instances by planting into random constraint satisfaction problem model with growing constraint scope length - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/abs/pii/S0378437122009256?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_7",
+      "section_idx": 3,
+      "idx_in_section": 7,
+      "text": "- **Adjustable hardness**: By controlling the concentration of clauses that are satisfied by the planted assignment and how visible it is, you can tune hardness for different solver strategies.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Hard Satisfiable Formulas by Hiding Solutions Deceptively",
+          "https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai"
+        ],
+        [
+          "Generating hard satisfiable instances by planting into random constraint satisfaction problem model with growing constraint scope length - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/abs/pii/S0378437122009256?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_9",
+      "section_idx": 3,
+      "idx_in_section": 9,
+      "text": "- **Statistical physics insights**: These constructions allow theory-derived phase diagrams and insights into solution-space structure, backbone properties, clustering etc.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Hard Satisfiable Formulas by Hiding Solutions Deceptively",
+          "https://www.catalyzex.com/paper/generating-hard-satisfiable-formulas-by?utm_source=openai"
+        ],
+        [
+          "Generating hard satisfiable instances by planting into random constraint satisfaction problem model with growing constraint scope length - ScienceDirect",
+          "https://www.sciencedirect.com/science/article/abs/pii/S0378437122009256?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "## 4. Loop/frustration-based methods",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "**Description:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Weighted MAX-2-SAT Instances of Tunable Difficulty with Frustrated Loops",
+          "https://arxiv.org/abs/1905.05334?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_10",
+      "section_idx": 4,
+      "idx_in_section": 10,
+      "text": "- **May be less difficult for complete solvers** or those with aggressive clause learning and look-aheads that can detect the loops more globally.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_11",
+      "section_idx": 4,
+      "idx_in_section": 11,
+      "text": "- **Artifact risk**: The loop structure may create structures unnatural to typical application instances.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_12",
+      "section_idx": 4,
+      "idx_in_section": 12,
+      "text": "Also, the \u201chardness\u201d captured may mainly be against specific algorithmic weaknesses (like local minima) rather than general hardness.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_13",
+      "section_idx": 4,
+      "idx_in_section": 13,
+      "text": "- **Parameter sensitivity**: Too little frustration yields easy instances; too much may make contradictions obvious and hence easy in the unsatisfiable case.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "Construct instances using \u201cloops\u201d or frustrated cycles (originating from spin-glass or physics-based models).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Weighted MAX-2-SAT Instances of Tunable Difficulty with Frustrated Loops",
+          "https://arxiv.org/abs/1905.05334?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_3",
+      "section_idx": 4,
+      "idx_in_section": 3,
+      "text": "Clauses or constraints are arranged so that along cycles, they create conflict (\u201cfrustration\u201d), making local consistency difficult.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Weighted MAX-2-SAT Instances of Tunable Difficulty with Frustrated Loops",
+          "https://arxiv.org/abs/1905.05334?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "One variant is generating weighted MAX-2-SAT formulas with frustrated loops, where a parameter like frustration index controls hardness.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "Generating Weighted MAX-2-SAT Instances of Tunable Difficulty with Frustrated Loops",
+          "https://arxiv.org/abs/1905.05334?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": "**Strengths:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "- **Tunable hardness via frustration measures**: By increasing frustration (e.g. more conflicting couplings around cycles), search becomes harder.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "text": "- **Strong performance vs local search and incomplete methods**: Such instances tend to stall incomplete solvers, exposing their inability to escape local minima.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_9",
+      "section_idx": 4,
+      "idx_in_section": 9,
+      "text": "**Weaknesses:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "## 5. Generation via empirical hardness models and learning-based methods (including adversarial/evolutionary)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "**Description:**",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "G2SAT",
+          "https://snap.stanford.edu/g2sat/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_10",
+      "section_idx": 5,
+      "idx_in_section": 10,
+      "text": "**High computational cost**: Training models, evaluating solver runtimes during evolution, detecting cores etc., can be very resource-intensive.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_11",
+      "section_idx": 5,
+      "idx_in_section": 11,
+      "text": "**Risk of overfitting to known solvers**: If benchmarks are generated using performance profiles of a fixed set of solvers, new or unfamiliar solvers may not find them hard.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_12",
+      "section_idx": 5,
+      "idx_in_section": 12,
+      "text": "**Interpretability**: Hard to know *why* an instance is hard (i.e., which structural features cause exponential blowup).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_13",
+      "section_idx": 5,
+      "idx_in_section": 13,
+      "text": "This can limit theoretical insight.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "Use machine learning or metaheuristics (e.g. evolutionary algorithms) to generate instances that maximize some measured hardness metric.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "G2SAT",
+          "https://snap.stanford.edu/g2sat/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "Recent neural graph-based generators (e.g. G2SAT) or core-based methods (e.g. HardCore) learn from existing hard instances, predict hardness (or cores), and then generate or evolve instances accordingly.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "G2SAT",
+          "https://snap.stanford.edu/g2sat/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_5",
+      "section_idx": 5,
+      "idx_in_section": 5,
+      "text": "**Strengths:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_6",
+      "section_idx": 5,
+      "idx_in_section": 6,
+      "text": "**Solver-tailored hardness**: These methods can produce benchmarks that are especially hard for certain types of solvers by leveraging feedback loops.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_7",
+      "section_idx": 5,
+      "idx_in_section": 7,
+      "text": "**Preservation of realistic traits**: Learning from real-world or competition benchmark sets, generated instances can preserve structural properties that make SAT truly hard in practice.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_8",
+      "section_idx": 5,
+      "idx_in_section": 8,
+      "text": "**Dynamic generation**: Ability to adapt during generation, avoid degeneracies (easy substructures), and iteratively refine hardness.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_9",
+      "section_idx": 5,
+      "idx_in_section": 9,
+      "text": "**Weaknesses:**",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## Comparing the methods\u2014summary table",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "8_0",
+      "section_idx": 8,
+      "idx_in_section": 0,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "## Practical advice: choosing or combining methods",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_1",
+      "section_idx": 9,
+      "idx_in_section": 1,
+      "text": "- For **benchmarking general-purpose solvers**, mix several instance types: random near thresholds, structured, and solver-tailor-learned ones, to avoid one solver dominating due to its design bias.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_2",
+      "section_idx": 9,
+      "idx_in_section": 2,
+      "text": "- If testing **incomplete (heuristic or local search) solvers**, focus more on satisfiable but hard instances, such as planting with hidden assignments or frustration-based models.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_3",
+      "section_idx": 9,
+      "idx_in_section": 3,
+      "text": "- For **complete/unsatisfiability proving solvers**, it's good to include hard unsatisfiable instances (e.g. structured contradictory cores, loop or random-k-SAT beyond threshold).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_4",
+      "section_idx": 9,
+      "idx_in_section": 4,
+      "text": "- When designing generators, always measure hardness across multiple solver architectures (CDCL, look-ahead, local search) to ensure the hardness generalizes.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_5",
+      "section_idx": 9,
+      "idx_in_section": 5,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_6",
+      "section_idx": 9,
+      "idx_in_section": 6,
+      "text": "In conclusion, there is no single best method for generating \u201chard\u201d SAT instances\u2014each technique has trade-offs among control, realism, adaptability, and generation cost.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_7",
+      "section_idx": 9,
+      "idx_in_section": 7,
+      "text": "Combining methods, or using automated learning/evolution atop structured or planted base models, often yields benchmarks that are the most challenging and valuable from both practical and theoretical perspectives.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    }
+  ]
+}

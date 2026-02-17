@@ -1,0 +1,1392 @@
+{
+  "model_name": "gpt-5-search-api",
+  "example_id": "1",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat publicly available datasets are typically used for evaluating type inference systems in python?",
+  "answer": "Here are some of the **publicly available datasets and benchmarks** that researchers commonly use to evaluate Python type inference systems. These are particularly valuable for static or ML-based inference tools (e.g. Type4Py, HiTyper), dynamic type-checking tools (like Pyre, Pytype), or newer benchmarks focused around large language models (LLMs) or micro-benchmarks. I\u2019ll describe each, highlight key features, and note trade-offs and gaps.\n\n---\n\n## Key Datasets & Benchmarks\n\n### ManyTypes4Py (MT4Py)\n\n- **What it is**: A large-scale Python dataset specifically built for ML-based type inference. It comprises thousands of GitHub projects annotated with type hints. ([arxiv.org](https://arxiv.org/abs/2104.04706?utm_source=openai))  \n- **Details**:\n  - Over **5,382** Python projects, with more than **869,000** type annotations. ([arxiv.org](https://arxiv.org/abs/2104.04706?utm_source=openai))  \n  - The dataset has both **clean** and **complete** versions:\n    - *Clean version*: only projects fully type\u2010checked with **mypy**; ~5.1K repos, ~1.2M annotations. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))  \n    - *Complete version*: includes more annotations (even partial), totaling ~3.3M annotations. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))  \n  - The repository has been processed to remove duplicated source files to reduce bias, split into train/validation/test by files, and converted into JSON with AST/hint info using a pipeline (LibSA4Py) ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai)).  \n- **Use cases / Tools**: Many ML type inference systems rely on MT4Py. For example, Type4Py is built on MT4Py. ([github.com](https://github.com/saltudelft/type4py?utm_source=openai))  \n- **Strengths**:\n  - Large scale (both in number of projects and annotations).\n  - Explicit splitting and deduplication help generalization evaluation.\n  - Supports different annotation completeness levels.\n- **Limitations**:\n  - It reflects only what projects have annotated (potential bias toward well-typed code).\n  - Clean version depends on mypy; tools stricter or looser than mypy may behave differently.\n  - Previously type definitions may miss context of runtime behavior/user-defined types.\n\n---\n\n### TypyBench (2025)\n\n- **What it is**: A recent benchmark focused on evaluating **LLMs** inferring types across entire untyped Python repositories. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n- **Details**:\n  - It includes **50 high-quality open-source Python repositories**, chosen for diversity and real-world complexity. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n  - All original type annotations are stripped; tools are evaluated on recovering types via LLM output (which can then be type stub files), and evaluated on:\n    - **TypeSim**: semantic similarity between inferred vs ground truth types (allows partial credit).  \n    - **TypeCheck**: number of errors when checking predicted stubs with a real static type checker (global consistency). ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n- **Strengths**:\n  - More realistic scenario: whole repositories, untyped code, diversity of type complexity.\n  - Novel metrics that penalize inconsistencies across modules, not just local exact match.\n- **Limitations**:\n  - Small number of repos (50), so lower statistical power or overfitting risk.\n  - Focused on LLM behavior; may not align with static tool use-cases exactly.\n\n---\n\n### TypeEvalPy\n\n- **What it is**: A **micro-benchmarking framework** containing small code snippets aimed at targeting specific Python features. Useful for comparing static inference methods. ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai))  \n- **Details**:\n  - 154 code snippets with **845 type annotations**, covering **18 categories** (e.g. function returns, arguments, generics, built-ins, etc.) ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai)).  \n  - Provides a standardized metric suite, normalized formats, etc. Allows multiple tools to be evaluated in a containerized, reproducible way. ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai))  \n- **Strengths**:\n  - Precisely tests specific, often tricky features (e.g. generics, user-defined types).\n  - Addresses deep corner cases which large datasets may under-represent.\n  - Good for ablation studies, tool component evaluation.\n- **Limitations**:\n  - Very small-scale; may not reflect code complexity or practical deployment.\n  - Does not include global repository context; no evaluation of consistency across modules.\n\n---\n\n### HiTyper uses ManyTypes4Py\n\n- **Details**:\n  - HiTyper is another system (static + ML components) whose evaluation is built on the ManyTypes4Py dataset. ([pypi.org](https://pypi.org/project/hityper/?utm_source=openai))  \n  - HiTyper\u2019s reported metrics (exact match, generic types, user-defined types, return values, etc.) are measured using MT4Py\u2019s \u201ctest\u201d subsets. ([pypi.org](https://pypi.org/project/hityper/?utm_source=openai))  \n- **Significance**: Shows how systems both static/inference and ML methods benchmark on the same standardized large dataset.\n\n---\n\n## Other Benchmarks / Tools to Know\n\nWhile the following are not full annotated datasets *specifically* for type inference, they are used in related contexts (e.g. code understanding, code annotation, auto-completion, type stub generation):\n\n- **Pytype / Pyre / Mypy internal test suites**, many tools use their internal test cases (toy and real library code), but often not fully public or not sufficiently large/standardized for cross-comparison.\n- Datasets drawn from **Typeshed** (which provides types for standard library and many popular third-party libs) are sometimes used to check coverage or consistency but not always as a benchmark for inference tools.\n- Benchmarks for code generation (e.g. DS-1000) are more about generating code; they may include type annotations but not in a way optimized for type inference evaluation. ([arxiv.org](https://arxiv.org/abs/2211.11501?utm_source=openai))\n\n---\n\n## Summary: Comparison Table\n\nHere\u2019s a quick summary to help choose what\u2019s suitable depending on your evaluation goals:\n\n| Dataset / Benchmark | Scale | Context | Strengths | Use When You Need \u2026 |\n|---|---|---|---|---|\n| **ManyTypes4Py** | Large (5,000+ projects) | Annotated real code | Broad coverage of annotations, train/val/test splits, ML focus | Training ML models; broad evaluation across projects |\n| **TypyBench** | Medium (50 repos) | Stripped full repositories | Repository-level evaluation, global consistency metrics | Evaluating LLMs or tools in realistic codebases |\n| **TypeEvalPy** | Small (154 snippets) | Isolated features / corner cases | Precise, controlled, focused on tricky language features | Fine-grained tool comparison; feature-specific evaluation |\n| **HiTyper on MT4Py** | Uses same as ManyTypes4Py | Static + ML combined | Demonstrated performance on generics, user-defined types | Benchmarks mixing static/ML inference, or comparing against MT4Py baselines |\n\n---\n\n## Gaps & Open Challenges\n\nSome of the limitations across existing datasets and benchmarks include:\n\n- **Under-representation of untyped or poorly typed code**: Many projects are already well typed (especially in clean sets), whereas real world legacy code often lacks types or has inconsistencies.\n- **Lack of runtime type behavior**: Static annotations may not reflect types that occur during execution, especially with dynamic features (metaprogramming, monkey patching, dynamic imports).\n- **Limited diversity in type complexity**: Deeply nested generics, union types, user-defined types across module boundaries are often rarer.\n- **Global consistency and cross-module context**: Many datasets focus on local correctness (function return types, parameter types), but consistency across modules (imports, shared types) is less covered.\n- **Versioning and ecosystem evolution**: Tools/new language features (like TypedDict, Protocols) evolve; datasets need updating to reflect new typing PEPs.\n\n---\n\n## Practical Recommendations\n\nIf you\u2019re evaluating or building a type inference system, here are tips on choosing or combining these datasets:\n\n1. **Use ManyTypes4Py** for large scale training, baseline performance, generic coverage. It\u2019s the most widely used large dataset.\n\n2. **Supplement with TypeEvalPy** to stress test specific features your system aims to improve (e.g. generics, user-defined types).\n\n3. **Use TypyBench** to observe real-world behavior at repository level, especially if you care about global consistency or the performance of your system in realistic settings (especially for LLM-based approaches).\n\n4. **Ensure de-duplication** and train/val/test splitting to avoid overfitting to popular patterns. Tools like CD4Py are used in ManyTypes4Py for this. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))\n\n5. **Define clear metrics**: exact match, partial match, top-k accuracy, type consistency over modules. Benchmarks like TypyBench introduce metrics like *TypeSim* and *TypeCheck* that are useful beyond simple matching. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))\n\n---\n\nIf you like, I can also list some **GitHub-hosted datasets** (possibly smaller or more recently released) or help find datasets specific to certain kinds of Python code (e.g. web frameworks, data science) to evaluate type inference in that domain. Do you want me to pull those in?",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "Here are some of the **publicly available datasets and benchmarks** that researchers commonly use to evaluate Python type inference systems. These are particularly valuable for static or ML-based inference tools (e.g. Type4Py, HiTyper), dynamic type-checking tools (like Pyre, Pytype), or newer benchmarks focused around large language models (LLMs) or micro-benchmarks. I\u2019ll describe each, highlight key features, and note trade-offs and gaps.\n\n---\n\n",
+      "start": 0,
+      "end": 451
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## Key Datasets & Benchmarks",
+      "header_level": 2,
+      "text": "## Key Datasets & Benchmarks\n\n",
+      "start": 451,
+      "end": 481
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "### ManyTypes4Py (MT4Py)",
+      "header_level": 3,
+      "text": "### ManyTypes4Py (MT4Py)\n\n- **What it is**: A large-scale Python dataset specifically built for ML-based type inference. It comprises thousands of GitHub projects annotated with type hints. ([arxiv.org](https://arxiv.org/abs/2104.04706?utm_source=openai))  \n- **Details**:\n  - Over **5,382** Python projects, with more than **869,000** type annotations. ([arxiv.org](https://arxiv.org/abs/2104.04706?utm_source=openai))  \n  - The dataset has both **clean** and **complete** versions:\n    - *Clean version*: only projects fully type\u2010checked with **mypy**; ~5.1K repos, ~1.2M annotations. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))  \n    - *Complete version*: includes more annotations (even partial), totaling ~3.3M annotations. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))  \n  - The repository has been processed to remove duplicated source files to reduce bias, split into train/validation/test by files, and converted into JSON with AST/hint info using a pipeline (LibSA4Py) ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai)).  \n- **Use cases / Tools**: Many ML type inference systems rely on MT4Py. For example, Type4Py is built on MT4Py. ([github.com](https://github.com/saltudelft/type4py?utm_source=openai))  \n- **Strengths**:\n  - Large scale (both in number of projects and annotations).\n  - Explicit splitting and deduplication help generalization evaluation.\n  - Supports different annotation completeness levels.\n- **Limitations**:\n  - It reflects only what projects have annotated (potential bias toward well-typed code).\n  - Clean version depends on mypy; tools stricter or looser than mypy may behave differently.\n  - Previously type definitions may miss context of runtime behavior/user-defined types.\n\n---\n\n",
+      "start": 481,
+      "end": 2328
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "### TypyBench (2025)",
+      "header_level": 3,
+      "text": "### TypyBench (2025)\n\n- **What it is**: A recent benchmark focused on evaluating **LLMs** inferring types across entire untyped Python repositories. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n- **Details**:\n  - It includes **50 high-quality open-source Python repositories**, chosen for diversity and real-world complexity. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n  - All original type annotations are stripped; tools are evaluated on recovering types via LLM output (which can then be type stub files), and evaluated on:\n    - **TypeSim**: semantic similarity between inferred vs ground truth types (allows partial credit).  \n    - **TypeCheck**: number of errors when checking predicted stubs with a real static type checker (global consistency). ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n- **Strengths**:\n  - More realistic scenario: whole repositories, untyped code, diversity of type complexity.\n  - Novel metrics that penalize inconsistencies across modules, not just local exact match.\n- **Limitations**:\n  - Small number of repos (50), so lower statistical power or overfitting risk.\n  - Focused on LLM behavior; may not align with static tool use-cases exactly.\n\n---\n\n",
+      "start": 2328,
+      "end": 3665
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### TypeEvalPy",
+      "header_level": 3,
+      "text": "### TypeEvalPy\n\n- **What it is**: A **micro-benchmarking framework** containing small code snippets aimed at targeting specific Python features. Useful for comparing static inference methods. ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai))  \n- **Details**:\n  - 154 code snippets with **845 type annotations**, covering **18 categories** (e.g. function returns, arguments, generics, built-ins, etc.) ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai)).  \n  - Provides a standardized metric suite, normalized formats, etc. Allows multiple tools to be evaluated in a containerized, reproducible way. ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai))  \n- **Strengths**:\n  - Precisely tests specific, often tricky features (e.g. generics, user-defined types).\n  - Addresses deep corner cases which large datasets may under-represent.\n  - Good for ablation studies, tool component evaluation.\n- **Limitations**:\n  - Very small-scale; may not reflect code complexity or practical deployment.\n  - Does not include global repository context; no evaluation of consistency across modules.\n\n---\n\n",
+      "start": 3665,
+      "end": 4797
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### HiTyper uses ManyTypes4Py",
+      "header_level": 3,
+      "text": "### HiTyper uses ManyTypes4Py\n\n- **Details**:\n  - HiTyper is another system (static + ML components) whose evaluation is built on the ManyTypes4Py dataset. ([pypi.org](https://pypi.org/project/hityper/?utm_source=openai))  \n  - HiTyper\u2019s reported metrics (exact match, generic types, user-defined types, return values, etc.) are measured using MT4Py\u2019s \u201ctest\u201d subsets. ([pypi.org](https://pypi.org/project/hityper/?utm_source=openai))  \n- **Significance**: Shows how systems both static/inference and ML methods benchmark on the same standardized large dataset.\n\n---\n\n",
+      "start": 4797,
+      "end": 5364
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## Other Benchmarks / Tools to Know",
+      "header_level": 2,
+      "text": "## Other Benchmarks / Tools to Know\n\nWhile the following are not full annotated datasets *specifically* for type inference, they are used in related contexts (e.g. code understanding, code annotation, auto-completion, type stub generation):\n\n- **Pytype / Pyre / Mypy internal test suites**, many tools use their internal test cases (toy and real library code), but often not fully public or not sufficiently large/standardized for cross-comparison.\n- Datasets drawn from **Typeshed** (which provides types for standard library and many popular third-party libs) are sometimes used to check coverage or consistency but not always as a benchmark for inference tools.\n- Benchmarks for code generation (e.g. DS-1000) are more about generating code; they may include type annotations but not in a way optimized for type inference evaluation. ([arxiv.org](https://arxiv.org/abs/2211.11501?utm_source=openai))\n\n---\n\n",
+      "start": 5364,
+      "end": 6273
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "## Summary: Comparison Table",
+      "header_level": 2,
+      "text": "## Summary: Comparison Table\n\nHere\u2019s a quick summary to help choose what\u2019s suitable depending on your evaluation goals:\n\n",
+      "start": 6273,
+      "end": 6394
+    },
+    {
+      "idx": 8,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Dataset / Benchmark | Scale | Context | Strengths | Use When You Need \u2026 |\n|---|---|---|---|---|\n| **ManyTypes4Py** | Large (5,000+ projects) | Annotated real code | Broad coverage of annotations, train/val/test splits, ML focus | Training ML models; broad evaluation across projects |\n| **TypyBench** | Medium (50 repos) | Stripped full repositories | Repository-level evaluation, global consistency metrics | Evaluating LLMs or tools in realistic codebases |\n| **TypeEvalPy** | Small (154 snippets) | Isolated features / corner cases | Precise, controlled, focused on tricky language features | Fine-grained tool comparison; feature-specific evaluation |\n| **HiTyper on MT4Py** | Uses same as ManyTypes4Py | Static + ML combined | Demonstrated performance on generics, user-defined types | Benchmarks mixing static/ML inference, or comparing against MT4Py baselines |",
+      "start": 6394,
+      "end": 7265
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "\n---\n\n",
+      "start": 7265,
+      "end": 7271
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "## Gaps & Open Challenges",
+      "header_level": 2,
+      "text": "## Gaps & Open Challenges\n\nSome of the limitations across existing datasets and benchmarks include:\n\n- **Under-representation of untyped or poorly typed code**: Many projects are already well typed (especially in clean sets), whereas real world legacy code often lacks types or has inconsistencies.\n- **Lack of runtime type behavior**: Static annotations may not reflect types that occur during execution, especially with dynamic features (metaprogramming, monkey patching, dynamic imports).\n- **Limited diversity in type complexity**: Deeply nested generics, union types, user-defined types across module boundaries are often rarer.\n- **Global consistency and cross-module context**: Many datasets focus on local correctness (function return types, parameter types), but consistency across modules (imports, shared types) is less covered.\n- **Versioning and ecosystem evolution**: Tools/new language features (like TypedDict, Protocols) evolve; datasets need updating to reflect new typing PEPs.\n\n---\n\n",
+      "start": 7271,
+      "end": 8274
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "## Practical Recommendations",
+      "header_level": 2,
+      "text": "## Practical Recommendations\n\nIf you\u2019re evaluating or building a type inference system, here are tips on choosing or combining these datasets:\n\n1. **Use ManyTypes4Py** for large scale training, baseline performance, generic coverage. It\u2019s the most widely used large dataset.\n\n2. **Supplement with TypeEvalPy** to stress test specific features your system aims to improve (e.g. generics, user-defined types).\n\n3. **Use TypyBench** to observe real-world behavior at repository level, especially if you care about global consistency or the performance of your system in realistic settings (especially for LLM-based approaches).\n\n4. **Ensure de-duplication** and train/val/test splitting to avoid overfitting to popular patterns. Tools like CD4Py are used in ManyTypes4Py for this. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))\n\n5. **Define clear metrics**: exact match, partial match, top-k accuracy, type consistency over modules. Benchmarks like TypyBench introduce metrics like *TypeSim* and *TypeCheck* that are useful beyond simple matching. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))\n\n---\n\nIf you like, I can also list some **GitHub-hosted datasets** (possibly smaller or more recently released) or help find datasets specific to certain kinds of Python code (e.g. web frameworks, data science) to evaluate type inference in that domain. Do you want me to pull those in?",
+      "start": 8274,
+      "end": 9739
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "text": "Here are some of the **publicly available datasets and benchmarks** that researchers commonly use to evaluate Python type inference systems.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "text": "These are particularly valuable for static or ML-based inference tools (e.g. Type4Py, HiTyper), dynamic type-checking tools (like Pyre, Pytype), or newer benchmarks focused around large language models (LLMs) or micro-benchmarks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "text": "I\u2019ll describe each, highlight key features, and note trade-offs and gaps.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "text": "## Gaps & Open Challenges",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "text": "Some of the limitations across existing datasets and benchmarks include:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "text": "- **Under-representation of untyped or poorly typed code**: Many projects are already well typed (especially in clean sets), whereas real world legacy code often lacks types or has inconsistencies.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "text": "- **Lack of runtime type behavior**: Static annotations may not reflect types that occur during execution, especially with dynamic features (metaprogramming, monkey patching, dynamic imports).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_4",
+      "section_idx": 10,
+      "idx_in_section": 4,
+      "text": "- **Limited diversity in type complexity**: Deeply nested generics, union types, user-defined types across module boundaries are often rarer.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_5",
+      "section_idx": 10,
+      "idx_in_section": 5,
+      "text": "- **Global consistency and cross-module context**: Many datasets focus on local correctness (function return types, parameter types), but consistency across modules (imports, shared types) is less covered.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "10_6",
+      "section_idx": 10,
+      "idx_in_section": 6,
+      "text": "- **Versioning and ecosystem evolution**: Tools/new language features (like TypedDict, Protocols) evolve; datasets need updating to reflect new typing PEPs.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "text": "## Practical Recommendations",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "text": "If you\u2019re evaluating or building a type inference system, here are tips on choosing or combining these datasets:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_10",
+      "section_idx": 11,
+      "idx_in_section": 10,
+      "text": "Benchmarks like TypyBench introduce metrics like *TypeSim* and *TypeCheck* that are useful beyond simple matching.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_12",
+      "section_idx": 11,
+      "idx_in_section": 12,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_13",
+      "section_idx": 11,
+      "idx_in_section": 13,
+      "text": "If you like, I can also list some **GitHub-hosted datasets** (possibly smaller or more recently released) or help find datasets specific to certain kinds of Python code (e.g. web frameworks, data science) to evaluate type inference in that domain.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_14",
+      "section_idx": 11,
+      "idx_in_section": 14,
+      "text": "Do you want me to pull those in?",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "text": "1. **Use ManyTypes4Py** for large scale training, baseline performance, generic coverage.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "text": "It\u2019s the most widely used large dataset.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "text": "2. **Supplement with TypeEvalPy** to stress test specific features your system aims to improve (e.g. generics, user-defined types).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "text": "3. **Use TypyBench** to observe real-world behavior at repository level, especially if you care about global consistency or the performance of your system in realistic settings (especially for LLM-based approaches).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "text": "4. **Ensure de-duplication** and train/val/test splitting to avoid overfitting to popular patterns.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_7",
+      "section_idx": 11,
+      "idx_in_section": 7,
+      "text": "Tools like CD4Py are used in ManyTypes4Py for this.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "11_9",
+      "section_idx": 11,
+      "idx_in_section": 9,
+      "text": "5. **Define clear metrics**: exact match, partial match, top-k accuracy, type consistency over modules.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "text": "## Key Datasets & Benchmarks",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "text": "### ManyTypes4Py (MT4Py)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "text": "- **What it is**: A large-scale Python dataset specifically built for ML-based type inference.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_10",
+      "section_idx": 2,
+      "idx_in_section": 10,
+      "text": "- *Complete version*: includes more annotations (even partial), totaling ~3.3M annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_12",
+      "section_idx": 2,
+      "idx_in_section": 12,
+      "text": "- The repository has been processed to remove duplicated source files to reduce bias, split into train/validation/test by files, and converted into JSON with AST/hint info using a pipeline (LibSA4Py)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_13",
+      "section_idx": 2,
+      "idx_in_section": 13,
+      "text": ".",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "2_14",
+      "section_idx": 2,
+      "idx_in_section": 14,
+      "text": "- **Use cases / Tools**: Many ML type inference systems rely on MT4Py.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_15",
+      "section_idx": 2,
+      "idx_in_section": 15,
+      "text": "For example, Type4Py is built on MT4Py.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_17",
+      "section_idx": 2,
+      "idx_in_section": 17,
+      "text": "- **Strengths**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_18",
+      "section_idx": 2,
+      "idx_in_section": 18,
+      "text": "- Large scale (both in number of projects and annotations).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_19",
+      "section_idx": 2,
+      "idx_in_section": 19,
+      "text": "- Explicit splitting and deduplication help generalization evaluation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "text": "It comprises thousands of GitHub projects annotated with type hints.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_20",
+      "section_idx": 2,
+      "idx_in_section": 20,
+      "text": "- Supports different annotation completeness levels.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_21",
+      "section_idx": 2,
+      "idx_in_section": 21,
+      "text": "- **Limitations**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_22",
+      "section_idx": 2,
+      "idx_in_section": 22,
+      "text": "- It reflects only what projects have annotated (potential bias toward well-typed code).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_23",
+      "section_idx": 2,
+      "idx_in_section": 23,
+      "text": "- Clean version depends on mypy; tools stricter or looser than mypy may behave differently.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_24",
+      "section_idx": 2,
+      "idx_in_section": 24,
+      "text": "- Previously type definitions may miss context of runtime behavior/user-defined types.\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "text": "- **Details**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "text": "- Over **5,382** Python projects, with more than **869,000** type annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_7",
+      "section_idx": 2,
+      "idx_in_section": 7,
+      "text": "- The dataset has both **clean** and **complete** versions:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "2_8",
+      "section_idx": 2,
+      "idx_in_section": 8,
+      "text": "- *Clean version*: only projects fully type\u2010checked with **mypy**; ~5.1K repos, ~1.2M annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "text": "### TypyBench (2025)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "text": "- **What it is**: A recent benchmark focused on evaluating **LLMs** inferring types across entire untyped Python repositories.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_10",
+      "section_idx": 3,
+      "idx_in_section": 10,
+      "text": "- **Limitations**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_11",
+      "section_idx": 3,
+      "idx_in_section": 11,
+      "text": "- Small number of repos (50), so lower statistical power or overfitting risk.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_12",
+      "section_idx": 3,
+      "idx_in_section": 12,
+      "text": "- Focused on LLM behavior; may not align with static tool use-cases exactly.\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "text": "- **Details**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_3",
+      "section_idx": 3,
+      "idx_in_section": 3,
+      "text": "- It includes **50 high-quality open-source Python repositories**, chosen for diversity and real-world complexity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_4",
+      "section_idx": 3,
+      "idx_in_section": 4,
+      "text": "- All original type annotations are stripped; tools are evaluated on recovering types via LLM output (which can then be type stub files), and evaluated on:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_5",
+      "section_idx": 3,
+      "idx_in_section": 5,
+      "text": "- **TypeSim**: semantic similarity between inferred vs ground truth types (allows partial credit).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_6",
+      "section_idx": 3,
+      "idx_in_section": 6,
+      "text": "- **TypeCheck**: number of errors when checking predicted stubs with a real static type checker (global consistency).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_7",
+      "section_idx": 3,
+      "idx_in_section": 7,
+      "text": "- **Strengths**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_8",
+      "section_idx": 3,
+      "idx_in_section": 8,
+      "text": "- More realistic scenario: whole repositories, untyped code, diversity of type complexity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "3_9",
+      "section_idx": 3,
+      "idx_in_section": 9,
+      "text": "- Novel metrics that penalize inconsistencies across modules, not just local exact match.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "text": "### TypeEvalPy",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "text": "- **What it is**: A **micro-benchmarking framework** containing small code snippets aimed at targeting specific Python features.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_10",
+      "section_idx": 4,
+      "idx_in_section": 10,
+      "text": "- **Strengths**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_11",
+      "section_idx": 4,
+      "idx_in_section": 11,
+      "text": "- Precisely tests specific, often tricky features (e.g. generics, user-defined types).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_12",
+      "section_idx": 4,
+      "idx_in_section": 12,
+      "text": "- Addresses deep corner cases which large datasets may under-represent.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_13",
+      "section_idx": 4,
+      "idx_in_section": 13,
+      "text": "- Good for ablation studies, tool component evaluation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_14",
+      "section_idx": 4,
+      "idx_in_section": 14,
+      "text": "- **Limitations**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_15",
+      "section_idx": 4,
+      "idx_in_section": 15,
+      "text": "- Very small-scale; may not reflect code complexity or practical deployment.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_16",
+      "section_idx": 4,
+      "idx_in_section": 16,
+      "text": "- Does not include global repository context; no evaluation of consistency across modules.\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "text": "Useful for comparing static inference methods.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "text": "- **Details**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "text": "- 154 code snippets with **845 type annotations**, covering **18 categories** (e.g. function returns, arguments, generics, built-ins, etc.)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "text": ".",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "text": "- Provides a standardized metric suite, normalized formats, etc.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "text": "Allows multiple tools to be evaluated in a containerized, reproducible way.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "text": "### HiTyper uses ManyTypes4Py",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "text": "- **Details**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hityper \u00b7 PyPI",
+          "https://pypi.org/project/hityper/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "text": "- HiTyper is another system (static + ML components) whose evaluation is built on the ManyTypes4Py dataset.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hityper \u00b7 PyPI",
+          "https://pypi.org/project/hityper/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "text": "- HiTyper\u2019s reported metrics (exact match, generic types, user-defined types, return values, etc.) are measured using MT4Py\u2019s \u201ctest\u201d subsets.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hityper \u00b7 PyPI",
+          "https://pypi.org/project/hityper/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "text": "- **Significance**: Shows how systems both static/inference and ML methods benchmark on the same standardized large dataset.\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hityper \u00b7 PyPI",
+          "https://pypi.org/project/hityper/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "text": "## Other Benchmarks / Tools to Know",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "text": "While the following are not full annotated datasets *specifically* for type inference, they are used in related contexts (e.g. code understanding, code annotation, auto-completion, type stub generation):",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "text": "- **Pytype / Pyre / Mypy internal test suites**, many tools use their internal test cases (toy and real library code), but often not fully public or not sufficiently large/standardized for cross-comparison.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "DS-1000: A Natural and Reliable Benchmark for Data Science Code Generation",
+          "https://arxiv.org/abs/2211.11501?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "text": "- Datasets drawn from **Typeshed** (which provides types for standard library and many popular third-party libs) are sometimes used to check coverage or consistency but not always as a benchmark for inference tools.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "DS-1000: A Natural and Reliable Benchmark for Data Science Code Generation",
+          "https://arxiv.org/abs/2211.11501?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "text": "- Benchmarks for code generation (e.g. DS-1000) are more about generating code; they may include type annotations but not in a way optimized for type inference evaluation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "DS-1000: A Natural and Reliable Benchmark for Data Science Code Generation",
+          "https://arxiv.org/abs/2211.11501?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "text": "## Summary: Comparison Table",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "text": "Here\u2019s a quick summary to help choose what\u2019s suitable depending on your evaluation goals:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false
+    }
+  ]
+}
