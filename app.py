@@ -17,6 +17,8 @@ from utils.annotation_data_loader import (
     get_available_annotation_models,
     get_available_annotation_examples,
     load_annotation_example,
+    get_example_files,
+    load_example_annotation,
 )
 from utils.annotation_storage import (
     load_annotations,
@@ -32,9 +34,11 @@ for key, default in [
     ("current_sentence_idx", 0),
     ("annotations", {}),
     ("nav_mode", "all"),
+    ("tutorial_mode", False),
     ("_prev_model", None),
     ("_prev_example", None),
     ("_prev_annotator", None),
+    ("_prev_tutorial", False),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -51,11 +55,22 @@ def _get_filtered_segments(segments: list[dict], nav_mode: str) -> list[dict]:
     return filtered
 
 
-def _parse_markdown_to_html(text: str) -> str:
-    """Minimal markdown-to-HTML for display."""
+def _parse_markdown_to_html(text: str, orig_newlines: str | None = None, is_first: bool = False) -> tuple[str, str]:
+    """Minimal markdown-to-HTML for display. Returns (html_text, newline_prefix)."""
+    # Compute newline prefix from original answer text
+    newlines = ""
+    if orig_newlines and not is_first:
+        n = max(orig_newlines.count('\n'), 1)
+        newlines = '<br/>' * n
+
+    # Bold
     text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
+    # List items: * or -
     text = re.sub(r'^\*\s+', '&bull; ', text)
-    return text
+    text = re.sub(r'^-\s+', '&bull; ', text)
+    # Strip --- separator artifacts
+    text = re.sub(r'^-{3,}$', '', text.strip())
+    return text, newlines
 
 
 def _render_report_html(
@@ -67,6 +82,7 @@ def _render_report_html(
     """Build the HTML for the report view with numbered, highlighted sentences."""
     sections = data.get("sections", [])
     all_segments = data.get("segments", [])
+    answer_text = data.get("answer", "")
 
     # Build lookup: segment idx -> sequential number in filtered list
     filtered_set = {s["idx"] for s in filtered_segments}
@@ -99,16 +115,33 @@ def _render_report_html(
         if not sec_segments:
             continue
 
+        section_start = section.get("start", 0)
         sentence_parts = []
-        for seg in sec_segments:
-            idx = seg["idx"]
-            text = html.escape(seg.get("text", ""))
-            text = _parse_markdown_to_html(text)
-            in_filter = idx in filtered_set
-            is_current = idx == current_seg_idx
-            is_annotated = idx in annotations
+        for i_seg, seg in enumerate(sec_segments):
+            seg_idx = seg["idx"]
+            raw_text = seg.get("text", "")
 
-            num = seg_number.get(idx)
+            # Skip header-like segments
+            if raw_text.strip().startswith('#'):
+                continue
+
+            escaped = html.escape(raw_text)
+
+            # Compute orig_newlines from answer text
+            start_in_sec = seg.get("start_in_section")
+            orig_newlines = None
+            if start_in_sec is not None and answer_text:
+                abs_start = section_start + start_in_sec
+                orig_newlines = answer_text[max(0, abs_start - 4):abs_start]
+
+            is_first = (i_seg == 0)
+            text, newlines = _parse_markdown_to_html(escaped, orig_newlines=orig_newlines, is_first=is_first)
+
+            in_filter = seg_idx in filtered_set
+            is_current = seg_idx == current_seg_idx
+            is_annotated = seg_idx in annotations
+
+            num = seg_number.get(seg_idx)
             if is_annotated and num is not None:
                 prefix = f"[&#10003;{num}]"
             elif num is not None:
@@ -117,7 +150,7 @@ def _render_report_html(
                 prefix = ""
 
             if is_current:
-                style = "background-color:#fff9c4; padding:2px 4px; border-radius:4px; font-weight:bold;"
+                style = "border-left:4px solid #fdd835; padding-left:6px; background-color:rgba(253,216,53,0.15); font-weight:bold;"
             elif is_annotated:
                 style = "border-left:3px solid #4caf50; padding-left:4px;"
             elif not in_filter:
@@ -125,7 +158,7 @@ def _render_report_html(
             else:
                 style = ""
 
-            sentence_parts.append(f'<span style="{style}">{prefix} {text}</span>')
+            sentence_parts.append(f'{newlines}<span style="{style}">{prefix} {text}</span>')
 
         paragraph = " ".join(sentence_parts)
         parts.append(
@@ -144,18 +177,45 @@ with st.sidebar:
     annotator_id = st.text_input("Annotator ID", value=st.session_state.annotator_id)
     st.session_state.annotator_id = annotator_id
 
-    models = get_available_annotation_models()
-    if not models:
-        st.error("No annotation data found in annotation_data/. Run export_annotation_data.py first.")
-        st.stop()
+    # Tutorial mode toggle
+    tutorial_mode = st.checkbox("Tutorial mode", value=st.session_state.tutorial_mode)
+    tutorial_changed = tutorial_mode != st.session_state._prev_tutorial
+    if tutorial_changed:
+        st.session_state.tutorial_mode = tutorial_mode
+        st.session_state._prev_tutorial = tutorial_mode
+        st.session_state.current_sentence_idx = 0
 
-    model = st.selectbox("Model", models)
-    examples = get_available_annotation_examples(model)
-    if not examples:
-        st.warning(f"No examples for model {model}")
-        st.stop()
+    if tutorial_mode:
+        # Tutorial: load example files
+        example_files = get_example_files()
+        if not example_files:
+            st.warning("No tutorial examples found. Run export_annotation_data.py with --include-llm-example first.")
+            st.stop()
 
-    example_id = st.selectbox("Example", examples)
+        tutorial_example = st.selectbox("Tutorial example", example_files)
+
+        # Detect changes for tutorial
+        example_changed = tutorial_example != st.session_state._prev_example
+        if example_changed:
+            st.session_state.current_sentence_idx = 0
+            st.session_state._prev_example = tutorial_example
+
+        # Dummy values for non-tutorial code paths
+        model = None
+        example_id = None
+    else:
+        models = get_available_annotation_models()
+        if not models:
+            st.error("No annotation data found in annotation_data/. Run export_annotation_data.py first.")
+            st.stop()
+
+        model = st.selectbox("Model", models)
+        examples = get_available_annotation_examples(model)
+        if not examples:
+            st.warning(f"No examples for model {model}")
+            st.stop()
+
+        example_id = st.selectbox("Example", examples)
 
     st.divider()
 
@@ -164,36 +224,43 @@ with st.sidebar:
 
     # Detect what changed
     nav_changed = nav_mode_key != st.session_state.nav_mode
-    model_changed = model != st.session_state._prev_model
-    example_changed = example_id != st.session_state._prev_example
-    annotator_changed = annotator_id != st.session_state._prev_annotator
+    if not tutorial_mode:
+        model_changed = model != st.session_state._prev_model
+        example_changed = example_id != st.session_state._prev_example
+        annotator_changed = annotator_id != st.session_state._prev_annotator
+    else:
+        model_changed = False
+        annotator_changed = annotator_id != st.session_state._prev_annotator
 
     # Reset sentence index when nav mode, model, or example changes
     if nav_changed or model_changed or example_changed:
         st.session_state.current_sentence_idx = 0
         st.session_state.nav_mode = nav_mode_key
         st.session_state._prev_model = model
-        st.session_state._prev_example = example_id
+        st.session_state._prev_example = example_id if not tutorial_mode else st.session_state._prev_example
 
-    # Reload annotations from sheet when annotator/model/example changes
-    if annotator_changed or model_changed or example_changed:
-        st.session_state._prev_annotator = annotator_id
-        st.session_state._prev_model = model
-        st.session_state._prev_example = example_id
-        if annotator_id:
-            try:
-                st.session_state.annotations = load_annotations(annotator_id, model, example_id)
-            except Exception as e:
-                st.warning(f"Could not load annotations from sheet: {e}")
+    # Reload annotations from sheet when annotator/model/example changes (not in tutorial)
+    if not tutorial_mode:
+        if annotator_changed or model_changed or example_changed:
+            st.session_state._prev_annotator = annotator_id
+            st.session_state._prev_model = model
+            st.session_state._prev_example = example_id
+            if annotator_id:
+                try:
+                    st.session_state.annotations = load_annotations(annotator_id, model, example_id)
+                except Exception as e:
+                    st.warning(f"Could not load annotations from sheet: {e}")
+                    st.session_state.annotations = {}
+            else:
                 st.session_state.annotations = {}
-        else:
-            st.session_state.annotations = {}
+    else:
+        st.session_state.annotations = {}
 
     # Instructions
     render_annotation_instructions()
 
-    # Download
-    if annotator_id:
+    # Download (not in tutorial)
+    if not tutorial_mode and annotator_id:
         if st.button("Download My Annotations"):
             try:
                 rows = download_annotations(annotator_id)
@@ -208,10 +275,16 @@ with st.sidebar:
 
 # ── Load data ───────────────────────────────────────────────────────────
 
-data = load_annotation_example(model, example_id)
-if data is None:
-    st.error(f"Could not load annotation data for {model}/{example_id}")
-    st.stop()
+if tutorial_mode:
+    data = load_example_annotation(tutorial_example)
+    if data is None:
+        st.error(f"Could not load tutorial example: {tutorial_example}")
+        st.stop()
+else:
+    data = load_annotation_example(model, example_id)
+    if data is None:
+        st.error(f"Could not load annotation data for {model}/{example_id}")
+        st.stop()
 
 segments = data.get("segments", [])
 filtered = _get_filtered_segments(segments, st.session_state.nav_mode)
@@ -222,12 +295,19 @@ if not filtered:
 
 # Progress bar in sidebar
 with st.sidebar:
-    annotated_count = sum(1 for s in filtered if s["idx"] in st.session_state.annotations)
-    total_count = len(filtered)
-    st.progress(annotated_count / total_count if total_count > 0 else 0.0)
-    st.caption(f"Progress: {annotated_count} / {total_count} sentences annotated")
+    if tutorial_mode:
+        st.caption(f"{len(filtered)} sentences in this example")
+    else:
+        annotated_count = sum(1 for s in filtered if s["idx"] in st.session_state.annotations)
+        total_count = len(filtered)
+        st.progress(annotated_count / total_count if total_count > 0 else 0.0)
+        st.caption(f"Progress: {annotated_count} / {total_count} sentences annotated")
 
 # ── Main area ───────────────────────────────────────────────────────────
+
+# Tutorial banner
+if tutorial_mode:
+    st.info("**Tutorial** -- Review the example annotations to understand the rubrics. No annotations are saved in this mode.")
 
 # Question
 st.markdown(f"**Question:** {data.get('question', '')}")
@@ -238,12 +318,7 @@ idx = max(0, min(idx, len(filtered) - 1))
 st.session_state.current_sentence_idx = idx
 current_seg = filtered[idx]
 
-# Report view
-st.subheader("Report")
-report_html = _render_report_html(data, filtered, current_seg["idx"], st.session_state.annotations)
-st.markdown(report_html, unsafe_allow_html=True)
-
-# Navigation
+# ── Navigation ─────────────────────────────────────────────────────────
 nav_cols = st.columns([1, 2, 1])
 with nav_cols[0]:
     if st.button("Prev", disabled=idx == 0, use_container_width=True):
@@ -256,16 +331,13 @@ with nav_cols[2]:
         st.session_state.current_sentence_idx = idx + 1
         st.rerun()
 
-# ── Annotation panel ────────────────────────────────────────────────────
-
-st.divider()
-st.subheader("Annotate")
-
-# Show current sentence
+# ── Current sentence display ───────────────────────────────────────────
+sentence_text = current_seg.get("text", "")
+sentence_html, _ = _parse_markdown_to_html(html.escape(sentence_text))
 st.markdown(
-    f'<div style="padding:1rem; background-color:rgba(255,249,196,0.5); '
-    f'border-radius:0.5rem; border-left:4px solid #fdd835; margin-bottom:1rem;">'
-    f'{html.escape(current_seg.get("text", ""))}</div>',
+    f'<div style="padding:1rem; border-left:4px solid #fdd835; '
+    f'background-color:rgba(253,216,53,0.1); border-radius:0.5rem; margin-bottom:1rem;">'
+    f'{sentence_html}</div>',
     unsafe_allow_html=True,
 )
 
@@ -276,86 +348,120 @@ if citations:
         for title, url in citations:
             st.markdown(f"- [{html.escape(title)}]({url})")
 
-if not annotator_id:
-    st.warning("Enter your Annotator ID in the sidebar to start annotating.")
-    st.stop()
+# ── Annotation / Tutorial panel ────────────────────────────────────────
 
-st.caption("A sentence can have multiple issues. Evaluate each rubric independently.")
-
-# Load existing annotation for this segment
-existing = st.session_state.annotations.get(current_seg["idx"], {})
-
-# Rubric inputs
+# Rubric definitions (shared between annotation and tutorial)
 rubrics = [
-    ("is_repetitive", "repetitive_explanation", "Repetitive?"),
-    ("is_non_coherent", "non_coherent_explanation", "Non-coherent?"),
-    ("is_over_specific", "over_specific_explanation", "Over-specific?"),
-    ("is_missing_details", "missing_details_explanation", "Missing details?"),
+    ("is_repetitive", "repetitive_explanation", "Repetitive?", "llm_is_repetitive", "llm_repetitive_analysis"),
+    ("is_non_coherent", "non_coherent_explanation", "Non-coherent?", "llm_is_non_coherent", "llm_coherence_analysis"),
+    ("is_over_specific", "over_specific_explanation", "Over-specific?", "llm_is_over_specific", "llm_specificity_analysis"),
+    ("is_missing_details", "missing_details_explanation", "Missing details?", "llm_is_missing_details", "llm_missing_details_analysis"),
 ]
 
-annotation = {}
-for field, expl_field, label in rubrics:
-    cols = st.columns([2, 3])
-    existing_val = existing.get(field, "")
-    # Map stored string values to radio index
-    if existing_val == "True" or existing_val is True:
-        default_idx = 0
-    elif existing_val == "False" or existing_val is False:
-        default_idx = 1
-    else:
-        default_idx = 2
+if tutorial_mode:
+    # Tutorial: show LLM answers read-only
+    st.subheader("LLM Annotations (read-only)")
+    for field, expl_field, label, llm_field, llm_analysis_field in rubrics:
+        llm_val = current_seg.get(llm_field)
+        llm_analysis = current_seg.get(llm_analysis_field, "")
 
-    with cols[0]:
-        choice = st.radio(
-            label,
-            ["Yes", "No", "---"],
-            index=default_idx,
-            horizontal=True,
-            key=f"rubric_{current_seg['idx']}_{field}",
-        )
-        if choice == "Yes":
-            annotation[field] = True
-        elif choice == "No":
-            annotation[field] = False
-        # else leave unset
+        if llm_val is True:
+            badge = ":red[**Yes**]"
+        elif llm_val is False:
+            badge = ":green[**No**]"
+        else:
+            badge = ":gray[N/A]"
 
-    with cols[1]:
-        annotation[expl_field] = st.text_input(
-            "Explanation (optional)",
-            value=existing.get(expl_field, ""),
-            key=f"expl_{current_seg['idx']}_{field}",
-            label_visibility="collapsed",
-            placeholder="Explanation (optional)",
-        )
+        st.markdown(f"**{label}** {badge}")
+        if llm_analysis:
+            with st.expander("LLM analysis"):
+                st.markdown(llm_analysis)
 
-annotation["other_issues"] = st.text_input(
-    "Other issues",
-    value=existing.get("other_issues", ""),
-    key=f"other_{current_seg['idx']}",
-    placeholder="Any other issues (factual errors, grammar, formatting, etc.)",
-)
+    # Tutorial "Next" button (no saving)
+    if st.button("Next", key="tutorial_next", type="primary", use_container_width=True, disabled=idx == len(filtered) - 1):
+        st.session_state.current_sentence_idx = idx + 1
+        st.rerun()
 
-# Save & Next
-if st.button("Save & Next", type="primary", use_container_width=True):
-    # Require at least one rubric answered
-    has_answer = any(
-        f in annotation for f, _, _ in rubrics
-    )
-    if not has_answer:
-        st.error("Please answer at least one rubric before saving.")
-    else:
-        try:
-            save_annotation(
-                annotator_id=annotator_id,
-                model_name=model,
-                example_id=example_id,
-                segment_idx=current_seg["idx"],
-                sentence_text=current_seg.get("text", ""),
-                annotation=annotation,
+else:
+    # Regular annotation mode
+    if not annotator_id:
+        st.warning("Enter your Annotator ID in the sidebar to start annotating.")
+        st.stop()
+
+    st.caption("A sentence can have multiple issues. Evaluate each rubric independently.")
+
+    # Load existing annotation for this segment
+    existing = st.session_state.annotations.get(current_seg["idx"], {})
+
+    annotation = {}
+    for field, expl_field, label, _llm_field, _llm_analysis_field in rubrics:
+        cols = st.columns([2, 3])
+        existing_val = existing.get(field, "")
+        # Map stored string values to radio index
+        if existing_val == "True" or existing_val is True:
+            default_idx = 0
+        elif existing_val == "False" or existing_val is False:
+            default_idx = 1
+        else:
+            default_idx = 2
+
+        with cols[0]:
+            choice = st.radio(
+                label,
+                ["Yes", "No", "---"],
+                index=default_idx,
+                horizontal=True,
+                key=f"rubric_{current_seg['idx']}_{field}",
             )
-            st.session_state.annotations[current_seg["idx"]] = annotation
-            if idx < len(filtered) - 1:
-                st.session_state.current_sentence_idx = idx + 1
-            st.rerun()
-        except Exception as e:
-            st.error(f"Failed to save annotation: {e}")
+            if choice == "Yes":
+                annotation[field] = True
+            elif choice == "No":
+                annotation[field] = False
+            # else leave unset
+
+        with cols[1]:
+            annotation[expl_field] = st.text_input(
+                "Explanation (optional)",
+                value=existing.get(expl_field, ""),
+                key=f"expl_{current_seg['idx']}_{field}",
+                label_visibility="collapsed",
+                placeholder="Explanation (optional)",
+            )
+
+    annotation["other_issues"] = st.text_input(
+        "Other issues",
+        value=existing.get("other_issues", ""),
+        key=f"other_{current_seg['idx']}",
+        placeholder="Any other issues (factual errors, grammar, formatting, etc.)",
+    )
+
+    # Save & Next
+    if st.button("Save & Next", type="primary", use_container_width=True):
+        # Require at least one rubric answered
+        has_answer = any(
+            f in annotation for f, _, _, _, _ in rubrics
+        )
+        if not has_answer:
+            st.error("Please answer at least one rubric before saving.")
+        else:
+            try:
+                save_annotation(
+                    annotator_id=annotator_id,
+                    model_name=model,
+                    example_id=example_id,
+                    segment_idx=current_seg["idx"],
+                    sentence_text=current_seg.get("text", ""),
+                    annotation=annotation,
+                )
+                st.session_state.annotations[current_seg["idx"]] = annotation
+                if idx < len(filtered) - 1:
+                    st.session_state.current_sentence_idx = idx + 1
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed to save annotation: {e}")
+
+# ── Full report (context) ──────────────────────────────────────────────
+st.divider()
+with st.expander("Full Report (context)", expanded=True):
+    report_html = _render_report_html(data, filtered, current_seg["idx"], st.session_state.annotations)
+    st.markdown(report_html, unsafe_allow_html=True)

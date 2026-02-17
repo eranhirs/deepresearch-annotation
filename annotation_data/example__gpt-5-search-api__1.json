@@ -1,0 +1,2252 @@
+{
+  "model_name": "gpt-5-search-api",
+  "example_id": "1",
+  "question": "Please provide a detailed answer to the following question:\n\nWhat publicly available datasets are typically used for evaluating type inference systems in python?",
+  "answer": "Here are some of the **publicly available datasets and benchmarks** that researchers commonly use to evaluate Python type inference systems. These are particularly valuable for static or ML-based inference tools (e.g. Type4Py, HiTyper), dynamic type-checking tools (like Pyre, Pytype), or newer benchmarks focused around large language models (LLMs) or micro-benchmarks. I\u2019ll describe each, highlight key features, and note trade-offs and gaps.\n\n---\n\n## Key Datasets & Benchmarks\n\n### ManyTypes4Py (MT4Py)\n\n- **What it is**: A large-scale Python dataset specifically built for ML-based type inference. It comprises thousands of GitHub projects annotated with type hints. ([arxiv.org](https://arxiv.org/abs/2104.04706?utm_source=openai))  \n- **Details**:\n  - Over **5,382** Python projects, with more than **869,000** type annotations. ([arxiv.org](https://arxiv.org/abs/2104.04706?utm_source=openai))  \n  - The dataset has both **clean** and **complete** versions:\n    - *Clean version*: only projects fully type\u2010checked with **mypy**; ~5.1K repos, ~1.2M annotations. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))  \n    - *Complete version*: includes more annotations (even partial), totaling ~3.3M annotations. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))  \n  - The repository has been processed to remove duplicated source files to reduce bias, split into train/validation/test by files, and converted into JSON with AST/hint info using a pipeline (LibSA4Py) ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai)).  \n- **Use cases / Tools**: Many ML type inference systems rely on MT4Py. For example, Type4Py is built on MT4Py. ([github.com](https://github.com/saltudelft/type4py?utm_source=openai))  \n- **Strengths**:\n  - Large scale (both in number of projects and annotations).\n  - Explicit splitting and deduplication help generalization evaluation.\n  - Supports different annotation completeness levels.\n- **Limitations**:\n  - It reflects only what projects have annotated (potential bias toward well-typed code).\n  - Clean version depends on mypy; tools stricter or looser than mypy may behave differently.\n  - Previously type definitions may miss context of runtime behavior/user-defined types.\n\n---\n\n### TypyBench (2025)\n\n- **What it is**: A recent benchmark focused on evaluating **LLMs** inferring types across entire untyped Python repositories. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n- **Details**:\n  - It includes **50 high-quality open-source Python repositories**, chosen for diversity and real-world complexity. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n  - All original type annotations are stripped; tools are evaluated on recovering types via LLM output (which can then be type stub files), and evaluated on:\n    - **TypeSim**: semantic similarity between inferred vs ground truth types (allows partial credit).  \n    - **TypeCheck**: number of errors when checking predicted stubs with a real static type checker (global consistency). ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n- **Strengths**:\n  - More realistic scenario: whole repositories, untyped code, diversity of type complexity.\n  - Novel metrics that penalize inconsistencies across modules, not just local exact match.\n- **Limitations**:\n  - Small number of repos (50), so lower statistical power or overfitting risk.\n  - Focused on LLM behavior; may not align with static tool use-cases exactly.\n\n---\n\n### TypeEvalPy\n\n- **What it is**: A **micro-benchmarking framework** containing small code snippets aimed at targeting specific Python features. Useful for comparing static inference methods. ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai))  \n- **Details**:\n  - 154 code snippets with **845 type annotations**, covering **18 categories** (e.g. function returns, arguments, generics, built-ins, etc.) ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai)).  \n  - Provides a standardized metric suite, normalized formats, etc. Allows multiple tools to be evaluated in a containerized, reproducible way. ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai))  \n- **Strengths**:\n  - Precisely tests specific, often tricky features (e.g. generics, user-defined types).\n  - Addresses deep corner cases which large datasets may under-represent.\n  - Good for ablation studies, tool component evaluation.\n- **Limitations**:\n  - Very small-scale; may not reflect code complexity or practical deployment.\n  - Does not include global repository context; no evaluation of consistency across modules.\n\n---\n\n### HiTyper uses ManyTypes4Py\n\n- **Details**:\n  - HiTyper is another system (static + ML components) whose evaluation is built on the ManyTypes4Py dataset. ([pypi.org](https://pypi.org/project/hityper/?utm_source=openai))  \n  - HiTyper\u2019s reported metrics (exact match, generic types, user-defined types, return values, etc.) are measured using MT4Py\u2019s \u201ctest\u201d subsets. ([pypi.org](https://pypi.org/project/hityper/?utm_source=openai))  \n- **Significance**: Shows how systems both static/inference and ML methods benchmark on the same standardized large dataset.\n\n---\n\n## Other Benchmarks / Tools to Know\n\nWhile the following are not full annotated datasets *specifically* for type inference, they are used in related contexts (e.g. code understanding, code annotation, auto-completion, type stub generation):\n\n- **Pytype / Pyre / Mypy internal test suites**, many tools use their internal test cases (toy and real library code), but often not fully public or not sufficiently large/standardized for cross-comparison.\n- Datasets drawn from **Typeshed** (which provides types for standard library and many popular third-party libs) are sometimes used to check coverage or consistency but not always as a benchmark for inference tools.\n- Benchmarks for code generation (e.g. DS-1000) are more about generating code; they may include type annotations but not in a way optimized for type inference evaluation. ([arxiv.org](https://arxiv.org/abs/2211.11501?utm_source=openai))\n\n---\n\n## Summary: Comparison Table\n\nHere\u2019s a quick summary to help choose what\u2019s suitable depending on your evaluation goals:\n\n| Dataset / Benchmark | Scale | Context | Strengths | Use When You Need \u2026 |\n|---|---|---|---|---|\n| **ManyTypes4Py** | Large (5,000+ projects) | Annotated real code | Broad coverage of annotations, train/val/test splits, ML focus | Training ML models; broad evaluation across projects |\n| **TypyBench** | Medium (50 repos) | Stripped full repositories | Repository-level evaluation, global consistency metrics | Evaluating LLMs or tools in realistic codebases |\n| **TypeEvalPy** | Small (154 snippets) | Isolated features / corner cases | Precise, controlled, focused on tricky language features | Fine-grained tool comparison; feature-specific evaluation |\n| **HiTyper on MT4Py** | Uses same as ManyTypes4Py | Static + ML combined | Demonstrated performance on generics, user-defined types | Benchmarks mixing static/ML inference, or comparing against MT4Py baselines |\n\n---\n\n## Gaps & Open Challenges\n\nSome of the limitations across existing datasets and benchmarks include:\n\n- **Under-representation of untyped or poorly typed code**: Many projects are already well typed (especially in clean sets), whereas real world legacy code often lacks types or has inconsistencies.\n- **Lack of runtime type behavior**: Static annotations may not reflect types that occur during execution, especially with dynamic features (metaprogramming, monkey patching, dynamic imports).\n- **Limited diversity in type complexity**: Deeply nested generics, union types, user-defined types across module boundaries are often rarer.\n- **Global consistency and cross-module context**: Many datasets focus on local correctness (function return types, parameter types), but consistency across modules (imports, shared types) is less covered.\n- **Versioning and ecosystem evolution**: Tools/new language features (like TypedDict, Protocols) evolve; datasets need updating to reflect new typing PEPs.\n\n---\n\n## Practical Recommendations\n\nIf you\u2019re evaluating or building a type inference system, here are tips on choosing or combining these datasets:\n\n1. **Use ManyTypes4Py** for large scale training, baseline performance, generic coverage. It\u2019s the most widely used large dataset.\n\n2. **Supplement with TypeEvalPy** to stress test specific features your system aims to improve (e.g. generics, user-defined types).\n\n3. **Use TypyBench** to observe real-world behavior at repository level, especially if you care about global consistency or the performance of your system in realistic settings (especially for LLM-based approaches).\n\n4. **Ensure de-duplication** and train/val/test splitting to avoid overfitting to popular patterns. Tools like CD4Py are used in ManyTypes4Py for this. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))\n\n5. **Define clear metrics**: exact match, partial match, top-k accuracy, type consistency over modules. Benchmarks like TypyBench introduce metrics like *TypeSim* and *TypeCheck* that are useful beyond simple matching. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))\n\n---\n\nIf you like, I can also list some **GitHub-hosted datasets** (possibly smaller or more recently released) or help find datasets specific to certain kinds of Python code (e.g. web frameworks, data science) to evaluate type inference in that domain. Do you want me to pull those in?",
+  "sections": [
+    {
+      "idx": 0,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "Here are some of the **publicly available datasets and benchmarks** that researchers commonly use to evaluate Python type inference systems. These are particularly valuable for static or ML-based inference tools (e.g. Type4Py, HiTyper), dynamic type-checking tools (like Pyre, Pytype), or newer benchmarks focused around large language models (LLMs) or micro-benchmarks. I\u2019ll describe each, highlight key features, and note trade-offs and gaps.\n\n---\n\n",
+      "start": 0,
+      "end": 451
+    },
+    {
+      "idx": 1,
+      "section_type": "text",
+      "header": "## Key Datasets & Benchmarks",
+      "header_level": 2,
+      "text": "## Key Datasets & Benchmarks\n\n",
+      "start": 451,
+      "end": 481
+    },
+    {
+      "idx": 2,
+      "section_type": "text",
+      "header": "### ManyTypes4Py (MT4Py)",
+      "header_level": 3,
+      "text": "### ManyTypes4Py (MT4Py)\n\n- **What it is**: A large-scale Python dataset specifically built for ML-based type inference. It comprises thousands of GitHub projects annotated with type hints. ([arxiv.org](https://arxiv.org/abs/2104.04706?utm_source=openai))  \n- **Details**:\n  - Over **5,382** Python projects, with more than **869,000** type annotations. ([arxiv.org](https://arxiv.org/abs/2104.04706?utm_source=openai))  \n  - The dataset has both **clean** and **complete** versions:\n    - *Clean version*: only projects fully type\u2010checked with **mypy**; ~5.1K repos, ~1.2M annotations. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))  \n    - *Complete version*: includes more annotations (even partial), totaling ~3.3M annotations. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))  \n  - The repository has been processed to remove duplicated source files to reduce bias, split into train/validation/test by files, and converted into JSON with AST/hint info using a pipeline (LibSA4Py) ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai)).  \n- **Use cases / Tools**: Many ML type inference systems rely on MT4Py. For example, Type4Py is built on MT4Py. ([github.com](https://github.com/saltudelft/type4py?utm_source=openai))  \n- **Strengths**:\n  - Large scale (both in number of projects and annotations).\n  - Explicit splitting and deduplication help generalization evaluation.\n  - Supports different annotation completeness levels.\n- **Limitations**:\n  - It reflects only what projects have annotated (potential bias toward well-typed code).\n  - Clean version depends on mypy; tools stricter or looser than mypy may behave differently.\n  - Previously type definitions may miss context of runtime behavior/user-defined types.\n\n---\n\n",
+      "start": 481,
+      "end": 2328
+    },
+    {
+      "idx": 3,
+      "section_type": "text",
+      "header": "### TypyBench (2025)",
+      "header_level": 3,
+      "text": "### TypyBench (2025)\n\n- **What it is**: A recent benchmark focused on evaluating **LLMs** inferring types across entire untyped Python repositories. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n- **Details**:\n  - It includes **50 high-quality open-source Python repositories**, chosen for diversity and real-world complexity. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n  - All original type annotations are stripped; tools are evaluated on recovering types via LLM output (which can then be type stub files), and evaluated on:\n    - **TypeSim**: semantic similarity between inferred vs ground truth types (allows partial credit).  \n    - **TypeCheck**: number of errors when checking predicted stubs with a real static type checker (global consistency). ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))  \n- **Strengths**:\n  - More realistic scenario: whole repositories, untyped code, diversity of type complexity.\n  - Novel metrics that penalize inconsistencies across modules, not just local exact match.\n- **Limitations**:\n  - Small number of repos (50), so lower statistical power or overfitting risk.\n  - Focused on LLM behavior; may not align with static tool use-cases exactly.\n\n---\n\n",
+      "start": 2328,
+      "end": 3665
+    },
+    {
+      "idx": 4,
+      "section_type": "text",
+      "header": "### TypeEvalPy",
+      "header_level": 3,
+      "text": "### TypeEvalPy\n\n- **What it is**: A **micro-benchmarking framework** containing small code snippets aimed at targeting specific Python features. Useful for comparing static inference methods. ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai))  \n- **Details**:\n  - 154 code snippets with **845 type annotations**, covering **18 categories** (e.g. function returns, arguments, generics, built-ins, etc.) ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai)).  \n  - Provides a standardized metric suite, normalized formats, etc. Allows multiple tools to be evaluated in a containerized, reproducible way. ([arxiv.org](https://arxiv.org/abs/2312.16882?utm_source=openai))  \n- **Strengths**:\n  - Precisely tests specific, often tricky features (e.g. generics, user-defined types).\n  - Addresses deep corner cases which large datasets may under-represent.\n  - Good for ablation studies, tool component evaluation.\n- **Limitations**:\n  - Very small-scale; may not reflect code complexity or practical deployment.\n  - Does not include global repository context; no evaluation of consistency across modules.\n\n---\n\n",
+      "start": 3665,
+      "end": 4797
+    },
+    {
+      "idx": 5,
+      "section_type": "text",
+      "header": "### HiTyper uses ManyTypes4Py",
+      "header_level": 3,
+      "text": "### HiTyper uses ManyTypes4Py\n\n- **Details**:\n  - HiTyper is another system (static + ML components) whose evaluation is built on the ManyTypes4Py dataset. ([pypi.org](https://pypi.org/project/hityper/?utm_source=openai))  \n  - HiTyper\u2019s reported metrics (exact match, generic types, user-defined types, return values, etc.) are measured using MT4Py\u2019s \u201ctest\u201d subsets. ([pypi.org](https://pypi.org/project/hityper/?utm_source=openai))  \n- **Significance**: Shows how systems both static/inference and ML methods benchmark on the same standardized large dataset.\n\n---\n\n",
+      "start": 4797,
+      "end": 5364
+    },
+    {
+      "idx": 6,
+      "section_type": "text",
+      "header": "## Other Benchmarks / Tools to Know",
+      "header_level": 2,
+      "text": "## Other Benchmarks / Tools to Know\n\nWhile the following are not full annotated datasets *specifically* for type inference, they are used in related contexts (e.g. code understanding, code annotation, auto-completion, type stub generation):\n\n- **Pytype / Pyre / Mypy internal test suites**, many tools use their internal test cases (toy and real library code), but often not fully public or not sufficiently large/standardized for cross-comparison.\n- Datasets drawn from **Typeshed** (which provides types for standard library and many popular third-party libs) are sometimes used to check coverage or consistency but not always as a benchmark for inference tools.\n- Benchmarks for code generation (e.g. DS-1000) are more about generating code; they may include type annotations but not in a way optimized for type inference evaluation. ([arxiv.org](https://arxiv.org/abs/2211.11501?utm_source=openai))\n\n---\n\n",
+      "start": 5364,
+      "end": 6273
+    },
+    {
+      "idx": 7,
+      "section_type": "text",
+      "header": "## Summary: Comparison Table",
+      "header_level": 2,
+      "text": "## Summary: Comparison Table\n\nHere\u2019s a quick summary to help choose what\u2019s suitable depending on your evaluation goals:\n\n",
+      "start": 6273,
+      "end": 6394
+    },
+    {
+      "idx": 8,
+      "section_type": "table",
+      "header": null,
+      "header_level": null,
+      "text": "| Dataset / Benchmark | Scale | Context | Strengths | Use When You Need \u2026 |\n|---|---|---|---|---|\n| **ManyTypes4Py** | Large (5,000+ projects) | Annotated real code | Broad coverage of annotations, train/val/test splits, ML focus | Training ML models; broad evaluation across projects |\n| **TypyBench** | Medium (50 repos) | Stripped full repositories | Repository-level evaluation, global consistency metrics | Evaluating LLMs or tools in realistic codebases |\n| **TypeEvalPy** | Small (154 snippets) | Isolated features / corner cases | Precise, controlled, focused on tricky language features | Fine-grained tool comparison; feature-specific evaluation |\n| **HiTyper on MT4Py** | Uses same as ManyTypes4Py | Static + ML combined | Demonstrated performance on generics, user-defined types | Benchmarks mixing static/ML inference, or comparing against MT4Py baselines |",
+      "start": 6394,
+      "end": 7265
+    },
+    {
+      "idx": 9,
+      "section_type": "text",
+      "header": null,
+      "header_level": null,
+      "text": "\n---\n\n",
+      "start": 7265,
+      "end": 7271
+    },
+    {
+      "idx": 10,
+      "section_type": "text",
+      "header": "## Gaps & Open Challenges",
+      "header_level": 2,
+      "text": "## Gaps & Open Challenges\n\nSome of the limitations across existing datasets and benchmarks include:\n\n- **Under-representation of untyped or poorly typed code**: Many projects are already well typed (especially in clean sets), whereas real world legacy code often lacks types or has inconsistencies.\n- **Lack of runtime type behavior**: Static annotations may not reflect types that occur during execution, especially with dynamic features (metaprogramming, monkey patching, dynamic imports).\n- **Limited diversity in type complexity**: Deeply nested generics, union types, user-defined types across module boundaries are often rarer.\n- **Global consistency and cross-module context**: Many datasets focus on local correctness (function return types, parameter types), but consistency across modules (imports, shared types) is less covered.\n- **Versioning and ecosystem evolution**: Tools/new language features (like TypedDict, Protocols) evolve; datasets need updating to reflect new typing PEPs.\n\n---\n\n",
+      "start": 7271,
+      "end": 8274
+    },
+    {
+      "idx": 11,
+      "section_type": "text",
+      "header": "## Practical Recommendations",
+      "header_level": 2,
+      "text": "## Practical Recommendations\n\nIf you\u2019re evaluating or building a type inference system, here are tips on choosing or combining these datasets:\n\n1. **Use ManyTypes4Py** for large scale training, baseline performance, generic coverage. It\u2019s the most widely used large dataset.\n\n2. **Supplement with TypeEvalPy** to stress test specific features your system aims to improve (e.g. generics, user-defined types).\n\n3. **Use TypyBench** to observe real-world behavior at repository level, especially if you care about global consistency or the performance of your system in realistic settings (especially for LLM-based approaches).\n\n4. **Ensure de-duplication** and train/val/test splitting to avoid overfitting to popular patterns. Tools like CD4Py are used in ManyTypes4Py for this. ([github.com](https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai))\n\n5. **Define clear metrics**: exact match, partial match, top-k accuracy, type consistency over modules. Benchmarks like TypyBench introduce metrics like *TypeSim* and *TypeCheck* that are useful beyond simple matching. ([proceedings.mlr.press](https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai))\n\n---\n\nIf you like, I can also list some **GitHub-hosted datasets** (possibly smaller or more recently released) or help find datasets specific to certain kinds of Python code (e.g. web frameworks, data science) to evaluate type inference in that domain. Do you want me to pull those in?",
+      "start": 8274,
+      "end": 9739
+    }
+  ],
+  "segments": [
+    {
+      "idx": "0_0",
+      "section_idx": 0,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 140,
+      "text": "Here are some of the **publicly available datasets and benchmarks** that researchers commonly use to evaluate Python type inference systems.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "0_1",
+      "section_idx": 0,
+      "idx_in_section": 1,
+      "start_in_section": 141,
+      "end_in_section": 370,
+      "text": "These are particularly valuable for static or ML-based inference tools (e.g. Type4Py, HiTyper), dynamic type-checking tools (like Pyre, Pytype), or newer benchmarks focused around large language models (LLMs) or micro-benchmarks.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "0_2",
+      "section_idx": 0,
+      "idx_in_section": 2,
+      "start_in_section": 370,
+      "end_in_section": 451,
+      "text": "I\u2019ll describe each, highlight key features, and note trade-offs and gaps.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "10_0",
+      "section_idx": 10,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 25,
+      "text": "## Gaps & Open Challenges",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "10_1",
+      "section_idx": 10,
+      "idx_in_section": 1,
+      "start_in_section": 27,
+      "end_in_section": 99,
+      "text": "Some of the limitations across existing datasets and benchmarks include:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "10_2",
+      "section_idx": 10,
+      "idx_in_section": 2,
+      "start_in_section": 101,
+      "end_in_section": 298,
+      "text": "- **Under-representation of untyped or poorly typed code**: Many projects are already well typed (especially in clean sets), whereas real world legacy code often lacks types or has inconsistencies.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "10_3",
+      "section_idx": 10,
+      "idx_in_section": 3,
+      "start_in_section": 299,
+      "end_in_section": 491,
+      "text": "- **Lack of runtime type behavior**: Static annotations may not reflect types that occur during execution, especially with dynamic features (metaprogramming, monkey patching, dynamic imports).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "10_4",
+      "section_idx": 10,
+      "idx_in_section": 4,
+      "start_in_section": 492,
+      "end_in_section": 633,
+      "text": "- **Limited diversity in type complexity**: Deeply nested generics, union types, user-defined types across module boundaries are often rarer.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "10_5",
+      "section_idx": 10,
+      "idx_in_section": 5,
+      "start_in_section": 634,
+      "end_in_section": 839,
+      "text": "- **Global consistency and cross-module context**: Many datasets focus on local correctness (function return types, parameter types), but consistency across modules (imports, shared types) is less covered.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "10_6",
+      "section_idx": 10,
+      "idx_in_section": 6,
+      "start_in_section": 839,
+      "end_in_section": 1003,
+      "text": "- **Versioning and ecosystem evolution**: Tools/new language features (like TypedDict, Protocols) evolve; datasets need updating to reflect new typing PEPs.\n\n---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_0",
+      "section_idx": 11,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 28,
+      "text": "## Practical Recommendations",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_1",
+      "section_idx": 11,
+      "idx_in_section": 1,
+      "start_in_section": 30,
+      "end_in_section": 142,
+      "text": "If you\u2019re evaluating or building a type inference system, here are tips on choosing or combining these datasets:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_10",
+      "section_idx": 11,
+      "idx_in_section": 10,
+      "start_in_section": 971,
+      "end_in_section": 1085,
+      "text": "Benchmarks like TypyBench introduce metrics like *TypeSim* and *TypeCheck* that are useful beyond simple matching.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence reiterates metrics (TypeSim and TypeCheck) that were already described in the TypyBench section earlier in the response, and it functions as a brief, referential summary within the recommendations. This falls under the exclusion criteria (referential/concluding), so it should not be marked as negative repetition.",
+      "llm_coherence_analysis": "The sentence restates and highlights metrics (TypeSim and TypeCheck) previously introduced for TypyBench and fits naturally in the practical recommendations section. It maintains topic relevance (evaluation metrics for type inference), supports the logical progression, and does not introduce new unrelated entities or contradictions.",
+      "llm_specificity_analysis": "The sentence names evaluation metrics (TypeSim and TypeCheck) introduced by TypyBench to highlight that evaluation should go beyond exact matches. These names are directly relevant and clarifying for the user\u2019s question about benchmarks and evaluation\u2014so they are not unnecessary technical minutiae or tangential detail.",
+      "llm_missing_details_analysis": "The response already defines TypeSim and TypeCheck in the TypyBench section (semantic similarity allowing partial credit, and errors from checking stubs with a static checker) and links those to repository-level/global consistency evaluation elsewhere, so the claim that they are useful beyond simple matching is supported and not left unexplained."
+    },
+    {
+      "idx": "11_12",
+      "section_idx": 11,
+      "idx_in_section": 12,
+      "start_in_section": 1180,
+      "end_in_section": 1183,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_13",
+      "section_idx": 11,
+      "idx_in_section": 13,
+      "start_in_section": 1185,
+      "end_in_section": 1432,
+      "text": "If you like, I can also list some **GitHub-hosted datasets** (possibly smaller or more recently released) or help find datasets specific to certain kinds of Python code (e.g. web frameworks, data science) to evaluate type inference in that domain.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_14",
+      "section_idx": 11,
+      "idx_in_section": 14,
+      "start_in_section": 1432,
+      "end_in_section": 1465,
+      "text": "Do you want me to pull those in?",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_2",
+      "section_idx": 11,
+      "idx_in_section": 2,
+      "start_in_section": 144,
+      "end_in_section": 233,
+      "text": "1. **Use ManyTypes4Py** for large scale training, baseline performance, generic coverage.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_3",
+      "section_idx": 11,
+      "idx_in_section": 3,
+      "start_in_section": 234,
+      "end_in_section": 274,
+      "text": "It\u2019s the most widely used large dataset.",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence restates a point already made about ManyTypes4Py but functions as a brief, emphatic summary in the recommendations rather than introducing new content. This is a referential/concluding restatement (cohesive emphasis), not unnecessary/paraphrased repetition that adds no value, so it meets an exclusion criterion.",
+      "llm_coherence_analysis": "The sentence \u201cIt\u2019s the most widely used large dataset.\u201d directly follows a recommendation to use ManyTypes4Py and echoes earlier description of ManyTypes4Py\u2019s large scale and common use in ML type-inference research. It introduces no new entities or conflicting domain concepts and supports the logical progression of the recommendation list, so it is coherent in context.",
+      "llm_specificity_analysis": "The sentence \u201cIt\u2019s the most widely used large dataset.\u201d is a brief evaluative claim about ManyTypes4Py\u2019s popularity. It does not provide excessive technical minutiae, exhaustive lists, or tangential details beyond the user\u2019s request; it supports the recommendation and is appropriate at the high level of the answer. Therefore it is not over-specific.",
+      "llm_missing_details_analysis": "The response already describes ManyTypes4Py in detail (size, versions, use in ML systems like Type4Py and HiTyper, deduplication/splitting), which supports the claim that it\u2019s the most widely used large dataset. While the sentence is a broad comparative assertion, the surrounding text gives sufficient context and examples of its widespread use, so it does not introduce unexplained or unsupported material."
+    },
+    {
+      "idx": "11_4",
+      "section_idx": 11,
+      "idx_in_section": 4,
+      "start_in_section": 276,
+      "end_in_section": 407,
+      "text": "2. **Supplement with TypeEvalPy** to stress test specific features your system aims to improve (e.g. generics, user-defined types).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_5",
+      "section_idx": 11,
+      "idx_in_section": 5,
+      "start_in_section": 409,
+      "end_in_section": 624,
+      "text": "3. **Use TypyBench** to observe real-world behavior at repository level, especially if you care about global consistency or the performance of your system in realistic settings (especially for LLM-based approaches).",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "11_6",
+      "section_idx": 11,
+      "idx_in_section": 6,
+      "start_in_section": 626,
+      "end_in_section": 725,
+      "text": "4. **Ensure de-duplication** and train/val/test splitting to avoid overfitting to popular patterns.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The target sentence repeats information already described earlier (ManyTypes4Py processing and explicit splitting/deduplication were mentioned in the dataset description and strengths) and does not add new insight beyond making it an actionable recommendation. This meets the inclusion criteria for unnecessary/paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence is a sensible continuation of the practical recommendations: it advises dataset de-duplication and proper train/val/test splits to prevent overfitting, which directly matches prior points about choosing and combining datasets. It does not introduce unrelated concepts or hallucinate entities, and the following sentence (mentioning CD4Py/ManyTypes4Py) supports it, so it is coherent.",
+      "llm_specificity_analysis": "The sentence gives a concise, generally applicable recommendation (de-duplication and train/validation/test splitting) that directly addresses evaluation best practices. It does not dive into unnecessary technical minutiae or exhaustive details and is appropriate for the user\u2019s question about dataset selection and evaluation, so it is not over-specific.",
+      "llm_missing_details_analysis": "The response already describes that ManyTypes4Py was processed to remove duplicate source files and split into train/validation/test by files (using pipelines like LibSA4Py) and explicitly names tools (CD4Py) used for de-duplication, so the recommendation is supported and not left unexplained."
+    },
+    {
+      "idx": "11_7",
+      "section_idx": 11,
+      "idx_in_section": 7,
+      "start_in_section": 726,
+      "end_in_section": 777,
+      "text": "Tools like CD4Py are used in ManyTypes4Py for this.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": true,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "The preceding paragraph already described deduplication and a processing pipeline for ManyTypes4Py; this sentence refers back to that (uses \u201cfor this\u201d) while adding the specific tool name CD4Py. Because it is referential and provides a concrete implementation detail rather than needless repetition, it does not meet the redundancy inclusion criteria.",
+      "llm_coherence_analysis": "The sentence directly follows a recommendation about de-duplication and train/val/test splitting and states that a specific tool (CD4Py) is used in ManyTypes4Py for that purpose. It maintains topic relevance, supplies a concrete example, and fits the logical flow of the paragraph (no domain drift or unexplained entities).",
+      "llm_specificity_analysis": "The user asked which datasets are used for evaluating Python type inference systems. Naming a specific internal tool (CD4Py) used for de-duplication in ManyTypes4Py is a tangential implementation detail not required to answer the dataset-focused question. It adds minor technical minutiae rather than clarifying or providing necessary evidence for the dataset recommendations.",
+      "llm_missing_details_analysis": "The sentence names a specific tool (CD4Py) and claims it is used in ManyTypes4Py for de-duplication/splitting but never explains what CD4Py is, how it works, or provides a reference. While the response discusses deduplication and a pipeline (LibSA4Py) earlier, it does not elaborate on CD4Py or connect it to those steps, so the reader is left without needed context or detail about the referenced tool."
+    },
+    {
+      "idx": "11_9",
+      "section_idx": 11,
+      "idx_in_section": 9,
+      "start_in_section": 867,
+      "end_in_section": 970,
+      "text": "5. **Define clear metrics**: exact match, partial match, top-k accuracy, type consistency over modules.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "This is not unnecessary repetition. Metrics were mentioned earlier in different contexts (TypyBench\u2019s TypeSim/TypeCheck, TypeEvalPy\u2019s metric suite, HiTyper\u2019s reported metrics), but this sentence offers an explicit recommendation and concrete example metrics (exact match, partial match, top-k, cross-module consistency). It adds actionable guidance rather than merely restating prior content.",
+      "llm_coherence_analysis": "The sentence fits the practical-recommendations list and logically follows the prior items. It suggests appropriate, relevant evaluation metrics (exact/partial/top-k/module consistency) and connects to the next sentence about TypyBench metrics, so it is coherent with the surrounding context.",
+      "llm_specificity_analysis": "The listed metrics (exact match, partial match, top-k accuracy, type consistency) are directly relevant and helpful for evaluating type inference systems. They provide appropriate examples of evaluation criteria rather than tangential or excessive technical minutiae, so this level of detail aids the user\u2019s decision-making and is not over-specific.",
+      "llm_missing_details_analysis": "The sentence lists several evaluation metrics (exact match, partial match, top-k accuracy, type consistency over modules) but the response does not define or explain these metrics, how they are computed, or how they differ/when to use each. While TypyBench\u2019s TypeSim/TypeCheck are mentioned nearby, that does not fully explain the listed metrics (e.g., top-k accuracy or precise meaning of partial match/type consistency). Therefore the reader is left without sufficient detail."
+    },
+    {
+      "idx": "1_0",
+      "section_idx": 1,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 28,
+      "text": "## Key Datasets & Benchmarks",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "2_0",
+      "section_idx": 2,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 24,
+      "text": "### ManyTypes4Py (MT4Py)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "2_1",
+      "section_idx": 2,
+      "idx_in_section": 1,
+      "start_in_section": 26,
+      "end_in_section": 120,
+      "text": "- **What it is**: A large-scale Python dataset specifically built for ML-based type inference.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "This sentence is the initial definitional mention of ManyTypes4Py in the response (an introductory description). It does not repeat previously stated information, so Exclusion Criterion 1 (First Mention) applies.",
+      "llm_coherence_analysis": "The sentence succinctly defines ManyTypes4Py and fits the surrounding description and details about that dataset. It maintains topic relevance and supports the logical progression of the dataset overview.",
+      "llm_specificity_analysis": "The sentence gives a high-level characterization (large-scale dataset for ML-based type inference). It does not include extraneous technical minutiae, exhaustive lists, or tangential dates\u2014so it\u2019s not over-specific.",
+      "llm_missing_details_analysis": "The sentence is an introductory descriptor for ManyTypes4Py and the response subsequently provides extensive details (scale, versions, processing, use cases, strengths and limitations). The concept is well elaborated elsewhere in the response, so it does not leave missing details."
+    },
+    {
+      "idx": "2_10",
+      "section_idx": 2,
+      "idx_in_section": 10,
+      "start_in_section": 681,
+      "end_in_section": 772,
+      "text": "- *Complete version*: includes more annotations (even partial), totaling ~3.3M annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The target sentence introduces the specific statistic for the \u201ccomplete\u201d version (~3.3M annotations), which is new information distinct from earlier counts (e.g., overall counts and the clean version). It is not repeating previously stated facts, so it does not meet the inclusion criteria for unnecessary or paraphrased repetition.",
+      "llm_coherence_analysis": "The target sentence continues the description of ManyTypes4Py\u2019s dataset versions (complete vs clean) and fits the surrounding discussion about annotation counts and dataset variants. It does not introduce unrelated concepts or entities and supports the logical progression. (Note: there are minor numeric discrepancies across nearby sentences, but that does not make this sentence non-coherent in context.)",
+      "llm_specificity_analysis": "The sentence gives a high-level numeric summary of the dataset size (\u22483.3M annotations) to contrast the \u2018complete\u2019 vs \u2018clean\u2019 versions. That quantitative detail helps convey scale and is relevant for comparing datasets, so it is not an unnecessary level of minutiae for this question.",
+      "llm_missing_details_analysis": "The sentence labels the \u201ccomplete version\u201d of ManyTypes4Py and gives its annotation count (~3.3M). The response already contrasts \u201cclean\u201d vs \u201ccomplete\u201d (clean = fully mypy-checked; complete = includes partial annotations), and the rest of the ManyTypes4Py paragraph and subsequent text discuss dataset processing, strengths, and limitations. The sentence therefore does not introduce an unexplained concept or claim that the response fails to follow up on."
+    },
+    {
+      "idx": "2_12",
+      "section_idx": 2,
+      "idx_in_section": 12,
+      "start_in_section": 865,
+      "end_in_section": 1064,
+      "text": "- The repository has been processed to remove duplicated source files to reduce bias, split into train/validation/test by files, and converted into JSON with AST/hint info using a pipeline (LibSA4Py)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "The sentence partially repeats earlier mention of splitting and deduplication, but it adds concrete, new details (removal of duplicate source files to reduce bias, file-level train/val/test split, conversion to JSON with AST/hint info, and the LibSA4Py pipeline). This additional, specific information constitutes useful elaboration rather than unnecessary/paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence describes processing steps (deduplication, file-level train/val/test splits, JSON+AST conversion via LibSA4Py) that directly relate to dataset preparation for ManyTypes4Py and fits the surrounding description of dataset details and tooling. It does not introduce an unrelated topic or contradict prior context.",
+      "llm_specificity_analysis": "The sentence describes dataset preprocessing (deduplication, file-based train/val/test split, JSON with AST/hint conversion) and names the pipeline (LibSA4Py). These details are directly relevant to dataset quality, reproducibility, and evaluation methodology, so they support the user\u2019s intent rather than being tangential minutiae. The pipeline name is useful for replication and not gratuitously granular.",
+      "llm_missing_details_analysis": "The sentence singles out a specific pipeline (LibSA4Py) and details (removing duplicates, file-based splits, JSON with AST/hint info) but the rest of the response does not explain what LibSA4Py is, how the conversion/AST/hint representation works, or provide examples/implications. While deduplication and splitting are mentioned elsewhere, the specific pipeline and data-format details are not elaborated, leaving the reader wanting more."
+    },
+    {
+      "idx": "2_13",
+      "section_idx": 2,
+      "idx_in_section": 13,
+      "start_in_section": 1065,
+      "end_in_section": 1153,
+      "text": ".",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "2_14",
+      "section_idx": 2,
+      "idx_in_section": 14,
+      "start_in_section": 1156,
+      "end_in_section": 1226,
+      "text": "- **Use cases / Tools**: Many ML type inference systems rely on MT4Py.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The ManyTypes4Py section already states it is a dataset for ML-based type inference. The target sentence (\u201cMany ML type inference systems rely on MT4Py.\u201d) restates that same point without adding new information (the following sentence provides the concrete example). This is paraphrased/unnecessary repetition.",
+      "llm_coherence_analysis": "The sentence fits the MT4Py section: it describes a relevant use case (ML type-inference systems using MT4Py) and is immediately supported by the following example (Type4Py). It maintains topic relevance and does not introduce unrelated concepts, so it is coherent.",
+      "llm_specificity_analysis": "The sentence \u201cMany ML type inference systems rely on MT4Py.\u201d is a brief, high-level claim about tool usage that directly answers the user\u2019s question about datasets used for evaluation. It does not introduce unnecessary minutiae, exhaustive lists, or tangential technical detail; instead it provides a concise, relevant summary (and is supported elsewhere in the response by examples). Therefore it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence claims that many ML type-inference systems rely on MT4Py. The response supports this with specific examples (Type4Py and HiTyper) and earlier/later elaboration about MT4Py\u2019s contents and usage, so the claim is followed up adequately."
+    },
+    {
+      "idx": "2_15",
+      "section_idx": 2,
+      "idx_in_section": 15,
+      "start_in_section": 1227,
+      "end_in_section": 1266,
+      "text": "For example, Type4Py is built on MT4Py.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "The sentence begins with \u201cFor example\u201d and explicitly refers back to the prior statement that ML type inference systems rely on MT4Py, providing a concrete instance (Type4Py). This is referential/cohesive rather than unnecessary repetition, so it meets an exclusion criterion.",
+      "llm_coherence_analysis": "The sentence directly supports the preceding claim that ML type inference systems rely on MT4Py by giving a concrete example (Type4Py). It stays on topic, contains no new unrelated entities beyond the expected example, and logically follows the surrounding discussion\u2014so it is coherent.",
+      "llm_specificity_analysis": "The sentence briefly gives an example of a tool that uses the dataset, which directly supports the user's question about datasets used for evaluating Python type inference systems. It is neither tangentially granular nor an exhaustive list\u2014just a concise, relevant example\u2014so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence asserts that Type4Py is built on MT4Py but the response provides no further information about Type4Py (what it is, how it uses MT4Py, or any supporting details). The rest of the response elaborates MT4Py and HiTyper but does not expand on this specific claim, so it leaves a gap."
+    },
+    {
+      "idx": "2_17",
+      "section_idx": 2,
+      "idx_in_section": 17,
+      "start_in_section": 1341,
+      "end_in_section": 1357,
+      "text": "- **Strengths**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The targeted text (\u201c- **Strengths**:\u201d) is a section heading introducing the upcoming bullet points, so it is introductory rather than a redundant repeat of previous content. It does not duplicate earlier information and falls under the exclusion criterion for introductory sentences.",
+      "llm_coherence_analysis": "The sentence is a structural heading introducing a strengths bullet list for the ManyTypes4Py entry. It fits the surrounding context and logically connects the preceding description to the subsequent points, so it is coherent.",
+      "llm_specificity_analysis": "The target text is simply a section heading (\u2018- **Strengths**:\u2019) and contains no concrete facts, minutiae, or exhaustive lists. It is not providing unnecessary detail beyond the user\u2019s request, so it is not over-specific.",
+      "llm_missing_details_analysis": "The tagged line is merely a header introducing the dataset\u2019s strengths, and the response immediately lists and explains those strengths (large scale, splitting/deduplication, completeness levels). Therefore the sentence is followed by adequate elaboration and does not leave missing details."
+    },
+    {
+      "idx": "2_18",
+      "section_idx": 2,
+      "idx_in_section": 18,
+      "start_in_section": 1360,
+      "end_in_section": 1419,
+      "text": "- Large scale (both in number of projects and annotations).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The ManyTypes4Py section already states the dataset is large and provides exact counts (e.g., 5,382 projects and hundreds of thousands to millions of annotations). The target sentence merely reiterates that it is \u201cLarge scale\u201d without adding new information or referencing a new aspect, so it is an unnecessary repetition.",
+      "llm_coherence_analysis": "The sentence succinctly summarizes a previously established point (ManyTypes4Py\u2019s large project/annotation counts) and fits the surrounding Strengths list. It does not introduce new entities or drift topics and supports the logical progression, so it is coherent.",
+      "llm_specificity_analysis": "The sentence simply summarizes a strength (that the dataset is large in projects and annotations) without giving unnecessary minutiae or exhaustive lists. It\u2019s a concise, relevant characterization for the user\u2019s high-level question and not over-specific.",
+      "llm_missing_details_analysis": "The response gives concrete numeric details about ManyTypes4Py (project and annotation counts, clean/complete versions, processing steps) immediately before and after the target sentence, so the claim of \u201cLarge scale\u201d is supported and not left unexplained."
+    },
+    {
+      "idx": "2_19",
+      "section_idx": 2,
+      "idx_in_section": 19,
+      "start_in_section": 1422,
+      "end_in_section": 1492,
+      "text": "- Explicit splitting and deduplication help generalization evaluation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The prior sentence already stated the dataset was deduplicated and split into train/validation/test; the target line restates that benefit (splitting/deduplication) without adding substantive new information beyond a brief rationale, so it is redundant/paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence fits the discussion of ManyTypes4Py\u2019s strengths: deduplication and explicit train/validation/test splitting directly relate to reducing dataset bias and enabling reliable generalization evaluation. It does not introduce unrelated concepts or contradict surrounding text, so it is coherent.",
+      "llm_specificity_analysis": "The sentence points out a relevant dataset property (explicit splitting and deduplication) that directly bears on evaluation quality (generalization). It\u2019s a concise, useful clarification rather than tangential minutiae or exhaustive detail, so it\u2019s not over-specific.",
+      "llm_missing_details_analysis": "The response already mentions that the dataset was processed to remove duplicated files and split into train/validation/test, and later (Practical Recommendations) reiterates ensuring de-duplication and proper splits to avoid overfitting. The target sentence is a brief, self-contained claim about why those steps matter and is supported elsewhere in the response, so it does not introduce unexplained content."
+    },
+    {
+      "idx": "2_2",
+      "section_idx": 2,
+      "idx_in_section": 2,
+      "start_in_section": 121,
+      "end_in_section": 189,
+      "text": "It comprises thousands of GitHub projects annotated with type hints.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence is an initial, high-level statement about the dataset\u2019s composition and is followed by more specific numeric details. It introduces new information (first mention) rather than redundantly repeating prior content, so it should not be marked as negative repetition.",
+      "llm_coherence_analysis": "The sentence fits the surrounding description of ManyTypes4Py and aligns with the subsequent numeric details (thousands of projects, thousands of annotations). It maintains topic relevance and supports the logical progression of describing the dataset, so it is coherent.",
+      "llm_specificity_analysis": "The sentence gives a concise, high-level characterization of MT4Py (\"thousands of GitHub projects annotated with type hints\"). This supports the user's question by summarizing the dataset scope without unnecessary technical minutiae or exhaustive listing, so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence states that MT4Py comprises thousands of GitHub projects annotated with type hints. The rest of the response immediately provides specific elaboration (exact project/annotation counts, clean vs complete versions, preprocessing/deduplication, splits, example tools using it, strengths and limitations), so the introduced claim is adequately explained."
+    },
+    {
+      "idx": "2_20",
+      "section_idx": 2,
+      "idx_in_section": 20,
+      "start_in_section": 1495,
+      "end_in_section": 1547,
+      "text": "- Supports different annotation completeness levels.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence restates information already given earlier in the ManyTypes4Py section (the dataset has clean and complete versions). It adds no new detail and is a paraphrased repetition, so it meets the Unnecessary/Paraphrased Repetition inclusion criteria.",
+      "llm_coherence_analysis": "The sentence aligns with the preceding description of 'clean' and 'complete' dataset versions and summarizes a relevant strength\u2014i.e., MT4Py provides varying annotation completeness\u2014so it is coherent with the surrounding text.",
+      "llm_specificity_analysis": "The sentence notes a relevant characteristic of ManyTypes4Py (that it has varying annotation completeness). This is a concise, clarifying detail that helps a reader understand dataset variants and choice trade-offs; it is not tangential minutiae or an exhaustive list, so it is not over-specific.",
+      "llm_missing_details_analysis": "The response already explains ManyTypes4Py\u2019s \u2018clean\u2019 and \u2018complete\u2019 versions (with descriptions and counts) earlier in the section, so the brief strength line about different annotation completeness levels is supported by those details and not left unexplained."
+    },
+    {
+      "idx": "2_21",
+      "section_idx": 2,
+      "idx_in_section": 21,
+      "start_in_section": 1548,
+      "end_in_section": 1566,
+      "text": "- **Limitations**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The target is an introductory header (\u201cLimitations:\u201d) that introduces the following bullet points and is the first mention of limitations for ManyTypes4Py. It does not repeat previously stated information or paraphrase earlier content, so it meets the exclusion criteria (Introductory / First Mention).",
+      "llm_coherence_analysis": "The line is a section heading introducing the subsequent limitation bullets for ManyTypes4Py and fits logically with the surrounding discussion, so it is coherent.",
+      "llm_specificity_analysis": "The marked sentence is simply a section heading (\u201cLimitations:\u201d) and does not introduce any specific details, dates, or exhaustive lists. It serves a structural/organizational purpose rather than providing unnecessary granular information, so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence is simply a section header introducing the limitations of ManyTypes4Py, and the following bullet points immediately enumerate those limitations (bias toward well-typed code, mypy dependency, missing runtime context). Therefore the concept is adequately elaborated in the response."
+    },
+    {
+      "idx": "2_22",
+      "section_idx": 2,
+      "idx_in_section": 22,
+      "start_in_section": 1569,
+      "end_in_section": 1657,
+      "text": "- It reflects only what projects have annotated (potential bias toward well-typed code).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "This limitation is the first explicit statement that MT4Py may be biased toward well-typed projects. Previous sentences described the dataset composition and the mypy-based clean split but did not clearly state the bias/repetition. Therefore it is not unnecessary repetition under the exclusion criteria.",
+      "llm_coherence_analysis": "The sentence states a plausible limitation of ManyTypes4Py (annotation bias toward well-typed projects) and fits the surrounding 'Limitations' bullets. It maintains topic relevance, does not introduce unrelated entities or domain shift, and supports the logical progression of discussing dataset weaknesses.",
+      "llm_specificity_analysis": "The sentence states a relevant, high-level limitation about dataset bias (that it only contains annotated projects and may lean toward well-typed code). This clarifies an important caveat for evaluating type inference systems and is neither tangentially granular nor an exhaustive, unnecessary detail. It serves the user's intent, so it is not over-specific.",
+      "llm_missing_details_analysis": "The response later addresses this limitation in the 'Gaps & Open Challenges' section (noting under-representation of untyped or poorly typed code) and also mentions related limits (mypy dependence, runtime behavior issues). Therefore the concept is followed up and not left unexplained."
+    },
+    {
+      "idx": "2_23",
+      "section_idx": 2,
+      "idx_in_section": 23,
+      "start_in_section": 1660,
+      "end_in_section": 1751,
+      "text": "- Clean version depends on mypy; tools stricter or looser than mypy may behave differently.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "The text already mentions the clean version is type-checked with mypy earlier, but the target sentence adds a consequential point (that tools stricter or looser than mypy may behave differently). That provides new insight rather than merely repeating prior information, so it does not meet the redundancy/inclusion criteria.",
+      "llm_coherence_analysis": "The sentence directly follows the earlier mention that the clean version is filtered by mypy and explains a realistic limitation: relying on mypy may bias results relative to tools with different strictness. It stays on-topic, introduces no new entities, and logically fits the surrounding discussion of dataset limitations.",
+      "llm_specificity_analysis": "The sentence succinctly highlights a relevant limitation of the dataset (that the clean split is based on mypy checks), which can materially affect evaluation results for tools with different strictness. This is clarifying and evidentiary rather than tangential granularity or unnecessary detail, so it should not be flagged as over-specific.",
+      "llm_missing_details_analysis": "The sentence claims the clean MT4Py version depends on mypy and that tools stricter or looser than mypy may behave differently, but the response never explains what those differences entail, gives examples (e.g., pyre/pytype behaviors), or advises how to account for this when evaluating systems. This introduces a consequential claim without sufficient elaboration, leaving the reader wanting more detail."
+    },
+    {
+      "idx": "2_24",
+      "section_idx": 2,
+      "idx_in_section": 24,
+      "start_in_section": 1751,
+      "end_in_section": 1847,
+      "text": "- Previously type definitions may miss context of runtime behavior/user-defined types.\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence introduces a distinct limitation (that static/type definitions can miss runtime behavior and user-defined types). Previous sentences in that ManyTypes4Py limitations list discussed annotation bias and mypy dependence, not runtime-context mismatch. This is the first mention of runtime behavior in the preceding text, so it is not unnecessary or paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence, while slightly awkwardly worded (\"Previously\" seems misplaced), fits the surrounding limitations: it notes that recorded type definitions may not capture runtime behavior or user-defined types. This is a logical, on-topic limitation of ManyTypes4Py and does not introduce unrelated concepts or a broken narrative.",
+      "llm_specificity_analysis": "The sentence states a general limitation of the dataset (that prior type annotations may not capture runtime behavior or user-defined types). This is a relevant, high-level caveat for choosing datasets and helps clarify scope\u2014it's not technical minutiae, exhaustive listing, or unnecessary detail beyond the user's request.",
+      "llm_missing_details_analysis": "The sentence flags that type annotations may miss runtime context and user-defined types, but the response later explicitly elaborates on this in the \u201cGaps & Open Challenges\u201d section (noting lack of runtime type behavior, dynamic features, and scarcity of user-defined/complex types across modules) and earlier limitations. Therefore the point is followed up elsewhere in the response."
+    },
+    {
+      "idx": "2_4",
+      "section_idx": 2,
+      "idx_in_section": 4,
+      "start_in_section": 258,
+      "end_in_section": 272,
+      "text": "- **Details**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The marked text is an introductory label (\u201cDetails:\u201d) introducing the following bullet points rather than repeating prior content. This fits the Exclusion Criterion 4 (Introductory), so it should not be marked as negative repetition.",
+      "llm_coherence_analysis": "The target string (\u201c- **Details**:\u201d) is a brief subheading introducing the following bulleted specifics about ManyTypes4Py. It functions as a logical transition and fits the surrounding context (introducing dataset details), so it is coherent.",
+      "llm_specificity_analysis": "The marked sentence is just a short section label (\u201c- **Details**:\u201d) and contains no substantive facts or minutiae. It does not add unnecessary or excessive detail and therefore is not over-specific.",
+      "llm_missing_details_analysis": "The target sentence is just a section heading (\u201cDetails:\u201d) introducing the following bullet points. The response immediately provides multiple specific details under that heading, so it does not introduce an unexplained concept or claim."
+    },
+    {
+      "idx": "2_5",
+      "section_idx": 2,
+      "idx_in_section": 5,
+      "start_in_section": 275,
+      "end_in_section": 353,
+      "text": "- Over **5,382** Python projects, with more than **869,000** type annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": true,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The response previously stated MT4Py \u201ccomprises thousands of GitHub projects,\u201d but the target sentence supplies specific quantitative details (5,382 projects and 869,000+ annotations). This adds new, concrete information rather than merely repeating earlier content, so it is not unnecessary repetition.",
+      "llm_coherence_analysis": "The target sentence gives specific counts (5,382 projects; 869,000 annotations) that conflict with other numbers in the same ManyTypes4Py section (clean ~5.1K repos with ~1.2M annotations; complete ~3.3M annotations). This contradiction breaks the logical consistency of the paragraph and therefore is non-coherent in context.",
+      "llm_specificity_analysis": "The numeric counts (projects and annotations) help convey dataset scale and are useful evidence for choosing/evaluating datasets. These figures are not tangential minutiae nor exhaustive listing\u2014they clarify scope, so they are appropriate for the user's question.",
+      "llm_missing_details_analysis": "The sentence gives a simple factual count about MT4Py. The response immediately elaborates with more detailed figures (clean vs complete versions and their annotation counts), describes processing (deduplication, splits, JSON/AST pipeline), and discusses strengths/limitations and tool usage. Thus the claim is followed up and not left unexplained."
+    },
+    {
+      "idx": "2_7",
+      "section_idx": 2,
+      "idx_in_section": 7,
+      "start_in_section": 424,
+      "end_in_section": 483,
+      "text": "- The dataset has both **clean** and **complete** versions:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The target sentence introduces new information (that the dataset has distinct \u201cclean\u201d and \u201ccomplete\u201d versions). This is the first mention of that distinction; subsequent lines expand on those versions. Therefore it is not unnecessary or paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence introduces that ManyTypes4Py has clean and complete versions and serves as a clear heading/transition into the two subitems that follow. It stays on-topic and logically connects the previous dataset description to the subsequent details (clean vs complete), so it is coherent.",
+      "llm_specificity_analysis": "The sentence simply states that the dataset has \u201cclean\u201d and \u201ccomplete\u201d versions \u2014 a high-level structural fact relevant to understanding dataset variants. It does not introduce technical minutiae, excessive numbers, or tangential detail (the specific counts appear in the following lines), so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence is immediately followed by specific explanations and counts for both the \u201cclean\u201d and \u201ccomplete\u201d versions, so the concept it introduces is elaborated within the response and does not leave the reader without necessary details."
+    },
+    {
+      "idx": "2_8",
+      "section_idx": 2,
+      "idx_in_section": 8,
+      "start_in_section": 488,
+      "end_in_section": 586,
+      "text": "- *Clean version*: only projects fully type\u2010checked with **mypy**; ~5.1K repos, ~1.2M annotations.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "ManyTypes4Py: A Benchmark Python Dataset for Machine Learning-based Type Inference",
+          "https://arxiv.org/abs/2104.04706?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/many-types-4-py-dataset: ManyTypes4Py: A benchmark Python dataset for machine learning-based type inference",
+          "https://github.com/saltudelft/many-types-4-py-dataset?utm_source=openai"
+        ],
+        [
+          "GitHub - saltudelft/type4py: Type4Py: Deep Similarity Learning-Based Type Inference for Python",
+          "https://github.com/saltudelft/type4py?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence introduces the \u201cclean version\u201d specifics (mypy-checked repos, ~5.1K repos, ~1.2M annotations) for the first time and provides new, specific information that was not stated earlier, so it is not unnecessary or paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence continues the ManyTypes4Py description by specifying the \"clean\" version and its counts, so it stays on-topic and supports the surrounding explanation of dataset variants. While the numeric counts conflict slightly with an earlier number in the same paragraph, this is a factual inconsistency rather than a break in narrative or an introduction of unrelated content. Therefore the sentence is coherent within the response.",
+      "llm_specificity_analysis": "The sentence gives dataset-specific counts and notes that the clean split is mypy-checked. Those details directly support understanding the dataset\u2019s scale and curation criteria, which are relevant when choosing benchmarks. The numbers and mypy detail are evidentiary rather than tangential granularity, so they do not exceed the user\u2019s needs.",
+      "llm_missing_details_analysis": "The sentence introduces the \u201cclean version\u201d of MT4Py but the response already explains the dataset has clean/complete versions, how the data were processed (deduplication, splits, JSON/AST pipeline), and even lists a limitation that the clean set depends on mypy. Thus the concept is followed up elsewhere and not left unexplained."
+    },
+    {
+      "idx": "3_0",
+      "section_idx": 3,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 20,
+      "text": "### TypyBench (2025)",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "3_1",
+      "section_idx": 3,
+      "idx_in_section": 1,
+      "start_in_section": 22,
+      "end_in_section": 241,
+      "text": "- **What it is**: A recent benchmark focused on evaluating **LLMs** inferring types across entire untyped Python repositories.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "This sentence is the introductory description of the TypyBench subsection and appears to be the first instance of this specific information. It does not repeat earlier content and serves to introduce the benchmark, so it meets the 'Introductory / First Mention' exclusion criteria.",
+      "llm_coherence_analysis": "The sentence describes TypyBench as an LLM-focused benchmark for inferring types in untyped Python repositories. This matches the surrounding detail (50 repos, stripped annotations, LLM outputs, TypeSim/TypeCheck metrics) and does not introduce unrelated concepts or unexplained entities. Therefore it is coherent with the context.",
+      "llm_specificity_analysis": "The sentence succinctly describes the benchmark\u2019s scope (LLMs, whole untyped repositories) and provides a citation. Those details are relevant to a user asking which datasets are used for evaluating Python type inference systems and are not tangential minutiae or exhaustive listing. Therefore it is not over-specific.",
+      "llm_missing_details_analysis": "The response immediately follows that sentence with specific details: number of repositories, that annotations are stripped, how tools are evaluated (LLM outputs to stubs), and the evaluation metrics (TypeSim, TypeCheck), plus strengths/limitations. Therefore the concept introduced is sufficiently explained elsewhere in the response."
+    },
+    {
+      "idx": "3_10",
+      "section_idx": 3,
+      "idx_in_section": 10,
+      "start_in_section": 1153,
+      "end_in_section": 1171,
+      "text": "- **Limitations**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The marked sentence is the first time limitations for the TypyBench entry are introduced (a section header), so it is not repeating previously stated information. It meets the 'First Mention' exclusion criterion, not the inclusion criteria for unnecessary or paraphrased repetition.",
+      "llm_coherence_analysis": "The line '- **Limitations**:' functions as a header introducing the following limitation bullets for TypyBench. It fits the surrounding content and logically signals the transition to drawbacks, so it is coherent.",
+      "llm_specificity_analysis": "The target is just a section header (\u201c- **Limitations**:\u201d) with no substantive details or excessive specifics. It does not provide over-specific information beyond signaling the following content, so it\u2019s not over-specific.",
+      "llm_missing_details_analysis": "The sentence is simply a section heading ('Limitations') and the response immediately lists and explains the specific limitations (small number of repos; LLM focus vs static tools). The introduced concept is followed by concrete elaboration, so it does not leave the reader without needed details."
+    },
+    {
+      "idx": "3_11",
+      "section_idx": 3,
+      "idx_in_section": 11,
+      "start_in_section": 1172,
+      "end_in_section": 1251,
+      "text": "- Small number of repos (50), so lower statistical power or overfitting risk.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence repeats the numeric size (50 repos) already stated, but it adds evaluative content (implications: lower statistical power and overfitting risk). This is not mere restatement or paraphrase without new information, so it does not meet the inclusion criteria for negative repetition. Therefore it should not be marked redundant.",
+      "llm_coherence_analysis": "The sentence comments on TypyBench\u2019s limitation (only 50 repos), which follows the prior description of the benchmark and its strengths/metrics. It stays on topic, provides a logical limitation (statistical power/overfitting risk), and does not introduce unrelated entities or contradictions. Therefore it is coherent.",
+      "llm_specificity_analysis": "The sentence cites the dataset size (50 repos) to justify a limitation (lower statistical power/overfitting risk). That numeric detail serves as evidence and clarifies the scope of the benchmark rather than introducing irrelevant minutiae, so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence states a concise limitation (TypyBench has only 50 repos, so results may have lower statistical power or risk overfitting). This is a self-contained critique that does not require further elaboration elsewhere in the response; the response already provides context about TypyBench\u2019s scale and intended use. The claim uses common terms that are sufficiently clear for the audience and does not introduce an unexplained concept or method that the rest of the response fails to follow up on."
+    },
+    {
+      "idx": "3_12",
+      "section_idx": 3,
+      "idx_in_section": 12,
+      "start_in_section": 1251,
+      "end_in_section": 1337,
+      "text": "- Focused on LLM behavior; may not align with static tool use-cases exactly.\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence reiterates that TypyBench targets LLMs but does so to state a consequence (it may not align with static tools). This is referential to the earlier sentence in the same paragraph and adds nuance rather than needless repetition, so it falls under the 'Referential' exclusion.",
+      "llm_coherence_analysis": "The target sentence notes that TypyBench focuses on LLM behavior and may not align with static tool use-cases. This directly follows the TypyBench description (designed for LLMs, repo-level evaluation) and appropriately qualifies its limitation, so it fits the context and logical flow.",
+      "llm_specificity_analysis": "The sentence is a concise limitation comment about TypyBench\u2019s scope (LLM focus vs static tools). It does not include unnecessary technical minutiae, exhaustive lists, or tangential details \u2014 it clarifies a relevant mismatch in scope, so it is not over\u2011specific.",
+      "llm_missing_details_analysis": "The sentence \"Focused on LLM behavior; may not align with static tool use-cases exactly.\" restates a limitation that is already introduced and supported earlier in the TypyBench paragraph (it explicitly said TypyBench is focused on evaluating LLMs and described metrics for LLM outputs) and the recommendations later also mention TypyBench\u2019s suitability for LLM-based approaches. Therefore the response does follow up on that claim and does not leave unexplained concepts."
+    },
+    {
+      "idx": "3_2",
+      "section_idx": 3,
+      "idx_in_section": 2,
+      "start_in_section": 244,
+      "end_in_section": 258,
+      "text": "- **Details**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The marked line (\u201c- **Details**:\u201d) is an introductory label preceding specific bullets about TypyBench; it simply signals details to follow rather than repeating previously given information. This matches the 'Introductory' exclusion criterion, so it should not be marked as negative repetition.",
+      "llm_coherence_analysis": "The line simply serves as a subheading introducing the subsequent bullets about TypyBench\u2019s specifics and matches the document\u2019s structural pattern (e.g., ManyTypes4Py also used \u201cDetails\u201d). It fits the context and does not introduce unrelated content.",
+      "llm_specificity_analysis": "The marked sentence is just a section heading (\u201c- **Details**:\u201d) and contains no substantive facts or excessive granularity. It does not add over-specific information beyond labeling the following details, so it should not be flagged.",
+      "llm_missing_details_analysis": "The target sentence is just a section header (\u201cDetails:\u201d) and the subsequent lines immediately provide specific information about TypyBench (repo count, stripping annotations, evaluation metrics TypeSim and TypeCheck, strengths/limitations). The response does elaborate on what the header introduces, so it does not leave the reader without necessary details."
+    },
+    {
+      "idx": "3_3",
+      "section_idx": 3,
+      "idx_in_section": 3,
+      "start_in_section": 259,
+      "end_in_section": 468,
+      "text": "- It includes **50 high-quality open-source Python repositories**, chosen for diversity and real-world complexity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "The sentence provides the first explicit quantitative detail about TypyBench (the number of repositories). No prior sentence in the response stated \u201c50\u201d or the same fact, so it is a first mention (Exclusion Criterion 1). It therefore is not unnecessary or paraphrased repetition.",
+      "llm_coherence_analysis": "The target sentence fits the surrounding context: it elaborates on TypyBench by specifying the number and selection criteria of repositories, matches the later remark about the small repo count (50), and does not introduce unrelated topics or unsupported entities. Therefore it is coherent.",
+      "llm_specificity_analysis": "The sentence specifies the number of repositories (50) in TypyBench. That numeric detail directly informs the dataset\u2019s scale and limitations (and is relevant when assessing statistical power and generality), so it\u2019s evidentiary rather than gratuitous. It does not dive into unnecessary minutiae beyond the user\u2019s need to choose datasets.",
+      "llm_missing_details_analysis": "The sentence asserts TypyBench \u201cincludes 50 high-quality ... repositories chosen for diversity and real-world complexity.\u201d The rest of the response notes metrics, strengths (realistic scenario, diversity) and a limitation (small n), but does not explain what \u201chigh-quality\u201d means, how repos were selected, or list examples\u2014details a reader would reasonably expect after that claim. Thus the claim introduces selection criteria that are not elaborated on."
+    },
+    {
+      "idx": "3_4",
+      "section_idx": 3,
+      "idx_in_section": 4,
+      "start_in_section": 471,
+      "end_in_section": 628,
+      "text": "- All original type annotations are stripped; tools are evaluated on recovering types via LLM output (which can then be type stub files), and evaluated on:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The TypyBench paragraph already mentions evaluating LLMs on untyped repositories, but the target sentence adds concrete procedure details (annotations are stripped, inferred types produced as stubs, and specific evaluation metrics). This supplies new information rather than repeating previous content, so it is not unnecessary repetition.",
+      "llm_coherence_analysis": "The sentence logically continues the TypyBench description: it explains that annotations are removed and LLMs are evaluated on recovering types, which directly leads into the listed evaluation metrics (TypeSim, TypeCheck). It matches the prior mention of LLM-focused benchmarking and flows coherently into the following bullets.",
+      "llm_specificity_analysis": "The sentence describes a core design choice of TypyBench (stripping annotations and evaluating recovery via LLM-produced stubs), which is directly relevant to understanding how that benchmark operates. The detail clarifies the evaluation scenario rather than giving unnecessary minutiae, so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence states that annotations are stripped and tools (LLMs) are evaluated on recovering types, then points to the specific evaluation metrics. The subsequent lines immediately list and describe the evaluation metrics (TypeSim and TypeCheck) and the following paragraphs discuss strengths, limitations, and use cases of TypyBench. The response therefore follows up on the introduced process and evaluation criteria, so it does not leave a key concept unexplained."
+    },
+    {
+      "idx": "3_5",
+      "section_idx": 3,
+      "idx_in_section": 5,
+      "start_in_section": 629,
+      "end_in_section": 731,
+      "text": "- **TypeSim**: semantic similarity between inferred vs ground truth types (allows partial credit).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "This is the first time the TypeSim metric is introduced in the response (it appears as part of the TypyBench evaluation metrics). It does not repeat earlier content, so it does not meet the redundancy criteria.",
+      "llm_coherence_analysis": "The sentence continues a list of evaluation metrics for TypyBench, introducing 'TypeSim' as a semantic-similarity metric that allows partial credit. It fits the preceding context (metrics for evaluating inferred types), uses consistent domain terminology, and connects directly to the following 'TypeCheck' metric. Therefore it is coherent.",
+      "llm_specificity_analysis": "Not over-specific. The sentence succinctly describes a relevant evaluation metric (TypeSim) that helps interpret how TypyBench assesses inferred types; it clarifies evaluation criteria rather than diving into unnecessary minutiae or tangential details.",
+      "llm_missing_details_analysis": "The sentence names a metric (TypeSim) and gives a one-line characterization (\u201csemantic similarity\u2026 allows partial credit\u201d) but the response never explains how TypeSim is computed, what similarity notion it uses, how partial credit is assigned, or examples\u2014so the concept is under-explained and would leave a reader wanting more."
+    },
+    {
+      "idx": "3_6",
+      "section_idx": 3,
+      "idx_in_section": 6,
+      "start_in_section": 734,
+      "end_in_section": 948,
+      "text": "- **TypeCheck**: number of errors when checking predicted stubs with a real static type checker (global consistency).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence introduces the TypeCheck metric for TypyBench and is the first explicit mention of that specific metric in the preceding text. It does not repeat previously stated information or paraphrase an earlier sentence, so it is not unnecessary repetition.",
+      "llm_coherence_analysis": "The target sentence defines a metric (\u201cTypeCheck\u201d) immediately after another metric (\u201cTypeSim\u201d) within the TypyBench metrics list. It directly relates to the preceding description (evaluating recovered types via stubs) and explains how global consistency is measured. There is no domain drift, introduced entities, or abrupt topic shift\u2014it fits the logical flow.",
+      "llm_specificity_analysis": "The sentence defines a specific evaluation metric (TypeCheck) and explains how it\u2019s measured (errors from a real static type checker). That detail is directly relevant to understanding the benchmark\u2019s evaluation approach and not tangential or unnecessarily granular, so it isn\u2019t over-specific.",
+      "llm_missing_details_analysis": "The sentence succinctly defines the TypeCheck metric (counts errors from running a real static type checker on predicted stubs) and the response later references that TypyBench measures global consistency and recommends metrics like TypeSim and TypeCheck. The metric is adequately described for this context and does not introduce an unexplained concept."
+    },
+    {
+      "idx": "3_7",
+      "section_idx": 3,
+      "idx_in_section": 7,
+      "start_in_section": 951,
+      "end_in_section": 967,
+      "text": "- **Strengths**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The marked text is a section header (\u201c- **Strengths**:\u201d) introducing the following bullet points. It functions as an introductory/organizational label rather than a repeated claim or paraphrase of prior content, so it should not be marked as negative repetition.",
+      "llm_coherence_analysis": "The target line is a section heading (\u201cStrengths:\u201d) for the TypyBench entry and the subsequent bullets expand on it. It logically fits the surrounding description and transitions to strengths, so it is coherent.",
+      "llm_specificity_analysis": "The marked sentence is just a section header (\u2018Strengths:\u2019) and contains no specific factual detail, numbers, or tangential minutiae. It does not provide excessive or unnecessary granularity relative to the user\u2019s question.",
+      "llm_missing_details_analysis": "The target text is just a section header label (\u201cStrengths:\u201d) for TypyBench. The response immediately follows with two concrete points describing those strengths (realistic whole-repo scenario and novel metrics), so the label is adequately elaborated. It does not introduce an unexplained claim or concept on its own."
+    },
+    {
+      "idx": "3_8",
+      "section_idx": 3,
+      "idx_in_section": 8,
+      "start_in_section": 968,
+      "end_in_section": 1060,
+      "text": "- More realistic scenario: whole repositories, untyped code, diversity of type complexity.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence restates points already given in the preceding sentences (that TypyBench uses whole repositories, annotations are stripped\u2014i.e. untyped code\u2014and repos were chosen for diversity/real-world complexity). It\u2019s a paraphrased repetition that adds no new information.",
+      "llm_coherence_analysis": "The sentence fits the surrounding context: it summarizes a key strength of TypyBench (evaluating whole, untyped repositories with diverse type complexity) and flows logically from the preceding description of the benchmark and its metrics. There is no domain drift, hallucination, or broken narrative.",
+      "llm_specificity_analysis": "The sentence is a concise, high-level summary of TypyBench\u2019s strengths relevant to the user\u2019s question. It does not introduce technical minutiae, exhaustive lists, or unnecessary internal details \u2014 it simply characterizes the dataset\u2019s scope and realism, which is appropriate for evaluating type-inference datasets.",
+      "llm_missing_details_analysis": "The sentence summarizes TypyBench\u2019s realism (whole repos, untyped code, diverse type complexity), but those points are already described earlier in the TypyBench section (50 repos, annotations stripped, and the TypeSim/TypeCheck metrics for global consistency). Therefore the response does elaborate on the claim and does not leave the reader without needed detail."
+    },
+    {
+      "idx": "3_9",
+      "section_idx": 3,
+      "idx_in_section": 9,
+      "start_in_section": 1061,
+      "end_in_section": 1152,
+      "text": "- Novel metrics that penalize inconsistencies across modules, not just local exact match.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypyBench: Evaluating LLM Type Inference for Untyped Python Repositories",
+          "https://proceedings.mlr.press/v267/dong25l.html?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The TypyBench section already described its metrics (TypeSim and TypeCheck) including evaluation of global consistency across modules. The target sentence merely restates that idea without adding new information, so it is a paraphrased/unnecessary repetition.",
+      "llm_coherence_analysis": "The sentence refers directly to TypyBench\u2019s evaluation metrics (TypeSim, TypeCheck) and emphasizes that these metrics assess cross-module consistency rather than only local exact matches. This continues the discussion of strengths and aligns with the preceding mention of repository-level evaluation and global consistency, so it fits logically and does not introduce unrelated concepts or hallucinated entities.",
+      "llm_specificity_analysis": "The sentence describes a high-level characteristic of TypyBench\u2019s evaluation metrics (penalizing cross-module inconsistencies rather than only local exact matches). This clarifies the benchmark\u2019s focus on global consistency, which is relevant to someone choosing datasets for type inference evaluation. It does not introduce technical minutiae, exhaustive lists, or unnecessary minor details, so it is not over-specific.",
+      "llm_missing_details_analysis": "The response already describes TypyBench\u2019s metrics (TypeSim and TypeCheck) earlier\u2014TypeSim as semantic similarity with partial credit and TypeCheck as checking predicted stubs with a real static type checker for global consistency\u2014and later references those metrics in the recommendations. Therefore the claim about penalizing cross-module inconsistencies is supported and not left unexplained."
+    },
+    {
+      "idx": "4_0",
+      "section_idx": 4,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 14,
+      "text": "### TypeEvalPy",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "4_1",
+      "section_idx": 4,
+      "idx_in_section": 1,
+      "start_in_section": 16,
+      "end_in_section": 144,
+      "text": "- **What it is**: A **micro-benchmarking framework** containing small code snippets aimed at targeting specific Python features.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence is the first mention of TypeEvalPy in the response (it introduces what the benchmark is), so it does not repeat prior information and meets the 'First Mention' exclusion criterion.",
+      "llm_coherence_analysis": "The sentence defines TypeEvalPy as a micro-benchmark of small snippets targeting specific Python features, which aligns directly with the surrounding sentences (details about snippet counts, categories, strengths/limitations). It maintains topic relevance and supports the logical progression of describing the benchmark, so it is coherent.",
+      "llm_specificity_analysis": "The sentence gives a concise, high-level description of TypeEvalPy as a micro-benchmark of small snippets targeting specific Python features. This matches the user's request for datasets used to evaluate type inference systems and does not introduce unnecessary technical minutiae, exhaustive lists, or tangential details. It is informative rather than over-specific.",
+      "llm_missing_details_analysis": "The response expands on the micro-benchmark immediately after the target sentence: it gives counts (154 snippets, 845 annotations), 18 categories, description of metrics and formats, strengths and limitations, and use cases. Therefore the target sentence is followed by adequate elaboration and does not leave missing details."
+    },
+    {
+      "idx": "4_10",
+      "section_idx": 4,
+      "idx_in_section": 10,
+      "start_in_section": 697,
+      "end_in_section": 713,
+      "text": "- **Strengths**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The marked text is a section heading (\u201cStrengths:\u201d) introducing the upcoming bullet points for the TypeEvalPy entry. It functions as an introductory label rather than repeating previously stated information; therefore it meets the exclusion criterion for 'Introductory' and should not be marked as redundant.",
+      "llm_coherence_analysis": "The target is a brief heading (\u201c- **Strengths**:\u201d) that matches the document\u2019s existing section/heading pattern and introduces the following bullet points. It fits the surrounding context and does not introduce new domain content or a broken narrative, so it is coherent.",
+      "llm_specificity_analysis": "The marked line is simply a section heading (\u201cStrengths:\u201d) and contains no factual details, numbers, or extraneous specifics. It does not add unnecessary granularity, exhaustive lists, or tangential minutiae, so it is not over-specific.",
+      "llm_missing_details_analysis": "The target is a heading label (\u201c- **Strengths**:\u201d) that is immediately followed by three bullet points elaborating the strengths of TypeEvalPy. It does not introduce an unexplained concept or claim\u2014the subsequent lines provide the details\u2014so the response does follow up appropriately."
+    },
+    {
+      "idx": "4_11",
+      "section_idx": 4,
+      "idx_in_section": 11,
+      "start_in_section": 716,
+      "end_in_section": 802,
+      "text": "- Precisely tests specific, often tricky features (e.g. generics, user-defined types).",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The target sentence repeats the same idea already stated in the subsequent strength bullet and earlier in the details (both mention testing tricky features/corner cases such as generics and user-defined types). It does not add new information or a distinct nuance, so this is paraphrased/unnecessary repetition.",
+      "llm_coherence_analysis": "The target sentence describes a strength of TypeEvalPy\u2014testing specific tricky features like generics and user-defined types\u2014which aligns with the preceding description of the micro-benchmark\u2019s purpose, scale, and categories. It maintains topic relevance and supports the logical progression about strengths of the benchmark, so it is coherent.",
+      "llm_specificity_analysis": "The sentence succinctly clarifies what TypeEvalPy targets by giving representative tricky features (generics, user-defined types). This level of detail helps the user understand the dataset\u2019s purpose and is relevant to choosing benchmarks, so it is not an unnecessary or tangential granularity.",
+      "llm_missing_details_analysis": "The response provides prior and subsequent context for TypeEvalPy: it describes the dataset size (154 snippets, 845 annotations), lists 18 categories including generics, and notes that it targets corner cases and is useful for ablation studies. The target sentence is supported and elaborated elsewhere in the response, so it does not introduce an unexplained concept."
+    },
+    {
+      "idx": "4_12",
+      "section_idx": 4,
+      "idx_in_section": 12,
+      "start_in_section": 805,
+      "end_in_section": 876,
+      "text": "- Addresses deep corner cases which large datasets may under-represent.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The target sentence repeats the same point already made in the previous Strengths bullet (that TypeEvalPy tests specific/tricky features). It does not add new information or clarify anything; it is a paraphrased redundancy rather than a first mention, referential, concluding, or introductory sentence.",
+      "llm_coherence_analysis": "The sentence fits the surrounding discussion of TypeEvalPy's strengths: it reiterates that the micro-benchmark targets tricky, under-represented corner cases. It maintains topic relevance and supports the logical progression about what the benchmark tests, so it is coherent.",
+      "llm_specificity_analysis": "The sentence is a concise, relevant summary of TypeEvalPy\u2019s strength (targeting corner cases that larger datasets may miss). It does not introduce unnecessary technical minutiae, exhaustive lists, or tangential granularity, and it clarifies the benchmark\u2019s purpose\u2014so it is not over-specific.",
+      "llm_missing_details_analysis": "The response already explains TypeEvalPy\u2019s purpose (154 snippets across 18 categories, targeting specific features like generics and user-defined types) and follows up by saying it\u2019s good for ablation studies and component evaluation. The claim that it \u201caddresses deep corner cases\u201d is therefore supported by those earlier details and examples, so it is not left unexplained."
+    },
+    {
+      "idx": "4_13",
+      "section_idx": 4,
+      "idx_in_section": 13,
+      "start_in_section": 879,
+      "end_in_section": 934,
+      "text": "- Good for ablation studies, tool component evaluation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence (\u201cGood for ablation studies, tool component evaluation.\u201d) conveys an explicit use-case recommendation that complements the preceding strength (precisely tests specific features). It adds actionable guidance rather than merely restating prior content, so it is not unnecessary or paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence fits the preceding point about TypeEvalPy\u2019s strengths: it explains a use-case (ablation studies and component evaluation) that naturally follows from \u2018precisely tests specific, often tricky features.\u2019 It maintains topic relevance and logical flow, so it is coherent.",
+      "llm_specificity_analysis": "The sentence is a concise, high-level use-case statement (suggesting TypeEvalPy is suited for ablation studies and component evaluation). It does not introduce unnecessary technical minutiae, exhaustive lists, or tangential details beyond the user's request, so it is not over-specific.",
+      "llm_missing_details_analysis": "The response already explains that TypeEvalPy is a small, precise micro-benchmark targeting specific language features and corner cases, and later recommends using it to stress-test features and for fine-grained tool comparison. Those points support the claim that it\u2019s good for ablation studies and component evaluation, so the sentence does not introduce an unexplained concept."
+    },
+    {
+      "idx": "4_14",
+      "section_idx": 4,
+      "idx_in_section": 14,
+      "start_in_section": 935,
+      "end_in_section": 953,
+      "text": "- **Limitations**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The target is an introductory section header (\u201cLimitations:\u201d) that signals the upcoming bullet points rather than restating previously given information. This matches the Exclusion Criterion 4 (Introductory), so it should not be marked as negative repetition.",
+      "llm_coherence_analysis": "The target is a short section heading (\u201c- **Limitations**:\u201d) that logically introduces the following bullet points describing TypeEvalPy\u2019s limitations. It fits the surrounding context and does not introduce unrelated content or hallucinate entities, so it is coherent.",
+      "llm_specificity_analysis": "The marked text is simply a section heading (\u201c- **Limitations**:\u201d) and does not include additional facts, minutiae, or unnecessary detail. It does not add over-specific information beyond serving as a label for following bullets, so it is not over-specific.",
+      "llm_missing_details_analysis": "The target is a section heading introducing limitations for TypeEvalPy, and the following lines immediately list and explain two specific limitations (small scale and lack of global context). Therefore the response does elaborate on what the heading introduces."
+    },
+    {
+      "idx": "4_15",
+      "section_idx": 4,
+      "idx_in_section": 15,
+      "start_in_section": 956,
+      "end_in_section": 1032,
+      "text": "- Very small-scale; may not reflect code complexity or practical deployment.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence repeats information already conveyed earlier (TypeEvalPy was described as a micro-benchmark with small code snippets and exact counts). The limitation restates that it is very small-scale and adds little new information beyond the earlier description, so it meets the \u2018unnecessary/paraphrased repetition\u2019 inclusion criterion.",
+      "llm_coherence_analysis": "The target sentence succinctly states a limitation of the previously described micro-benchmark (TypeEvalPy). It aligns with the surrounding discussion of strengths/limitations, does not introduce new entities or conflicting domain concepts, and logically follows from the dataset's small snippet count. Therefore it is coherent with the context.",
+      "llm_specificity_analysis": "This sentence succinctly states a high-level limitation of the micro-benchmark (small scale, limited realism). It does not include unnecessary technical minutiae, exhaustive lists, or tangential details \u2014 the comment is directly relevant to the user\u2019s question about dataset suitability. Therefore it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence states that TypeEvalPy is very small-scale and may not reflect real code complexity. The response already provides concrete details (154 snippets, 845 annotations, 18 categories), explains it is a micro-benchmark targeting isolated features, and lists related limitations (no global repository context). Therefore the claim is supported elsewhere and does not leave an unexplained concept."
+    },
+    {
+      "idx": "4_16",
+      "section_idx": 4,
+      "idx_in_section": 16,
+      "start_in_section": 1032,
+      "end_in_section": 1132,
+      "text": "- Does not include global repository context; no evaluation of consistency across modules.\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The target sentence specifies a concrete limitation (no global repository context / no cross-module consistency evaluation) that was not stated earlier in the TypeEvalPy section. This is the first explicit mention of that limitation here and is not merely paraphrasing prior sentences, so it is not unnecessary repetition. It does not meet any referential, concluding, or introductory exclusion criteria beyond being a first mention.",
+      "llm_coherence_analysis": "The target sentence continues the discussion of TypeEvalPy\u2019s limitations by noting it lacks repository-level context and cannot evaluate cross-module consistency. This directly follows the previous limitation about small scale and aligns with the section\u2019s focus, so it is coherent with the surrounding text.",
+      "llm_specificity_analysis": "The sentence states a limitation of TypeEvalPy (it lacks global repository context and thus cannot evaluate cross-module consistency). This directly clarifies the dataset's scope and is relevant to choosing benchmarks, so it\u2019s not providing unnecessary minutiae or tangential detail.",
+      "llm_missing_details_analysis": "The sentence states that TypeEvalPy lacks global repository context and cross-module consistency evaluation, which is a limitation that the rest of the response already addresses (TypyBench and the Gaps & Open Challenges discuss global consistency, and Practical Recommendations suggest using TypyBench for repository-level evaluation). Therefore it is not left unexplained."
+    },
+    {
+      "idx": "4_2",
+      "section_idx": 4,
+      "idx_in_section": 2,
+      "start_in_section": 145,
+      "end_in_section": 191,
+      "text": "Useful for comparing static inference methods.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": true,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence \u201cUseful for comparing static inference methods.\u201d restates the same point already made by the surrounding description (TypeEvalPy is a micro-benchmark that precisely tests specific features and is good for ablation/tool component evaluation). It adds no new information and is a paraphrased repetition rather than a first mention, referential note, introduction, or conclusion. Therefore it meets the inclusion criterion for unnecessary/paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence fits the context: TypeEvalPy is a micro-benchmark for specific Python typing features, so stating it is useful for comparing static inference methods is relevant (even if slightly narrow). It does not introduce unrelated concepts or hallucinate entities, and it supports the logical flow.",
+      "llm_specificity_analysis": "The sentence \u201cUseful for comparing static inference methods.\u201d is a short, high-level claim about TypeEvalPy\u2019s suitability. It does not introduce excessive technical minutiae, exhaustive lists, or tangential granular details beyond the user\u2019s intent (identifying datasets for evaluating type inference). Thus it is not over-specific.",
+      "llm_missing_details_analysis": "The TypeEvalPy section immediately surrounding the target sentence explains its scope (154 snippets, 845 annotations, 18 categories), notes that it provides standardized metrics, normalized formats, and containerized reproducible evaluation, and lists strengths (precisely tests tricky features, good for ablation studies). These details justify and elaborate on the claim that it\u2019s useful for comparing static inference methods. Therefore the sentence does not introduce an unexplained concept or claim."
+    },
+    {
+      "idx": "4_4",
+      "section_idx": 4,
+      "idx_in_section": 4,
+      "start_in_section": 260,
+      "end_in_section": 274,
+      "text": "- **Details**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The marked sentence is just an introductory subheading (\u201cDetails:\u201d) that introduces the following bullets. This is structural/cohesive repetition (an introductory label), not unnecessary or paraphrased repetition of prior content, so it meets an exclusion criterion (Introductory).",
+      "llm_coherence_analysis": "The target fragment (\u201c- **Details:**\u201d) functions as a subheading introducing the following specific information about TypeEvalPy. It fits logically between the brief description and the detailed bullet points, so it is coherent with the surrounding text.",
+      "llm_specificity_analysis": "The marked sentence is just a section heading (\u201cDetails:\u201d) and contains no factual specifics or extra granularity. It does not introduce unnecessary detail beyond its role as a label; the actual detailed content follows in the bullets. Therefore it is not over-specific.",
+      "llm_missing_details_analysis": "The tagged sentence is simply a heading (\u2018Details:\u2019) introducing the following bullets that provide specifics about TypeEvalPy (snippet counts, categories, metrics, strengths/limitations). The response does elaborate the concept immediately after, so it does not leave missing details."
+    },
+    {
+      "idx": "4_5",
+      "section_idx": 4,
+      "idx_in_section": 5,
+      "start_in_section": 277,
+      "end_in_section": 416,
+      "text": "- 154 code snippets with **845 type annotations**, covering **18 categories** (e.g. function returns, arguments, generics, built-ins, etc.)",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence provides specific dataset counts (154 snippets, 845 annotations, 18 categories) that are not stated earlier in the response; this is the first mention of those details, so it is not unnecessary repetition.",
+      "llm_coherence_analysis": "The target sentence gives specific details (counts and categories) about TypeEvalPy, which matches the preceding sentence describing it as a micro-benchmark of small code snippets. It stays on topic, introduces no unrelated entities, and supports the logical progression of the description, so it is coherent.",
+      "llm_specificity_analysis": "The counts and category number are concise, relevant scale indicators that help the user assess the benchmark\u2019s applicability; they serve as useful evidence rather than unnecessary minutiae. The examples are illustrative, not exhaustive.",
+      "llm_missing_details_analysis": "The target sentence gives specific counts and categories for TypeEvalPy but the rest of the response expands on what TypeEvalPy is, its purpose, strengths, and limitations. The sentence does not introduce an unexplained concept or claim that the response fails to follow up on."
+    },
+    {
+      "idx": "4_6",
+      "section_idx": 4,
+      "idx_in_section": 6,
+      "start_in_section": 417,
+      "end_in_section": 483,
+      "text": ".",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "4_7",
+      "section_idx": 4,
+      "idx_in_section": 7,
+      "start_in_section": 488,
+      "end_in_section": 552,
+      "text": "- Provides a standardized metric suite, normalized formats, etc.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "The target sentence introduces new specifics (a standardized metric suite and normalized formats) that were not stated earlier in the paragraph; it is not paraphrasing prior content nor explicitly referring to a previous mention. It therefore does not meet the inclusion criteria for unnecessary or paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence describes standardized metrics and normalized formats for the TypeEvalPy micro-benchmark, which directly supports the preceding claim about it being a micro-benchmarking framework and the following sentence about reproducible evaluation. It stays on topic and contributes to the logical flow (formatting with a leading hyphen is a minor stylistic issue only).",
+      "llm_specificity_analysis": "The sentence is a brief, high-level summary of TypeEvalPy\u2019s features (standardized metrics and normalized formats). It does not introduce unnecessary technical minutiae, excessive examples, or tangential details beyond the user\u2019s intent, so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence introduces that TypeEvalPy \u201cprovides a standardized metric suite, normalized formats, etc.\u201d and supports containerized, reproducible evaluation but does not explain what those metrics are, what normalized formats mean, or how containerization/reproducibility is implemented. The rest of the response does not elaborate on these specifics (it only gives general metric suggestions later), so the reader is left wanting concrete details."
+    },
+    {
+      "idx": "4_8",
+      "section_idx": 4,
+      "idx_in_section": 8,
+      "start_in_section": 553,
+      "end_in_section": 628,
+      "text": "Allows multiple tools to be evaluated in a containerized, reproducible way.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "TypeEvalPy: A Micro-benchmarking Framework for Python Type Inference Tools",
+          "https://arxiv.org/abs/2312.16882?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "The TypeEvalPy description already said it\u2019s useful for comparing tools, but the marked sentence adds specific, new information (containerized and reproducible evaluation). This is additional detail (positive cohesion), not unnecessary/paraphrased repetition.",
+      "llm_coherence_analysis": "The sentence fits the TypeEvalPy description: it states a plausible capability of a micro-benchmarking framework (supporting containerized, reproducible evaluations) and flows logically between the dataset details and the strengths/limitations. It does not introduce unrelated entities or a domain shift.",
+      "llm_specificity_analysis": "The sentence states a concise capability of the benchmark (that it supports containerized, reproducible evaluations). This is clarifying and relevant to someone choosing evaluation datasets/frameworks\u2014not tangential technical minutiae, exhaustive listing, or mismatched scope. The detail helps the user understand the framework\u2019s evaluation reproducibility rather than providing unnecessary low-level specifics.",
+      "llm_missing_details_analysis": "The sentence claims TypeEvalPy \u201cAllows multiple tools to be evaluated in a containerized, reproducible way,\u201d but the response never explains how this is achieved (no details on the container tooling, execution workflow, supported tool interfaces, example commands, or where to find the container images). This capability is asserted but not elaborated, so readers are left wanting more information."
+    },
+    {
+      "idx": "5_0",
+      "section_idx": 5,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 29,
+      "text": "### HiTyper uses ManyTypes4Py",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "5_1",
+      "section_idx": 5,
+      "idx_in_section": 1,
+      "start_in_section": 31,
+      "end_in_section": 45,
+      "text": "- **Details**:",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hityper \u00b7 PyPI",
+          "https://pypi.org/project/hityper/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The tagged text is just a repeated subheading (\u201cDetails:\u201d) introducing the HiTyper subsection. This functions as an introductory/structural label consistent with earlier dataset entries and supports cohesion rather than adding redundant content, so it should not be marked as unnecessary repetition.",
+      "llm_coherence_analysis": "The target line is a brief subsection header (\u201c- **Details**:\u201d) introducing the subsequent sentences about HiTyper\u2019s use of ManyTypes4Py. It logically fits the surrounding paragraph and acts as a connector rather than introducing unrelated content or hallucinating new entities.",
+      "llm_specificity_analysis": "The target text is just a section heading (\u201c- **Details**:\u201d) and contains no factual or granular information. It does not introduce unnecessary specificity, evidence, or exhaustive listing, so it is not over-specific.",
+      "llm_missing_details_analysis": "The tagged sentence is a section heading (\u201cDetails:\u201d) that is immediately followed by specific elaboration about HiTyper (its use of ManyTypes4Py, metrics reported, and significance). The rest of the response provides the promised details, so the sentence does not introduce an unexplained claim or concept."
+    },
+    {
+      "idx": "5_2",
+      "section_idx": 5,
+      "idx_in_section": 2,
+      "start_in_section": 46,
+      "end_in_section": 221,
+      "text": "- HiTyper is another system (static + ML components) whose evaluation is built on the ManyTypes4Py dataset.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hityper \u00b7 PyPI",
+          "https://pypi.org/project/hityper/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence restates what the subsection heading already conveys (\u201cHiTyper uses ManyTypes4Py\u201d) and is referential to that heading (and to the next sentence that elaborates metrics). This meets an exclusion criterion, so it should not be marked as redundant.",
+      "llm_coherence_analysis": "The sentence fits the heading and surrounding context: it introduces HiTyper (consistent with the 'HiTyper uses ManyTypes4Py' section) and states its evaluation dataset, which is directly referenced by the next sentence about reported metrics. No domain drift, hallucination, or abrupt topic change is present.",
+      "llm_specificity_analysis": "The sentence briefly states that HiTyper\u2019s evaluation uses the ManyTypes4Py dataset and provides a source link. This is a concise, relevant factual claim that supports the response (acts as evidence) and does not introduce unnecessary technical minutiae, exhaustive lists, or tangential details. Therefore it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence states that HiTyper\u2019s evaluation is built on ManyTypes4Py and the response immediately follows with how HiTyper\u2019s metrics are measured using MT4Py test subsets and the significance of that linkage. The claim is sufficiently followed up in the surrounding text for this context."
+    },
+    {
+      "idx": "5_3",
+      "section_idx": 5,
+      "idx_in_section": 3,
+      "start_in_section": 224,
+      "end_in_section": 433,
+      "text": "- HiTyper\u2019s reported metrics (exact match, generic types, user-defined types, return values, etc.) are measured using MT4Py\u2019s \u201ctest\u201d subsets.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hityper \u00b7 PyPI",
+          "https://pypi.org/project/hityper/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence provides specific new information about how HiTyper\u2019s metrics are measured (which metrics and that they use MT4Py\u2019s \u201ctest\u201d subsets). Although it relates to the preceding statement that HiTyper uses ManyTypes4Py, it adds concrete measurement details rather than repeating prior content, so it does not meet the repetition/redundancy criteria.",
+      "llm_coherence_analysis": "The sentence directly elaborates how HiTyper\u2019s evaluation is carried out (which metrics and that they use MT4Py test subsets), coherently following the preceding sentence that said HiTyper uses ManyTypes4Py. It stays on-topic, introduces no unrelated entities, and supports the logical flow.",
+      "llm_specificity_analysis": "The sentence links HiTyper\u2019s evaluation to the MT4Py test subsets and lists example metrics. Given the user asked which datasets are used, this supports the point that MT4Py is used in real evaluations; the metric examples are relevant evidence rather than unnecessary technical minutiae. Therefore it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence is a concise factual claim that HiTyper\u2019s metrics are computed on MT4Py\u2019s test subsets. The response already describes MT4Py and discusses relevant metrics elsewhere (e.g., exact/partial match, consistency), so this statement does not introduce an unexplained concept or leave the reader needing additional follow-up within the context of the answer."
+    },
+    {
+      "idx": "5_4",
+      "section_idx": 5,
+      "idx_in_section": 4,
+      "start_in_section": 433,
+      "end_in_section": 567,
+      "text": "- **Significance**: Shows how systems both static/inference and ML methods benchmark on the same standardized large dataset.\n\n---",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "hityper \u00b7 PyPI",
+          "https://pypi.org/project/hityper/?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence is a brief summary/assessment of the prior bullet (HiTyper uses MT4Py) and explicitly refers back to that information, serving as a concluding/referential remark rather than an unnecessary repetition. This matches the Exclusion criteria (Referential and Concluding).",
+      "llm_coherence_analysis": "The sentence (\u201cSignificance: Shows how systems both static/inference and ML methods benchmark on the same standardized large dataset.\u201d) directly follows the HiTyper description and explains why using ManyTypes4Py matters. It stays on-topic, reinforces the preceding point about evaluation using MT4Py, and does not introduce unrelated entities or sudden topic shifts.",
+      "llm_specificity_analysis": "The sentence is a concise, high-level remark explaining why mentioning HiTyper on MT4Py matters for readers comparing datasets/tools. It provides relevant context and does not include unnecessary technical minutiae or exhaustive details, so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence states that HiTyper\u2019s reported metrics are measured using MT4Py\u2019s test subsets and is followed by a significance note linking this to benchmarking on a standardized dataset. The response already describes ManyTypes4Py (its splits, strengths, and use for ML systems) and discusses metrics elsewhere, so the claim does not introduce an unexplained concept or leave the reader needing crucial missing details. It\u2019s a brief factual note rather than a new method or result requiring further elaboration."
+    },
+    {
+      "idx": "6_0",
+      "section_idx": 6,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 35,
+      "text": "## Other Benchmarks / Tools to Know",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "6_1",
+      "section_idx": 6,
+      "idx_in_section": 1,
+      "start_in_section": 37,
+      "end_in_section": 240,
+      "text": "While the following are not full annotated datasets *specifically* for type inference, they are used in related contexts (e.g. code understanding, code annotation, auto-completion, type stub generation):",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "6_2",
+      "section_idx": 6,
+      "idx_in_section": 2,
+      "start_in_section": 242,
+      "end_in_section": 448,
+      "text": "- **Pytype / Pyre / Mypy internal test suites**, many tools use their internal test cases (toy and real library code), but often not fully public or not sufficiently large/standardized for cross-comparison.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "DS-1000: A Natural and Reliable Benchmark for Data Science Code Generation",
+          "https://arxiv.org/abs/2211.11501?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "The sentence names Pytype/Pyre/Mypy internal test suites, which were mentioned earlier only in passing as example tools; this sentence adds new information (that many tools rely on internal test cases and that these are often not public or standardized). It is not simply repeating prior content or paraphrasing the same point, so it does not meet the repetition/ redundancy inclusion criteria.",
+      "llm_coherence_analysis": "The sentence fits the surrounding section (other benchmarks/tools), mentions internal test suites used by type checkers, and explains their limitations\u2014this stays on-topic and logically follows the list. It does not introduce unrelated entities or break the narrative.",
+      "llm_specificity_analysis": "The sentence briefly notes that some tools rely on their internal test suites (Pytype/Pyre/Mypy) but that these are often not fully public or standardized. This is a concise, relevant caveat for a discussion of publicly available datasets rather than unnecessary technical minutiae or an exhaustive list, so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence is a concise factual note that many tools use their internal test suites but that those suites are often not public or standardized. This does not introduce an undeveloped concept that the rest of the response fails to follow up on; it simply flags a limitation. The rest of the response already covers public datasets and alternative resources, so no further elaboration is necessary here."
+    },
+    {
+      "idx": "6_3",
+      "section_idx": 6,
+      "idx_in_section": 3,
+      "start_in_section": 449,
+      "end_in_section": 664,
+      "text": "- Datasets drawn from **Typeshed** (which provides types for standard library and many popular third-party libs) are sometimes used to check coverage or consistency but not always as a benchmark for inference tools.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "DS-1000: A Natural and Reliable Benchmark for Data Science Code Generation",
+          "https://arxiv.org/abs/2211.11501?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": false,
+      "llm_repetitive_analysis": "This sentence introduces Typeshed for the first time; it\u2019s not repeating prior content in the response and therefore does not meet the repetition inclusion criteria (Exclusion criterion 1: First Mention).",
+      "llm_coherence_analysis": "The sentence fits the preceding context (other non-full-dataset resources), introduces Typeshed (a relevant, known source of type stubs) without unrelated domain drift or unsupported entities, and logically follows the bullet about internal test suites. It maintains topic relevance and supports the paragraph\u2019s point that some resources are used for related evaluations rather than as primary inference benchmarks.",
+      "llm_specificity_analysis": "The sentence names Typeshed and explains its typical (limited) role \u2014 checking coverage/consistency rather than serving as a full benchmark. That clarification is relevant to the user\u2019s question and not gratuitously detailed (no minor dates/codes or exhaustive lists). Therefore it isn\u2019t over-specific.",
+      "llm_missing_details_analysis": "The sentence is a brief, self-contained aside: it names Typeshed and immediately explains its role (providing types for stdlib and popular libs). The response does not need to further elaborate on Typeshed for the reader to understand the point (that Typeshed is sometimes used for coverage/consistency checks but not as a primary inference benchmark). Therefore it does not introduce unresolved concepts or claims that leave the reader wanting more."
+    },
+    {
+      "idx": "6_4",
+      "section_idx": 6,
+      "idx_in_section": 4,
+      "start_in_section": 665,
+      "end_in_section": 836,
+      "text": "- Benchmarks for code generation (e.g. DS-1000) are more about generating code; they may include type annotations but not in a way optimized for type inference evaluation.",
+      "type": "text_sentence",
+      "citations": [
+        [
+          "DS-1000: A Natural and Reliable Benchmark for Data Science Code Generation",
+          "https://arxiv.org/abs/2211.11501?utm_source=openai"
+        ]
+      ],
+      "has_citations": true,
+      "is_citation_needed_llm": true,
+      "llm_is_repetitive": false,
+      "llm_is_non_coherent": false,
+      "llm_is_over_specific": false,
+      "llm_is_missing_details": true,
+      "llm_repetitive_analysis": "This sentence introduces a new point (that code-generation benchmarks like DS-1000 are about code generation and not optimized for type-inference evaluation) that was not previously stated elsewhere in the response. It is a first mention rather than a needless repetition or paraphrase of earlier content, so it meets the exclusion criterion (First Mention).",
+      "llm_coherence_analysis": "The sentence fits the surrounding paragraph listing related but not directly targeted resources. It stays on topic (other benchmarks/tools), does not introduce unrelated concepts or unexplained entities, and explains why code-generation benchmarks (e.g. DS-1000) are less suitable for type-inference evaluation. Therefore it is coherent.",
+      "llm_specificity_analysis": "The sentence briefly cites an example (DS-1000) to clarify that some code-generation benchmarks include type annotations but are not tailored for type-inference evaluation. This is a relevant, succinct qualification rather than unnecessary technical minutiae or exhaustive detail, so it is not over-specific.",
+      "llm_missing_details_analysis": "The sentence names a specific benchmark (DS-1000) and claims it\u2019s focused on code generation and not optimized for type-inference evaluation, but the full response never explains what DS-1000 is, how it differs from the listed type-focused datasets, or why its annotations are unsuitable for inference benchmarking. This introduces a concrete example and a comparative claim that isn\u2019t elaborated elsewhere, so a reader could reasonably want more detail."
+    },
+    {
+      "idx": "6_5",
+      "section_idx": 6,
+      "idx_in_section": 5,
+      "start_in_section": 836,
+      "end_in_section": 909,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "7_0",
+      "section_idx": 7,
+      "idx_in_section": 0,
+      "start_in_section": 0,
+      "end_in_section": 28,
+      "text": "## Summary: Comparison Table",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "7_1",
+      "section_idx": 7,
+      "idx_in_section": 1,
+      "start_in_section": 28,
+      "end_in_section": 121,
+      "text": "Here\u2019s a quick summary to help choose what\u2019s suitable depending on your evaluation goals:",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    },
+    {
+      "idx": "9_0",
+      "section_idx": 9,
+      "idx_in_section": 0,
+      "start_in_section": 1,
+      "end_in_section": 4,
+      "text": "---",
+      "type": "text_sentence",
+      "citations": [],
+      "has_citations": false,
+      "is_citation_needed_llm": false,
+      "llm_is_repetitive": null,
+      "llm_is_non_coherent": null,
+      "llm_is_over_specific": null,
+      "llm_is_missing_details": null,
+      "llm_repetitive_analysis": "",
+      "llm_coherence_analysis": "",
+      "llm_specificity_analysis": "",
+      "llm_missing_details_analysis": ""
+    }
+  ]
+}
