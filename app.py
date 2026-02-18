@@ -33,7 +33,7 @@ for key, default in [
     ("annotator_id", ""),
     ("current_sentence_idx", 0),
     ("annotations", {}),
-    ("nav_mode", "all"),
+    ("nav_mode", "citation_needed"),
     ("tutorial_mode", False),
     ("_prev_model", None),
     ("_prev_example", None),
@@ -117,6 +117,7 @@ def _render_report_sections(
 
         section_start = section.get("start", 0)
         sentence_parts = []
+        rendered_count = 0
         for i_seg, seg in enumerate(sec_segments):
             seg_idx = seg["idx"]
             raw_text = seg.get("text", "")
@@ -134,8 +135,9 @@ def _render_report_sections(
                 abs_start = section_start + start_in_sec
                 orig_newlines = answer_text[max(0, abs_start - 4):abs_start]
 
-            is_first = (i_seg == 0)
+            is_first = (rendered_count == 0)
             text, newlines = _parse_markdown_to_html(escaped, orig_newlines=orig_newlines, is_first=is_first)
+            rendered_count += 1
 
             in_filter = seg_idx in filtered_set
             is_current = seg_idx == current_seg_idx
@@ -150,7 +152,13 @@ def _render_report_sections(
             else:
                 style = ""
 
-            sentence_parts.append(f'{newlines}<span style="{style}">{text}</span>')
+            is_list_item = raw_text.lstrip().startswith(('* ', '- ', '• '))
+            if is_list_item:
+                sentence_parts.append(
+                    f'<div style="margin-left:1.5em; text-indent:-1.2em; margin-top:0.3em; {style}">{text}</div>'
+                )
+            else:
+                sentence_parts.append(f'{newlines}<span style="{style}">{text}</span>')
 
         if sentence_parts:
             paragraph = " ".join(sentence_parts)
@@ -215,7 +223,8 @@ with st.sidebar:
 
     st.divider()
 
-    nav_mode = st.radio("Navigation mode", ["All sentences", "Citation-needed only"], horizontal=True)
+    nav_default = 1 if st.session_state.nav_mode == "citation_needed" else 0
+    nav_mode = st.radio("Navigation mode", ["All sentences", "Citation-needed only"], index=nav_default, horizontal=True)
     nav_mode_key = "all" if nav_mode == "All sentences" else "citation_needed"
 
     # Detect what changed
