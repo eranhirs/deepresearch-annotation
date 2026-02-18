@@ -34,10 +34,12 @@ def get_available_annotation_examples(model: str) -> list[str]:
         if f.startswith(prefix) and f.endswith(".json"):
             example_id = f[len(prefix):-len(".json")]
             examples.append(example_id)
-    try:
-        examples.sort(key=lambda x: int(x))
-    except ValueError:
-        examples.sort()
+    def _sort_key(x: str):
+        try:
+            return (0, int(x), "")
+        except ValueError:
+            return (1, 0, x)
+    examples.sort(key=_sort_key)
     return examples
 
 
