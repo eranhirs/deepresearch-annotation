@@ -57,13 +57,27 @@ def _get_worksheet() -> gspread.Worksheet:
     return worksheet
 
 
+def _rows_to_dicts(all_values: list[list[str]]) -> list[dict[str, str]]:
+    """Convert get_all_values() output to list of dicts using first row as headers."""
+    if len(all_values) < 2:
+        return []
+    headers = all_values[0]
+    results = []
+    for row in all_values[1:]:
+        # Pad short rows with empty strings
+        padded = row + [""] * max(0, len(headers) - len(row))
+        results.append(dict(zip(headers, padded)))
+    return results
+
+
 def load_annotations(annotator_id: str, model_name: str, example_id: str) -> dict[str, dict]:
     """Load existing annotations for this annotator + model + example.
 
     Returns {segment_idx: annotation_dict}.
     """
     worksheet = _get_worksheet()
-    all_records = worksheet.get_all_records()
+    all_values = worksheet.get_all_values()
+    all_records = _rows_to_dicts(all_values)
 
     annotations = {}
     for row in all_records:
@@ -142,5 +156,6 @@ def save_annotation(
 def download_annotations(annotator_id: str) -> list[dict]:
     """Fetch all annotations for a given annotator as a list of dicts."""
     worksheet = _get_worksheet()
-    all_records = worksheet.get_all_records()
+    all_values = worksheet.get_all_values()
+    all_records = _rows_to_dicts(all_values)
     return [row for row in all_records if row.get("annotator_id") == annotator_id]
