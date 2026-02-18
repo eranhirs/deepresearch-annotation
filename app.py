@@ -35,6 +35,7 @@ for key, default in [
     ("annotations", {}),
     ("nav_mode", "citation_needed"),
     ("tutorial_mode", False),
+    ("tutorial_annotations", {}),
     ("_prev_model", None),
     ("_prev_example", None),
     ("_prev_annotator", None),
@@ -53,6 +54,61 @@ def _get_filtered_segments(segments: list[dict], nav_mode: str) -> list[dict]:
         filtered = [s for s in filtered if s.get("is_citation_needed_llm")]
     filtered.sort(key=lambda s: (s.get("section_idx", 0), s.get("idx_in_section", 0)))
     return filtered
+
+
+def _select_tutorial_subset(segments: list[dict]) -> list[dict]:
+    """Select a curated subset of segments covering each issue type for tutorial.
+
+    Picks up to 2 per category, preferring segments where that issue is the ONLY one.
+    Returns subset re-sorted by (section_idx, idx_in_section) to preserve report order.
+    """
+    categories = {
+        "no_issues": [],
+        "repetitive": [],
+        "non_coherent": [],
+        "over_specific": [],
+        "missing_details": [],
+    }
+    issue_fields = {
+        "repetitive": "llm_is_repetitive",
+        "non_coherent": "llm_is_non_coherent",
+        "over_specific": "llm_is_over_specific",
+        "missing_details": "llm_is_missing_details",
+    }
+
+    for seg in segments:
+        active_issues = [
+            cat for cat, field in issue_fields.items()
+            if seg.get(field) is True
+        ]
+        if not active_issues:
+            categories["no_issues"].append((seg, 0))  # 0 = no other issues
+        else:
+            for cat in active_issues:
+                # Count how many OTHER issues this segment has (fewer = cleaner example)
+                other_count = len(active_issues) - 1
+                categories[cat].append((seg, other_count))
+
+    # Sort each category: prefer segments with fewer other issues (cleaner examples)
+    for cat in categories:
+        categories[cat].sort(key=lambda x: x[1])
+
+    selected_idxs: set[str] = set()
+    selected: list[dict] = []
+
+    for cat in ["non_coherent", "over_specific", "missing_details", "repetitive", "no_issues"]:
+        count = 0
+        for seg, _ in categories[cat]:
+            if count >= 2:
+                break
+            if seg["idx"] in selected_idxs:
+                continue
+            selected.append(seg)
+            selected_idxs.add(seg["idx"])
+            count += 1
+
+    selected.sort(key=lambda s: (s.get("section_idx", 0), s.get("idx_in_section", 0)))
+    return selected
 
 
 def _parse_markdown_to_html(text: str, orig_newlines: str | None = None, is_first: bool = False) -> tuple[str, str]:
@@ -188,6 +244,7 @@ with st.sidebar:
         st.session_state.tutorial_mode = tutorial_mode
         st.session_state._prev_tutorial = tutorial_mode
         st.session_state.current_sentence_idx = 0
+        st.session_state.tutorial_annotations = {}
 
     if tutorial_mode:
         # Tutorial: load example files
@@ -202,6 +259,7 @@ with st.sidebar:
         example_changed = tutorial_example != st.session_state._prev_example
         if example_changed:
             st.session_state.current_sentence_idx = 0
+            st.session_state.tutorial_annotations = {}
             st.session_state._prev_example = tutorial_example
 
         # Dummy values for non-tutorial code paths
@@ -294,6 +352,9 @@ else:
 segments = data.get("segments", [])
 filtered = _get_filtered_segments(segments, st.session_state.nav_mode)
 
+if tutorial_mode and filtered:
+    filtered = _select_tutorial_subset(filtered)
+
 # Determine current segment (None if filter is empty)
 if filtered:
     idx = st.session_state.current_sentence_idx
@@ -307,7 +368,13 @@ else:
 # Progress bar in sidebar
 with st.sidebar:
     if tutorial_mode:
-        st.caption(f"{len(filtered)} sentences in this example")
+        if filtered:
+            tut_completed = sum(1 for s in filtered if s["idx"] in st.session_state.tutorial_annotations)
+            tut_total = len(filtered)
+            st.progress(tut_completed / tut_total if tut_total > 0 else 0.0)
+            st.caption(f"Tutorial: {tut_completed} of {tut_total} completed")
+        else:
+            st.caption("No tutorial sentences found")
     elif filtered:
         annotated_count = sum(1 for s in filtered if s["idx"] in st.session_state.annotations)
         total_count = len(filtered)
@@ -318,7 +385,7 @@ with st.sidebar:
 
 # Tutorial banner
 if tutorial_mode:
-    st.info("**Tutorial** -- Review the example annotations to understand the rubrics. No annotations are saved in this mode.")
+    st.info("**Tutorial** -- Practice annotating each sentence, then submit to see LLM feedback. No annotations are saved.")
 
 # Question
 st.markdown(f"**Question:** {data.get('question', '')}")
@@ -353,7 +420,8 @@ rubrics = [
 current_seg_idx = current_seg["idx"] if current_seg is not None else None
 current_section_idx = current_seg.get("section_idx") if current_seg is not None else None
 
-section_htmls = _render_report_sections(data, filtered, current_seg_idx, st.session_state.annotations)
+annotations_for_display = st.session_state.tutorial_annotations if tutorial_mode else st.session_state.annotations
+section_htmls = _render_report_sections(data, filtered, current_seg_idx, annotations_for_display)
 
 for sec_idx, sec_html in section_htmls:
     st.markdown(sec_html, unsafe_allow_html=True)
@@ -378,27 +446,68 @@ for sec_idx, sec_html in section_htmls:
                     for title, url in citations:
                         st.markdown(f"- [{html.escape(title)}]({url})")
 
-            # Tutorial mode: read-only LLM annotations
+            # Tutorial mode: practice annotation with feedback
             if tutorial_mode:
-                for field, expl_field, label, llm_field, llm_analysis_field in rubrics:
-                    llm_val = current_seg.get(llm_field)
-                    llm_analysis = current_seg.get(llm_analysis_field, "")
+                seg_idx = current_seg["idx"]
+                submitted = st.session_state.tutorial_annotations.get(seg_idx)
 
-                    if llm_val is True:
-                        badge = ":red[**Yes**]"
-                    elif llm_val is False:
-                        badge = ":green[**No**]"
-                    else:
-                        badge = ":gray[N/A]"
+                if submitted is None:
+                    # ── State A: annotator practices ──
+                    st.caption("Evaluate each rubric independently, then submit to see LLM feedback.")
+                    tut_annotation = {}
+                    for field, _expl_field, label, _llm_field, _llm_analysis_field in rubrics:
+                        choice = st.radio(
+                            label,
+                            ["Yes", "No", "---"],
+                            index=2,
+                            horizontal=True,
+                            key=f"tut_{seg_idx}_{field}",
+                        )
+                        if choice == "Yes":
+                            tut_annotation[field] = True
+                        elif choice == "No":
+                            tut_annotation[field] = False
 
-                    st.markdown(f"**{label}** {badge}")
-                    if llm_analysis:
-                        with st.expander("LLM analysis"):
-                            st.markdown(llm_analysis)
+                    if st.button("Submit", key="tut_submit", type="primary", use_container_width=True):
+                        has_answer = any(f in tut_annotation for f, _, _, _, _ in rubrics)
+                        if not has_answer:
+                            st.error("Please answer at least one rubric before submitting.")
+                        else:
+                            st.session_state.tutorial_annotations[seg_idx] = tut_annotation
+                            st.rerun()
 
-                if st.button("Next", key="tutorial_next", type="primary", use_container_width=True, disabled=idx == len(filtered) - 1):
-                    st.session_state.current_sentence_idx = idx + 1
-                    st.rerun()
+                else:
+                    # ── State B: show feedback ──
+                    for field, _expl_field, label, llm_field, llm_analysis_field in rubrics:
+                        llm_val = current_seg.get(llm_field)
+                        llm_analysis = current_seg.get(llm_analysis_field, "")
+                        user_val = submitted.get(field)  # True, False, or missing (---)
+
+                        # Format user answer
+                        if user_val is True:
+                            user_str = "**Yes**"
+                        elif user_val is False:
+                            user_str = "**No**"
+                        else:
+                            user_str = "**---**"
+
+                        if llm_val is True:
+                            # LLM found an issue — show detail
+                            llm_str = ":red[Yes]"
+                            st.markdown(f"**{label}** — You: {user_str} · LLM: {llm_str}")
+                            if user_val is not True:
+                                st.caption("↑ Your answer differs from the LLM on this rubric.")
+                            if llm_analysis:
+                                st.info(f"**LLM analysis:** {llm_analysis}")
+                        else:
+                            # LLM found no issue — compact line
+                            st.markdown(f"**{label}** — You: {user_str} · LLM: :green[No]")
+                            if user_val is True:
+                                st.caption("↑ Your answer differs from the LLM on this rubric.")
+
+                    if st.button("Next →", key="tut_next", type="primary", use_container_width=True, disabled=idx == len(filtered) - 1):
+                        st.session_state.current_sentence_idx = idx + 1
+                        st.rerun()
 
             # Annotation mode
             else:
