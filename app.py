@@ -532,6 +532,8 @@ for sec_idx, sec_html in section_htmls:
                             st.markdown(f"**{label}** — You: {user_str} · LLM: :green[No]")
                             if user_val is True:
                                 st.caption("↑ Your answer differs from the LLM on this rubric.")
+                                if llm_analysis:
+                                    st.info(f"**LLM analysis:** {llm_analysis}")
 
                     if st.button("Next →", key="tut_next", type="primary", use_container_width=True, disabled=idx == len(filtered) - 1):
                         st.session_state.current_sentence_idx = idx + 1
