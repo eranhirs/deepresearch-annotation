@@ -134,6 +134,8 @@ def _render_report_sections(
     filtered_segments: list[dict],
     current_seg_idx: str | None,
     annotations: dict,
+    *,
+    is_tutorial: bool = False,
 ) -> list[tuple[int, str]]:
     """Build per-section HTML for the report with highlighted sentences.
 
@@ -201,9 +203,7 @@ def _render_report_sections(
 
             if is_current:
                 style = "background-color:rgba(253,216,53,0.15); padding:2px 4px; border-radius:4px; font-weight:bold;"
-            elif is_annotated:
-                style = "border-left:3px solid #4caf50; padding-left:4px;"
-            elif not in_filter:
+            elif not in_filter and not is_tutorial:
                 style = "color:#999;"
             else:
                 style = ""
@@ -211,7 +211,7 @@ def _render_report_sections(
             is_list_item = raw_text.lstrip().startswith(('* ', '- ', '• '))
             if is_list_item:
                 sentence_parts.append(
-                    f'<div style="margin-left:1.5em; text-indent:-1.2em; margin-top:0.3em; {style}">{text}</div>'
+                    f'<div style="margin-left:1.5em; text-indent:-1em; line-height:1.6; margin-top:0.15em; {style}">{text}</div>'
                 )
             else:
                 sentence_parts.append(f'{newlines}<span style="{style}">{text}</span>')
@@ -421,7 +421,7 @@ current_seg_idx = current_seg["idx"] if current_seg is not None else None
 current_section_idx = current_seg.get("section_idx") if current_seg is not None else None
 
 annotations_for_display = st.session_state.tutorial_annotations if tutorial_mode else st.session_state.annotations
-section_htmls = _render_report_sections(data, filtered, current_seg_idx, annotations_for_display)
+section_htmls = _render_report_sections(data, filtered, current_seg_idx, annotations_for_display, is_tutorial=tutorial_mode)
 
 for sec_idx, sec_html in section_htmls:
     st.markdown(sec_html, unsafe_allow_html=True)
@@ -469,9 +469,9 @@ for sec_idx, sec_html in section_htmls:
                             tut_annotation[field] = False
 
                     if st.button("Submit", key="tut_submit", type="primary", use_container_width=True):
-                        has_answer = any(f in tut_annotation for f, _, _, _, _ in rubrics)
-                        if not has_answer:
-                            st.error("Please answer at least one rubric before submitting.")
+                        all_answered = all(f in tut_annotation for f, _, _, _, _ in rubrics)
+                        if not all_answered:
+                            st.error("Please answer all rubrics before submitting.")
                         else:
                             st.session_state.tutorial_annotations[seg_idx] = tut_annotation
                             st.rerun()
