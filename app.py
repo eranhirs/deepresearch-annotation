@@ -111,6 +111,7 @@ def _select_tutorial_subset(segments: list[dict]) -> list[dict]:
     return selected
 
 
+
 def _parse_markdown_to_html(text: str, orig_newlines: str | None = None, is_first: bool = False) -> tuple[str, str]:
     """Minimal markdown-to-HTML for display. Returns (html_text, newline_prefix)."""
     # Compute newline prefix from original answer text
@@ -218,15 +219,25 @@ def _render_report_sections(
 
             is_list_item = raw_text.lstrip().startswith(('* ', '- ', '• '))
             if is_list_item:
-                # Detect indentation from answer text to preserve nested list levels
+                # Detect indentation from the answer text.
+                # start_in_section may point to leading spaces (if sentencizer kept them)
+                # or directly to the list marker (if sentencizer stripped them).
                 indent_em = 1.5
                 if start_in_sec is not None and answer_text:
                     abs_start = section_start + start_in_sec
-                    line_start = answer_text.rfind('\n', 0, abs_start)
-                    if line_start >= 0:
-                        between = answer_text[line_start + 1:abs_start]
-                        n_spaces = len(between) - len(between.lstrip(' '))
-                        indent_em = 1.5 + n_spaces * 0.75
+                    if abs_start < len(answer_text) and answer_text[abs_start] == ' ':
+                        # Position includes leading whitespace — count from here
+                        window = answer_text[abs_start:abs_start + 10]
+                        n_spaces = len(window) - len(window.lstrip(' '))
+                    else:
+                        # Position is at the list marker — look backwards for spaces
+                        line_start = answer_text.rfind('\n', max(0, abs_start - 20), abs_start)
+                        if line_start >= 0:
+                            between = answer_text[line_start + 1:abs_start]
+                            n_spaces = len(between) - len(between.lstrip(' '))
+                        else:
+                            n_spaces = 0
+                    indent_em = 1.5 + n_spaces * 0.75
 
                 sentence_parts.append(
                     f'<div style="margin-left:{indent_em}em; text-indent:-1em; line-height:1.6; margin-top:0.15em; {style}">{text}</div>'
