@@ -455,11 +455,24 @@ if current_seg is not None:
             st.rerun()
 
 # ── Rubric definitions (shared between annotation and tutorial) ─────────
+# (field, expl_field, label, llm_field, llm_analysis_field, tooltip)
 rubrics = [
-    ("is_repetitive", "repetitive_explanation", "Repetitive?", "llm_is_repetitive", "llm_repetitive_analysis"),
-    ("is_non_coherent", "non_coherent_explanation", "Non-coherent?", "llm_is_non_coherent", "llm_coherence_analysis"),
-    ("is_over_specific", "over_specific_explanation", "Over-specific?", "llm_is_over_specific", "llm_specificity_analysis"),
-    ("is_missing_details", "missing_details_explanation", "Missing details?", "llm_is_missing_details", "llm_missing_details_analysis"),
+    ("is_repetitive", "repetitive_explanation", "Repetitive?", "llm_is_repetitive", "llm_repetitive_analysis",
+     "Yes: repeats information already clearly stated earlier, or conveys the same info in different wording without new insights. "
+     "No: first mention, explicit back-reference, summary/conclusion, or section overview. "
+     "See Annotation Instructions in the sidebar for examples."),
+    ("is_non_coherent", "non_coherent_explanation", "Non-coherent?", "llm_is_non_coherent", "llm_coherence_analysis",
+     "Yes: domain drift, context hallucination (entities never introduced), or broken narrative (topic jump without transition). "
+     "No: stays on topic, supports logical progression, flows smoothly. "
+     "See Annotation Instructions in the sidebar for examples."),
+    ("is_over_specific", "over_specific_explanation", "Over-specific?", "llm_is_over_specific", "llm_specificity_analysis",
+     "Yes: tangential minutiae, mismatched scope (high-level question but niche detail), or exhaustive listing when a summary would suffice. "
+     "No: details serve as evidence, resolve ambiguity, or match domain-standard depth. Don't flag facts that prove a claim. "
+     "See Annotation Instructions in the sidebar for examples."),
+    ("is_missing_details", "missing_details_explanation", "Missing details?", "llm_is_missing_details", "llm_missing_details_analysis",
+     "Yes: introduces a concept/method/finding not explained elsewhere, references a result without context, or uses undefined jargon. "
+     "No: elaborated elsewhere in the response, self-contained factual statement, or conclusion referencing prior material. "
+     "See Annotation Instructions in the sidebar for examples."),
 ]
 
 # ── Render report sections with inline annotation ───────────────────────
@@ -501,13 +514,14 @@ for sec_idx, sec_html in section_htmls:
                     # ── State A: annotator practices ──
                     st.caption("Evaluate each rubric independently, then submit to see LLM feedback.")
                     tut_annotation = {}
-                    for field, _expl_field, label, _llm_field, _llm_analysis_field in rubrics:
+                    for field, _expl_field, label, _llm_field, _llm_analysis_field, tooltip in rubrics:
                         choice = st.radio(
                             label,
                             ["Yes", "No", "---"],
                             index=2,
                             horizontal=True,
                             key=f"tut_{seg_idx}_{field}",
+                            help=tooltip,
                         )
                         if choice == "Yes":
                             tut_annotation[field] = True
@@ -515,7 +529,7 @@ for sec_idx, sec_html in section_htmls:
                             tut_annotation[field] = False
 
                     if st.button("Submit", key="tut_submit", type="primary", use_container_width=True):
-                        all_answered = all(f in tut_annotation for f, _, _, _, _ in rubrics)
+                        all_answered = all(f in tut_annotation for f, _, _, _, _, _ in rubrics)
                         if not all_answered:
                             st.error("Please answer all rubrics before submitting.")
                         else:
@@ -524,7 +538,7 @@ for sec_idx, sec_html in section_htmls:
 
                 else:
                     # ── State B: show feedback ──
-                    for field, _expl_field, label, llm_field, llm_analysis_field in rubrics:
+                    for field, _expl_field, label, llm_field, llm_analysis_field, _tooltip in rubrics:
                         llm_val = current_seg.get(llm_field)
                         llm_analysis = current_seg.get(llm_analysis_field, "")
                         user_val = submitted.get(field)  # True, False, or missing (---)
@@ -567,7 +581,7 @@ for sec_idx, sec_html in section_htmls:
                     existing = st.session_state.annotations.get(current_seg["idx"], {})
 
                     annotation = {}
-                    for field, expl_field, label, _llm_field, _llm_analysis_field in rubrics:
+                    for field, expl_field, label, _llm_field, _llm_analysis_field, tooltip in rubrics:
                         cols = st.columns([2, 3])
                         existing_val = existing.get(field, "")
                         if existing_val == "True" or existing_val is True:
@@ -584,6 +598,7 @@ for sec_idx, sec_html in section_htmls:
                                 index=default_idx,
                                 horizontal=True,
                                 key=f"rubric_{current_seg['idx']}_{field}",
+                                help=tooltip,
                             )
                             if choice == "Yes":
                                 annotation[field] = True
@@ -609,7 +624,7 @@ for sec_idx, sec_html in section_htmls:
                     # Save & Next
                     if st.button("Save & Next", type="primary", use_container_width=True):
                         has_answer = any(
-                            f in annotation for f, _, _, _, _ in rubrics
+                            f in annotation for f, _, _, _, _, _ in rubrics
                         )
                         if not has_answer:
                             st.error("Please answer at least one rubric before saving.")
