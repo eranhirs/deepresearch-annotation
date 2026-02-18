@@ -136,8 +136,6 @@ def _render_report_sections(
     filtered_segments: list[dict],
     current_seg_idx: str | None,
     annotations: dict,
-    *,
-    is_tutorial: bool = False,
 ) -> list[tuple[int, str]]:
     """Build per-section HTML for the report with highlighted sentences.
 
@@ -215,8 +213,6 @@ def _render_report_sections(
 
             if is_current:
                 style = "background-color:rgba(253,216,53,0.15); padding:2px 4px; border-radius:4px; font-weight:bold;"
-            elif not in_filter and not is_tutorial:
-                style = "color:#999;"
             else:
                 style = ""
 
@@ -449,7 +445,7 @@ current_seg_idx = current_seg["idx"] if current_seg is not None else None
 current_section_idx = current_seg.get("section_idx") if current_seg is not None else None
 
 annotations_for_display = st.session_state.tutorial_annotations if tutorial_mode else st.session_state.annotations
-section_htmls = _render_report_sections(data, filtered, current_seg_idx, annotations_for_display, is_tutorial=tutorial_mode)
+section_htmls = _render_report_sections(data, filtered, current_seg_idx, annotations_for_display)
 
 for sec_idx, sec_html in section_htmls:
     st.markdown(sec_html, unsafe_allow_html=True)
