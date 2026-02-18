@@ -124,7 +124,8 @@ def _parse_markdown_to_html(text: str, orig_newlines: str | None = None, is_firs
     # List items: * or -
     text = re.sub(r'^\*\s+', '&bull; ', text)
     text = re.sub(r'^-\s+', '&bull; ', text)
-    # Strip --- separator artifacts
+    # Strip --- separator artifacts (standalone or trailing)
+    text = re.sub(r'\n*-{3,}\s*$', '', text)
     text = re.sub(r'^-{3,}$', '', text.strip())
     return text, newlines
 
@@ -184,6 +185,11 @@ def _render_report_sections(
             if raw_text.strip().startswith('#'):
                 continue
 
+            # Skip degenerate segments (sentencizer artifacts)
+            stripped = raw_text.strip()
+            if stripped in ('.', '') or re.match(r'^-{2,}$', stripped):
+                continue
+
             escaped = html.escape(raw_text)
 
             # Compute orig_newlines from answer text
@@ -195,6 +201,11 @@ def _render_report_sections(
 
             is_first = (rendered_count == 0)
             text, newlines = _parse_markdown_to_html(escaped, orig_newlines=orig_newlines, is_first=is_first)
+
+            # Skip if text is empty after markdown processing (e.g. stripped --- separators)
+            if not text.strip():
+                continue
+
             rendered_count += 1
 
             in_filter = seg_idx in filtered_set
@@ -210,8 +221,18 @@ def _render_report_sections(
 
             is_list_item = raw_text.lstrip().startswith(('* ', '- ', '• '))
             if is_list_item:
+                # Detect indentation from answer text to preserve nested list levels
+                indent_em = 1.5
+                if start_in_sec is not None and answer_text:
+                    abs_start = section_start + start_in_sec
+                    line_start = answer_text.rfind('\n', 0, abs_start)
+                    if line_start >= 0:
+                        between = answer_text[line_start + 1:abs_start]
+                        n_spaces = len(between) - len(between.lstrip(' '))
+                        indent_em = 1.5 + n_spaces * 0.75
+
                 sentence_parts.append(
-                    f'<div style="margin-left:1.5em; text-indent:-1em; line-height:1.6; margin-top:0.15em; {style}">{text}</div>'
+                    f'<div style="margin-left:{indent_em}em; text-indent:-1em; line-height:1.6; margin-top:0.15em; {style}">{text}</div>'
                 )
             else:
                 sentence_parts.append(f'{newlines}<span style="{style}">{text}</span>')
