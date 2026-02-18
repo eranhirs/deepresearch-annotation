@@ -117,8 +117,9 @@ def _parse_markdown_to_html(text: str, orig_newlines: str | None = None, is_firs
     # Compute newline prefix from original answer text
     newlines = ""
     if orig_newlines and not is_first:
-        n = max(orig_newlines.count('\n'), 1)
-        newlines = '<br/>' * n
+        n = orig_newlines.count('\n')
+        if n > 0:
+            newlines = '<br/>' * n
 
     # Bold then italic (order matters: ** before *)
     text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
@@ -177,6 +178,7 @@ def _render_report_sections(
         section_start = section.get("start", 0)
         sentence_parts = []
         rendered_count = 0
+        prev_indent_em = 0  # Track last list item indent for continuations
         for i_seg, seg in enumerate(sec_segments):
             seg_idx = seg["idx"]
             raw_text = seg.get("text", "")
@@ -239,11 +241,20 @@ def _render_report_sections(
                             n_spaces = 0
                     indent_em = 1.5 + n_spaces * 0.75
 
+                prev_indent_em = indent_em
                 sentence_parts.append(
                     f'<div style="margin-left:{indent_em}em; text-indent:-1em; line-height:1.6; margin-top:0.15em; {style}">{text}</div>'
                 )
             else:
-                sentence_parts.append(f'{newlines}<span style="{style}">{text}</span>')
+                # Non-list continuation of a bullet (no newline separation) — merge into previous div
+                if not newlines and prev_indent_em > 0 and sentence_parts:
+                    prev = sentence_parts[-1]
+                    # Insert the continuation text before the closing </div>
+                    styled_text = f' <span style="{style}">{text}</span>' if style else f' {text}'
+                    sentence_parts[-1] = prev.replace('</div>', f'{styled_text}</div>')
+                else:
+                    prev_indent_em = 0
+                    sentence_parts.append(f'{newlines}<span style="{style}">{text}</span>')
 
         if sentence_parts:
             paragraph = " ".join(sentence_parts)
