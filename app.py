@@ -119,8 +119,9 @@ def _parse_markdown_to_html(text: str, orig_newlines: str | None = None, is_firs
         n = max(orig_newlines.count('\n'), 1)
         newlines = '<br/>' * n
 
-    # Bold
+    # Bold then italic (order matters: ** before *)
     text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
+    text = re.sub(r'\*([^*]+)\*', r'<i>\1</i>', text)
     # List items: * or -
     text = re.sub(r'^\*\s+', '&bull; ', text)
     text = re.sub(r'^-\s+', '&bull; ', text)
@@ -409,7 +410,13 @@ if tutorial_mode:
     st.info("**Tutorial** -- Practice annotating each sentence, then submit to see LLM feedback. No annotations are saved.")
 
 # Question
-st.markdown(f"**Question:** {data.get('question', '')}")
+question_text = html.escape(data.get("question", ""))
+st.markdown(
+    f'<div style="padding:0.75rem 1rem; background-color:rgba(28,131,225,0.1); border-left:4px solid #1c83e1; '
+    f'border-radius:4px; margin-bottom:1rem; font-size:1.05em;">'
+    f'<b>Question:</b> {question_text}</div>',
+    unsafe_allow_html=True,
+)
 
 # Warning when filter yields nothing
 if not filtered:
